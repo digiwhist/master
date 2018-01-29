@@ -1,6 +1,7 @@
 package eu.digiwhist.worker.si.parsed;
 
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
+import eu.dl.dataaccess.dto.parsed.ParsedAwardCriterion;
 import eu.dl.dataaccess.dto.parsed.ParsedBid;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedCPV;
@@ -8,134 +9,63 @@ import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.parsed.utils.ParserUtils;
-import eu.dl.worker.utils.jsoup.JsoupUtils;
+import eu.dl.worker.utils.StringUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Base handler for parsing forms in which information are saved in table HTML element.
  */
 abstract class BaseENarocanjeFormInTableHandler {
-    // pattern contains only "contains" keyword to find all sections - lot title is in the "td" element
-    static final String SECTION_SELECTOR_PATTERN = "div.tab-content > table > tbody > tr:contains(%s)";
-    static final String SECTION_FIRST_ELEMENT_SELECTOR_PATTERN = SECTION_SELECTOR_PATTERN + " > *:first-child";
-
     /**
-     * Parses common specific attributes and updates the passed tender.
+     * Parses common attributes and updates the passed tender.
      *
      * @param tender
      *         tender to be updated with parsed data
      * @param form
      *         parsed document for the source HTML page (parsed form)
      *
-     * @return updated tender object with data parsed from Form
+     * @return updated tender object with data parsed from form
      */
-    static ParsedTender parseCommonAttributes(final ParsedTender tender, final Element form) {
+    static ParsedTender parseCommonFormInTableAttributes(final ParsedTender tender, final Element form) {
+        final Element sectionI12 = ENarocanjeTenderFormInTableUtils.getSectionWithSeparatedNodes("I.1.2", form);
+        final Element sectionII3 = ENarocanjeTenderFormInTableUtils.getSectionWithSeparatedNodes("II.3", form);
+        final Element sectionIV33 = ENarocanjeTenderFormInTableUtils.getSectionWithSeparatedNodes("IV.3.3", form);
+
         tender
-                .addBuyer(parseBuyer(form));
+                .addBuyer(parseBuyer(form))
+                .setAddressOfImplementation(new ParsedAddress()
+                    .setRawAddress(ParserUtils.getFromContent(sectionI12, null, " Glavna lokacija ali mesto gradnje:"))
+                    .addNuts(StringUtils.removeDotsAtTheEnd(ParserUtils.getFromContent(sectionI12, null,
+                        " Sifra NUTS:"))))
+                .setIsCoveredByGpa(BooleanUtils.toStringTrueFalse(ENarocanjeTenderFormUtils.meansYes(
+                        ENarocanjeTenderFormInTableUtils.getSectionContent("II.1.7", form, Arrays.asList(
+                                "Naročilo je vključeno v Sporazum o vladnih naročilih (GPA)")))))
+                .setEstimatedDurationInDays(parseTenderEstimatedDurationInDays(sectionII3))
+                .setPersonalRequirements(ENarocanjeTenderFormInTableUtils.getSectionContent("III.2.1", form,
+                        Arrays.asList(
+                                "Osebni status gospodarskih subjektov, vključno z zahtevami v zvezi z vpisom v " +
+                                        "register poklicev ali trgovski register")))
+                .setEconomicRequirements(ENarocanjeTenderFormInTableUtils.getSectionContent("III.2.2", form,
+                        Arrays.asList("Poslovna in finančna sposobnost")))
+                .setTechnicalRequirements(ENarocanjeTenderFormInTableUtils.getSectionContent("III.2.3", form,
+                        Arrays.asList("Tehnična sposobnost")))
+                .setDocumentsPayable(BooleanUtils.toStringTrueFalse(ENarocanjeTenderFormUtils.meansYes(
+                        ParserUtils.getFromContent(sectionIV33, null, " Dokumentacija se plačuje:"))))
+                .setDocumentsPrice(parseDocumentsPrice(sectionIV33))
+                .setIsOnBehalfOf(parseIsTenderOnBehalfOfSomeone(form));
 
         assert tender.getPublications().get(0).getIsIncluded().equals(Boolean.toString(true));
         tender.getPublications().get(0)
-                .setDispatchDate(ParserUtils.getFromContent(form, "div.tab-content > center > font.naslovmali",
+                .setPublicationDate(ParserUtils.getFromContent(form, "div.tab-content > center > font.naslovmali",
                         "Datum objave:"));
 
         return tender;
-    }
-
-    /**
-     * Gets elements representing section (title and content).
-     *
-     * @param sectionNumber
-     *          number of section in title
-     * @param form
-     *         parsed document for the source HTML page (parsed form)
-     *
-     * @return elements representing section
-     */
-    static Elements getSections(final String sectionNumber, final Element form) {
-        return JsoupUtils.select(String.format(SECTION_SELECTOR_PATTERN, sectionNumber), form);
-    }
-
-    /**
-     * Gets element representing section (title and content).
-     *
-     * @param sectionNumber
-     *          number of section in title
-     * @param form
-     *         parsed document for the source HTML page (parsed form)
-     *
-     * @return element representing section
-     */
-    static Element getSection(final String sectionNumber, final Element form) {
-        return JsoupUtils.selectFirst(String.format(SECTION_SELECTOR_PATTERN, sectionNumber), form);
-    }
-
-    /**
-     * Gets wrapped element representing section (title and content) where each node is separated by <br>.
-     *
-     * @param sectionNumber
-     *          number of section in title
-     * @param form
-     *         parsed document for the source HTML page (parsed form)
-     *
-     * @return wrapped element representing section where each node is separated by <br>
-     */
-    static Element getSectionWithSeparatedNodes(final String sectionNumber, final Element form) {
-        return ParserUtils.getSubsectionOfNodes(
-                JsoupUtils.selectFirst(String.format(SECTION_FIRST_ELEMENT_SELECTOR_PATTERN, sectionNumber), form),
-                null);
-    }
-
-    /**
-     * Gets section content without title. The method suppose that title ends by ":".
-     *
-     * @param sectionNumber
-     *          number of section in title
-     * @param form
-     *         parsed document for the source HTML page (parsed form)
-     *
-     * @return section content without title
-     */
-    static String getSectionContent(final String sectionNumber, final Element form) {
-        // we suppose that colon is at the end of section title
-        return getSectionContent(sectionNumber, form, Collections.singletonList(":"));
-    }
-
-    /**
-     * Gets section content without title.
-     *
-     * @param sectionNumber
-     *          number of section in title
-     * @param form
-     *         parsed document for the source HTML page (parsed form)
-     * @param contentSeparators
-     *         separators of title and section content to get just the content. It can be the whole title.
-     *
-     * @return section content without title
-     */
-    static String getSectionContent(final String sectionNumber, final Element form,
-                                    final List<String> contentSeparators) {
-        final Element section = getSection(sectionNumber, form);
-        if (section == null) {
-            return null;
-        }
-        final String sectionText = section.text();
-
-        final String contentSeparator = contentSeparators
-                .stream()
-                .filter(s -> sectionText.contains(s))
-                .findFirst()
-                .orElse(null);
-        assert contentSeparator != null;
-
-        assert sectionText.contains(contentSeparator);
-        return sectionText.substring(sectionText.indexOf(contentSeparator) + contentSeparator.length()).trim();
     }
 
     /**
@@ -205,7 +135,7 @@ abstract class BaseENarocanjeFormInTableHandler {
      * @return List of parsed CPVs
      */
     static List<ParsedCPV> parseTenderCpvs(final String sectionNumber, final Element form) {
-        final Element cpvsElement = getSectionWithSeparatedNodes(sectionNumber, form);
+        final Element cpvsElement = ENarocanjeTenderFormInTableUtils.getSectionWithSeparatedNodes(sectionNumber, form);
 
         if (cpvsElement == null) {
             return null;
@@ -241,9 +171,16 @@ abstract class BaseENarocanjeFormInTableHandler {
      * @return String or Null
      */
     static String parseIfTenderHasLots(final String sectionNumber, final Element form) {
-        String hasLots = getSectionContent(sectionNumber, form, Arrays.asList("Razdelitev na sklope:",
+        String hasLots = ENarocanjeTenderFormInTableUtils.getSectionContent(sectionNumber, form, Arrays.asList(
+                "Razdelitev na sklope:",
+                "Razdelitev na sklope",
                 "RAZDELITEV NA SKLOPE:"));
 
+        if (hasLots == null) {
+            // it can happen when the form contains no information. See
+            // e.g. http://www.enarocanje.si/Obrazci/?id_obrazec=81539
+            return null;
+        }
         if (hasLots.isEmpty()) {
             // e.g. https://www.enarocanje.si/Obrazci/?id_obrazec=116490 in section II.1.5
             return null;
@@ -266,37 +203,92 @@ abstract class BaseENarocanjeFormInTableHandler {
      *          lot to be set
      */
     static void parseNameAndAddressOfWinningBidder(final String nameAndAddress, final ParsedTenderLot lot) {
-        if (nameAndAddress.isEmpty()) {
-            // e.g. section IV.3 in https://www.enarocanje.si/Obrazci/?id_obrazec=129499
-            return;
-        }
-
-        final List<String> separators = Arrays.asList(
-                "d.o.o.,", "D.O.O.,", "d.o.o. ,", "d. o. o.,", "d.o.o. ",
-                "d.d.,", "d.d,",
-                "s.p.,", "S.P.,", "s.p. ,",
-                ",");
-        final String separator = separators
-                .stream()
-                .filter(s -> nameAndAddress.contains(s))
-                .findFirst()
-                .orElse(null);
-        assert separator != null;
-
-        assert nameAndAddress.contains(separator);
-
         if (lot.getBids() == null) {
-            lot
-                    .addBid(new ParsedBid()
-                            .setIsWinning(Boolean.TRUE.toString()));
+            lot.addBid(new ParsedBid().setIsWinning(Boolean.TRUE.toString()));
         }
 
-        final int addressStartIndex = nameAndAddress.indexOf(separator) + separator.length();
         lot.getBids().get(0)
-                .addBidder(new ParsedBody()
-                        .setName(nameAndAddress.substring(0, addressStartIndex))
-                        .setAddress(new ParsedAddress()
-                                .setRawAddress(nameAndAddress.substring(addressStartIndex))));
+            .addBidder(ENarocanjeTenderFormUtils.parseNameAndAddressBody(nameAndAddress, null));
+    }
+
+    /**
+     * Parses supply type.
+     *
+     * @param sectionNumber
+     *          number of section in title
+     * @param form
+     *         parsed document for the source HTML page (parsed form)
+     *
+     * @return String or null
+     */
+    static String parseSupplyType(final String sectionNumber, final Element form) {
+        final Element section = ENarocanjeTenderFormInTableUtils.getSectionWithSeparatedNodes(sectionNumber, form);
+
+        if (section == null) {
+            return null;
+        }
+
+        /* The supply type should be the first information in the content of section. Index of the array created by
+           split by <br> is 6. The example below is from https://www.enarocanje.si/Obrazci/?id_obrazec=185848
+        <wrapper>
+         <script>_l('%0d%0a%3c%74d v%61lig%6e%3d%74%6fp%3e%0d%0a%3cf%6f%6e%74 cl%61ss%3d%22vpr%61s%61%6ej%65%22%3e')
+         </script>
+         <br>II.1.2)
+         <br>
+         <script>_l('%26%6ebsp%3b%3c%2ff%6f%6e%74%3e%0d%0a%3c%2f%74d%3e%0d%0a%3c%74d
+         v%61lig%6e%3d%74%6fp%3e%0d%0a%3cf%6f%6e%74 cl%61ss%3d%22vpr%61s%61%6ej%65%22%3e')</script>
+         <br>Vrsta naročila in mesto gradnje, kraj dobave ali izvedbe
+         <br>
+         <script>_l('%3c%2ff%6f%6e%74%3e')</script>
+         <br>
+         <script>_l('%0d%0a%3c%2f%74d%3e%0d%0a%3c%2f%74r%3e%0d%0a%3c%74r%3e%0d%0a%3c%74d%3e%3c%2f%74d%3e%0d%0a%3c%74d
+         v%61lig%6e%3d%74%6fp%3e')</script>
+         <br> Blago.
+         <br>Nakup.
+         <br> Glavni kraj dobave: Prostori naročnika
+         <br> Sifra NUTS: SI.
+         <br>
+         <br>
+         <br>
+        </wrapper>
+        */
+        return StringUtils.removeDotsAtTheEnd(ParserUtils.getFromContent(section, null, 6));
+    }
+
+    /**
+     * Parse tender award criterion list from publication element.
+     *
+     * @param section
+     *         section element to be parsed
+     *
+     * @return award criterion list or Null
+     */
+    static List<ParsedAwardCriterion> parseTenderAwardCriteria(final Element section) {
+        // each award criteria starts with order number. See
+        // https://www.enarocanje.si/Obrazci/?id_obrazec=33117
+
+        List<ParsedAwardCriterion> awardCriteria = new ArrayList<>();
+
+        Integer orderNumber = 1;
+        final String beginOfAwardCriterionPattern = " %s.";
+        String awardCriterion = ParserUtils.getFromContent(section, null,
+                String.format(beginOfAwardCriterionPattern, orderNumber.toString()));
+        while (awardCriterion != null) {
+            // e.g.:
+            // - "cena. Pondeniranje: 85"
+            // - "Merila za 6. skupino:. Pondeniranje:", see https://www.enarocanje.si/Obrazci/?id_obrazec=33099
+            String[] nameAndWeight = awardCriterion.split("Pondeniranje:");
+            assert nameAndWeight.length <= 2;
+            awardCriteria.add(new ParsedAwardCriterion()
+                    .setName(StringUtils.removeDotsAtTheEnd(nameAndWeight[0]))
+                    .setWeight(nameAndWeight.length == 2 ? StringUtils.removeDotsAtTheEnd(nameAndWeight[1]) : null));
+
+            orderNumber++;
+            awardCriterion = ParserUtils.getFromContent(section, null,
+                    String.format(beginOfAwardCriterionPattern, orderNumber.toString()));
+        }
+
+        return awardCriteria;
     }
 
     /**
@@ -308,7 +300,7 @@ abstract class BaseENarocanjeFormInTableHandler {
      * @return parsed buyer info
      */
     private static ParsedBody parseBuyer(final Element form) {
-        String sectionI1Content = getSectionContent("I.1", form, Arrays.asList(
+        String sectionI1Content = ENarocanjeTenderFormInTableUtils.getSectionContent("I.1", form, Arrays.asList(
                 "Ime, naslovi in kontaktna(-e) točka(-e):",
                 "IME, NASLOVI IN KONTAKTNE TOČKE:",
                 "IME, NASLOVI IN KONTAKTNA(-E) TOČKA(-E):",
@@ -347,16 +339,142 @@ abstract class BaseENarocanjeFormInTableHandler {
             }
         }
 
-        // get rawAddress and contact point
+        // get buyer name, rawAddress and contact point
         final String contactPointTitle = "Kontakt:";
-        final String[] rawAddressAndContactPoint = sectionI1Content.split(contactPointTitle);
-        assert rawAddressAndContactPoint.length <= 2;
+        final String[] nameRawAddressAndContactPoint = sectionI1Content.split(contactPointTitle);
+        assert nameRawAddressAndContactPoint.length <= 2;
+        String nameAndRawAddress = nameRawAddressAndContactPoint[0].trim();
+        if (nameAndRawAddress.endsWith(",")) {
+            nameAndRawAddress = nameAndRawAddress.substring(0, nameAndRawAddress.length() - 1);
+        }
+        // last comma is separator. Example of the string is "JAVNI HOLDING Ljubljana, d.o.o., Verovškova ulica 70"
+        final int nameAndRawAddressSeparatorIndex = nameAndRawAddress.lastIndexOf(',');
+        assert nameAndRawAddressSeparatorIndex != -1;
+        final String name = nameAndRawAddress.substring(0, nameAndRawAddressSeparatorIndex).trim();        
+        final String contactPoint = nameRawAddressAndContactPoint.length == 2
+                ? nameRawAddressAndContactPoint[1].trim()
+                : null;
+        String rawAddress = nameAndRawAddress.substring(nameAndRawAddressSeparatorIndex + 1).trim();
+        if (contactPoint != null) {
+            rawAddress += "," + contactPoint;
+        }
 
-        return new ParsedBody()
-                .setAddress(new ParsedAddress()
-                        .setRawAddress(rawAddressAndContactPoint[0].trim()))
-                .setContactPoint(rawAddressAndContactPoint.length == 2 ? rawAddressAndContactPoint[1].trim() : null)
-                .setPhone(phone);
+        List<ParsedBody> buyers = Arrays.asList(new ParsedBody()
+            .setName(name)
+            .setAddress(new ParsedAddress().setRawAddress(rawAddress))
+            .setContactPoint(contactPoint)
+            .setPhone(phone)
+            .setMainActivities(parseBuyerMainActivities(form)));
+
+        buyers = ENarocanjeTenderFormInTableUtils.parseBuyerType(buyers, form);
+
+        return buyers.get(0);
+    }
+
+    /**
+     * Parse tender estimated duration in days value from section II.3.
+     *
+     * @param sectionII3
+     *         section II.3 to be parsed
+     *
+     * @return String or Null
+     */
+    private static String parseTenderEstimatedDurationInDays(final Element sectionII3) {
+        String numberOfDays = ParserUtils.getFromContent(sectionII3, null,
+                " " + ENarocanjeTenderFormUtils.DURATION_IN_DAYS_TITLE);
+        if (numberOfDays == null) {
+            return null;
+        }
+        assert numberOfDays.endsWith(ENarocanjeTenderFormUtils.DURATION_IN_DAYS_SUFFIX);
+        return numberOfDays.substring(0, numberOfDays.indexOf(ENarocanjeTenderFormUtils.DURATION_IN_DAYS_SUFFIX))
+                .trim();
+    }
+
+    /**
+     * Parses documents price.
+     *
+     * @param sectionIV33
+     *          section IV.3.3 to be parsed
+     *
+     * @return documents price or null
+     */
+    private static ParsedPrice parseDocumentsPrice(final Element sectionIV33) {
+        final String priceAndCurrencyString = ParserUtils.getFromContent(sectionIV33, null, " Cena:");
+        if (priceAndCurrencyString == null) {
+            return null;
+        }
+        assert priceAndCurrencyString.contains(" ")
+                && priceAndCurrencyString.indexOf(' ') == priceAndCurrencyString.lastIndexOf(' ');
+        final String[] priceAndCurrency = priceAndCurrencyString.split(" ");
+        return new ParsedPrice()
+                .setNetAmount(priceAndCurrency[0])
+                .setCurrency(priceAndCurrency[1]);
+    }
+
+    /**
+     * Returns provided main activity of the buyer.
+     *
+     * @param form
+     *         parsed document for the source HTML page (parsed form)
+     *
+     * @return buyer main activity or null
+     */
+    private static List<String> parseBuyerMainActivities(final Element form) {
+        List<String> activities = new ArrayList<>();
+
+        // section I.2 or I.3 (same title)
+        // maybe it is content of the section I.2. See
+        // https://www.enarocanje.si/Obrazci/?id_obrazec=83105
+        Element activitiesNode = ENarocanjeTenderFormInTableUtils.getSectionWithSeparatedNodes("GLAVNA PODROČJA"
+            + " DEJAVNOSTI", form);
+
+        if (activitiesNode != null) {
+            activities = Arrays.asList(activitiesNode.html().split("<br>")).stream()
+                // skip useless rows
+                .filter(n -> !n.contains("<script>") && !n.contains("GLAVNA PODROČJA DEJAVNOSTI")
+                    && !n.startsWith("I.") && !n.trim().isEmpty())
+                .map(n -> n.trim())
+                .collect(Collectors.toList());
+        }
+
+        if (activities.isEmpty()) {
+            // maybe it is in the second row in I.2. See
+            // https://www.enarocanje.si/Obrazci/?id_obrazec=37402
+            Element section = ENarocanjeTenderFormInTableUtils.getSection("^I.2\\)", form);
+            if (!section.text().toLowerCase().contains("i.2) vrsta naročnika in glavna(-o) področja(-e) dejavnosti:")) {
+                // https://www.enarocanje.si/Obrazci/?id_obrazec=10766
+                return null;
+            }
+            section = section.nextElementSibling().nextElementSibling();
+            activities.add(section.text());
+        }
+
+        return activities.isEmpty() ? null : activities;
+    }
+
+    /**
+     * Parse if tender is made on behalf of someone value from document.
+     *
+     * @param form
+     *         parsed document for the source HTML page (parsed form)
+     *
+     * @return String or Null
+     */
+    private static String parseIsTenderOnBehalfOfSomeone(final Element form) {
+        final Element sectionI2 = ENarocanjeTenderFormInTableUtils.getSection("I.2", form);
+        if (sectionI2 == null) {
+            // it can happen when the form contains no information. See
+            // e.g. http://www.enarocanje.si/Obrazci/?id_obrazec=81539
+            return null;
+        }
+
+        final String isTenderOnBehalfOfSomeoneText = sectionI2.nextElementSibling().nextElementSibling()
+                .nextElementSibling().nextElementSibling().text();
+        final String isTenderOnBehalfOfSomeoneTitle = "Naročnik izvaja postopek v imenu drugih naročnikov:";
+        return isTenderOnBehalfOfSomeoneText.startsWith(isTenderOnBehalfOfSomeoneTitle)
+                ? BooleanUtils.toStringTrueFalse(ENarocanjeTenderFormUtils.meansYes(StringUtils.removeDotsAtTheEnd(
+                        isTenderOnBehalfOfSomeoneText.substring(isTenderOnBehalfOfSomeoneTitle.length()))))
+                : null;
     }
 
 }

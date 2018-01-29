@@ -102,7 +102,7 @@ public final class StatniPokladnaBudgetDownloader extends BaseDownloader<RawData
 
 
                     logger.info("File {} processed. {} items out of total {} were skipped.", file.getKey(),
-                        skipped[0], file.getValue().length());
+                        skipped[0], file.getValue().split("\n").length);
                 } catch(IOException e) {
                     logger.error("Spliting of the file {} failed because of", file.getKey(), e);
                     throw new UnrecoverableException("Spliting of the file failed", e);

@@ -1,26 +1,24 @@
 package eu.dl.worker.indicator.plugin;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
-import java.time.LocalDate;
-import java.util.Arrays;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import eu.dl.core.config.Config;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.generic.Address;
 import eu.dl.dataaccess.dto.generic.Publication;
-import eu.dl.dataaccess.dto.indicator.TenderIndicatorType;
+import eu.dl.dataaccess.dto.indicator.IndicatorStatus;
 import eu.dl.dataaccess.dto.master.MasterBid;
 import eu.dl.dataaccess.dto.master.MasterBody;
 import eu.dl.dataaccess.dto.master.MasterTender;
 import eu.dl.dataaccess.dto.master.MasterTenderLot;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.time.LocalDate;
+import java.util.Arrays;
+
+import static org.junit.Assert.assertEquals;
 
 /**
- * Test of electronic auction indicator plugin.
+ * Test of tax haven indicator plugin.
  *
  * @author Jakub Krafka
  */
@@ -33,28 +31,32 @@ public final class TaxHavenIndicatorPluginTest {
             .setLots(Arrays.asList(new MasterTenderLot()));
     
 	private final MasterTender tender2 = new MasterTender()
-			.setLots(
-				Arrays.asList(
-					new MasterTenderLot().setBids(
-						Arrays.asList(
-							new MasterBid().setBidders(
-								Arrays.asList(
-									new MasterBody().setAddress(
-										new Address().setCountry("CZ")
-									)
-								)
-							).setIsWinning(true)
-						)
-					)
-				)
-			).setPublications(
-				Arrays.asList(
-					new Publication()
-						.setPublicationDate(LocalDate.of(2017, 1, 1))
-						.setFormType(PublicationFormType.CONTRACT_AWARD
-					)
-				)
-			);
+			.setLots(Arrays.asList(
+			        new MasterTenderLot()
+                            .setBids(Arrays.asList(
+                                    new MasterBid()
+                                            .setBidders(Arrays.asList(
+                                                    new MasterBody()
+                                                            .setAddress(new Address()
+                                                                    .setCountry("CZ"))))
+                                            .setIsWinning(true)))))
+            .setPublications(Arrays.asList(new Publication()
+                    .setPublicationDate(LocalDate.of(2017, 1, 1))
+                    .setFormType(PublicationFormType.CONTRACT_AWARD)));
+
+	private final MasterTender tender3 = new MasterTender()
+			.setLots(Arrays.asList(
+			        new MasterTenderLot()
+                            .setBids(Arrays.asList(
+                                    new MasterBid()
+                                            .setBidders(Arrays.asList(
+                                                    new MasterBody()
+                                                            .setAddress(new Address()
+                                                                    .setCountry("CZ"))))
+                                            .setIsWinning(true)))))
+            .setPublications(Arrays.asList(new Publication()
+                    .setPublicationDate(LocalDate.of(2017, 1, 1))
+                    .setFormType(PublicationFormType.CONTRACT_NOTICE)));
 
     private final TaxHavenIndicatorPlugin plugin = new TaxHavenIndicatorPlugin();
 
@@ -65,32 +67,32 @@ public final class TaxHavenIndicatorPluginTest {
     public void init() {
         Config.getInstance().setConfigFile(Arrays.asList("unit_test"));
     }
-    
+
     /**
-     * Test of correct tender address.
+     * Test of undefined indicators.
      */
     @Test
-    public void noIndicatorTest() {
-        assertNull(plugin.evaulate(null));
-        assertNull(plugin.evaulate(nullTender));
-        assertNull(plugin.evaulate(tender1));
+    public void undefinedIndicatorTest() {
+        assertEquals(plugin.evaluate(tender3).getStatus(), IndicatorStatus.UNDEFINED);
     }
 
     /**
-     * Test of positive result.
+     * Test of insufficient indicators.
      */
     @Test
-    public void okTest() {
-        assertEquals(plugin.evaulate(tender2).getType(),
-                TenderIndicatorType.CORRUPTION_TAX_HAVEN.name());
+    public void insufficientIndicatorTest() {
+        assertEquals(plugin.evaluate(null).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
+        assertEquals(plugin.evaluate(nullTender).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
+        assertEquals(plugin.evaluate(tender1).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
     }
 
     /**
-     * Test of correct plugin type.
+     * Test of calculated indicators.
      */
     @Test
-    public void getTypeTest() {
-        assertEquals(plugin.getType(),
-                TenderIndicatorType.CORRUPTION_TAX_HAVEN.name());
+    public void calculatedIndicatorTest() {
+        assertEquals(plugin.evaluate(tender2).getStatus(), IndicatorStatus.CALCULATED);
+        assertEquals(plugin.evaluate(tender2).getValue(), new Double(0d));
     }
+
 }

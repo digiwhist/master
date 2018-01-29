@@ -1,8 +1,9 @@
 package eu.digiwhist.worker.pl.matched;
 
 import eu.digiwhist.worker.matched.BaseDigiwhistTenderMatcher;
-import eu.digiwhist.worker.matched.TenderPublicationSourceIdsMatchingPlugin;
+import eu.digiwhist.worker.matched.TenderPublicationSourceIdsAndPublicationDatesMatchingPlugin;
 import eu.dl.core.UnrecoverableException;
+import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
 import static eu.dl.dataaccess.utils.DigestUtils.bodyHash;
@@ -31,7 +32,7 @@ public class UZPTenderMatcher extends BaseDigiwhistTenderMatcher {
     @Override
     protected final void registerTenderPlugins() {
         tenderPluginRegistry.registerPlugin(TENDER_PLUGIN,
-            new TenderPublicationSourceIdsMatchingPlugin(matchedTenderDao, false));
+            new TenderPublicationSourceIdsAndPublicationDatesMatchingPlugin(matchedTenderDao, false));
     }
 
     @Override
@@ -44,7 +45,18 @@ public class UZPTenderMatcher extends BaseDigiwhistTenderMatcher {
         String hash = null;
 
         try {
-            byte[] data = UUID.randomUUID().toString().getBytes("UTF-8");
+            Publication includedPublication = matchedTender.getPublications().stream()
+                .filter(n -> n.getIsIncluded() && n.getPublicationDate() != null)
+                .findFirst().orElse(null);
+            
+            if (includedPublication != null && includedPublication.getSourceId() != null
+                && includedPublication.getPublicationDate() != null) {
+                hash = includedPublication.getSourceId() + "|" + includedPublication.getPublicationDate();
+            } else {
+                hash = UUID.randomUUID().toString();
+            }
+
+            byte[] data = hash.getBytes("UTF-8");
             return DigestUtils.sha1Hex(data);
         } catch (UnsupportedEncodingException e) {
             logger.error("Unable to convert \"{}\" to UTF-8", hash);

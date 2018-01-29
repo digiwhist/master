@@ -164,6 +164,8 @@ public final class TedContractNoticeUtilitiesHandler {
                 "PROCEDURES_FOR_APPEAL > MEDIATION_PROCEDURE_BODY_RESPONSIBLE > CONTACT_DATA_WITHOUT_RESPONSIBLE_NAME"
                     + " > ORGANISATION > OFFICIALNAME", complementaryInfoNode));
 
+        TedTenderParserUtils.appendNoticeReference(document, parsedTender);
+
         return parsedTender;
     }
 

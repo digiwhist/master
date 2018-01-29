@@ -1,10 +1,16 @@
 package eu.dl.worker.master;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
+
+import org.apache.logging.log4j.ThreadContext;
+
 import eu.dl.core.UnrecoverableException;
-import eu.dl.dataaccess.dao.IndicatorDAO;
 import eu.dl.dataaccess.dao.MasterDAO;
 import eu.dl.dataaccess.dao.MatchedDAO;
-import eu.dl.dataaccess.dto.indicator.EntitySpecificIndicator;
+import eu.dl.dataaccess.dto.indicator.Indicator;
 import eu.dl.dataaccess.dto.master.Masterable;
 import eu.dl.dataaccess.dto.matched.MasterablePart;
 import eu.dl.dataaccess.dto.matched.Matchable;
@@ -14,11 +20,6 @@ import eu.dl.worker.indicator.plugin.IndicatorPlugin;
 import eu.dl.worker.master.plugin.MasterPlugin;
 import eu.dl.worker.utils.BasicPluginRegistry;
 import eu.dl.worker.utils.PluginRegistry;
-import org.apache.logging.log4j.ThreadContext;
-
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 /**
  * Base class for all the masters.
@@ -41,8 +42,6 @@ public abstract class BaseMaster<T extends Matchable & MasterablePart, V extends
     private final MatchedDAO<T> matchedDAO = getMatchedDAO();
 
     private final MasterDAO<V> masterDAO = getMasterDAO();
-
-    private final IndicatorDAO indicatorDAO = getIndicatorDAO();
 
     /**
      * Time execution threshold of this master worker (in milliseconds).
@@ -118,20 +117,22 @@ public abstract class BaseMaster<T extends Matchable & MasterablePart, V extends
                 
         item = sourceSpecificPostprocessData(item);
 
-        String savedId = masterDAO.save(item);
-
+        List<Indicator> indicators = new ArrayList<>();
+        
         // iterate over all indicator plugins and execute them in a proper order
         for (Entry<String, IndicatorPlugin<V>> entry : indicatorPluginRegistry.getPlugins().entrySet()) {
             IndicatorPlugin<V> plugin = entry.getValue();
-            EntitySpecificIndicator indicator = (EntitySpecificIndicator) plugin.evaulate(item);
-            indicatorDAO.delete(item.getId(), plugin.getType());
+            Indicator indicator = plugin.evaluate(item);
             if (indicator != null) {
-                // set entity id for which was the indicator calculated
-                indicator.setRelatedEntityId(item.getId());
-                indicatorDAO.save(indicator);
+            		indicators.add(indicator);
             }
         }
 
+        item.setIndicators(indicators);
+
+        String savedId = masterDAO.save(item);
+
+        
         getTransactionUtils().commit();
         logger.info("Mastering finished for group id {} stored as {}", groupId, savedId);
 
@@ -187,13 +188,6 @@ public abstract class BaseMaster<T extends Matchable & MasterablePart, V extends
      * @return matched dao
      */
     protected abstract MasterDAO<V> getMasterDAO();
-
-    /**
-     * Returns dao instance used to handle indicators.
-     *
-     * @return indicator
-     */
-    protected abstract IndicatorDAO<V> getIndicatorDAO();
 
     /**
      * This function registers common mastering plugins. The plugins will

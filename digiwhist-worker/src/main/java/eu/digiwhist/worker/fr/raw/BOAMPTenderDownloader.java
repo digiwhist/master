@@ -25,6 +25,7 @@ import static eu.digiwhist.worker.fr.BOAMPTenderUtils.ARCHIVE_URL_METADATA_KEY;
 import static eu.digiwhist.worker.fr.BOAMPTenderUtils.FILE_PATH_METADATA_KEY;
 import static eu.digiwhist.worker.fr.BOAMPTenderUtils.HTML_SOURCE_DATA_METADATA_KEY;
 import static eu.digiwhist.worker.fr.BOAMPTenderUtils.HTML_SOURCE_URL_METADATA_KEY;
+import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 
 /**
  * Tender downloader for France, which saves XML file from FTP (is is saved on disc by crawler) and downloads HTML page
@@ -85,6 +86,9 @@ public class BOAMPTenderDownloader extends BaseDownloader<RawData> {
         metaData.put(HTML_SOURCE_DATA_METADATA_KEY, DownloaderUtils.getResponseBody(publicationWebUrl));
         logger.info("Downloaded data from {}", publicationWebUrl);
         rawData.setMetaData(metaData);
+
+        // set persistent id according to publication human readable URL, which is unique for each publication
+        rawData.setPersistentId(getSourceId() + "_" + sha256Hex(publicationWebUrl));
 
         // delete successfully loaded file
         try {

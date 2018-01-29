@@ -6,7 +6,6 @@ import eu.dl.worker.clean.utils.LotUtils;
 
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,38 +32,27 @@ public final class VestnikLotUtils {
      *         list of number formats
      * @param formatter
      *         datetime formatter
-     * @param documentTypeMapping
-     *         mapping for document type
-     * @param selectionMethodMapping
-     *         mapping for selection method
-     * @param statusMapping
-     *         mapping for status
-     * @param unitPriceMapping
-     *         mapping for price units
-     *
+     * @param mappings
+     *         mappings for {@link LotUtils#cleanLot(eu.dl.dataaccess.dto.parsed.ParsedTenderLot, java.util.List,
+     *          java.util.List, java.util.Map, java.lang.String)}     
+     * @param country
+     *          country
      * @return cleaned lot
      */
     public static CleanTenderLot cleanLot(final ParsedTenderLot parsedLot, final List<NumberFormat> numberFormat,
-            final List<DateTimeFormatter> formatter, final Map<Enum, List<String>> documentTypeMapping,
-            final Map<Enum, List<String>> selectionMethodMapping, final Map<Enum, List<String>> statusMapping,
-            final Map<Enum, List<String>> unitPriceMapping) {
+        final List<DateTimeFormatter> formatter, final Map<String, Map<Enum, List<String>>> mappings,
+        final String country) {
+
         if (parsedLot == null) {
             return null;
         }
 
-        final Map<String, Map<Enum, List<String>>> lotMapping = new HashMap<>();
-        lotMapping.put("documentTypeMapping", documentTypeMapping);
-        lotMapping.put("selectionMethodMapping", selectionMethodMapping);
-        lotMapping.put("statusMapping", statusMapping);
-        lotMapping.put("unitPriceMapping", unitPriceMapping);
-
-
-        CleanTenderLot cleanLot = LotUtils.cleanLot(parsedLot, numberFormat, formatter, lotMapping);
+        CleanTenderLot cleanLot = LotUtils.cleanLot(parsedLot, numberFormat, formatter, mappings, country);
 
         // Vestnik specific selection method cleaning
         cleanLot.setSelectionMethod(
-                VestnikSelectionMethodUtils.cleanSelectionMethod(parsedLot.getSelectionMethod(), selectionMethodMapping,
-                        parsedLot.getAwardCriteria()));
+                VestnikSelectionMethodUtils.cleanSelectionMethod(parsedLot.getSelectionMethod(),
+                    mappings.get("selectionMethodMapping"), parsedLot.getAwardCriteria()));
 
         return cleanLot;
     }

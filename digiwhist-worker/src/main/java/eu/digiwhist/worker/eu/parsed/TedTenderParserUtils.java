@@ -1,5 +1,6 @@
 package eu.digiwhist.worker.eu.parsed;
 
+import eu.digiwhist.dataaccess.dto.codetables.PublicationSources;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -21,6 +22,7 @@ import eu.dl.dataaccess.dto.parsed.ParsedCPV;
 import eu.dl.dataaccess.dto.parsed.ParsedFunding;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedPublication;
+import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
 
 /**
@@ -133,7 +135,7 @@ final class TedTenderParserUtils {
         
         String name = JsoupUtils.selectText("OFFICIALNAME", bodyNode);
         if (name == null) {
-            JsoupUtils.selectText("ORGANISATION", bodyNode);
+            name = JsoupUtils.selectText("ORGANISATION", bodyNode);
         }
 
         final ParsedBody body = new ParsedBody()
@@ -236,8 +238,12 @@ final class TedTenderParserUtils {
      * @return origin node
      */
     public static Element getOriginNode(final Document document) {
-        final Element originNode =
-            JsoupUtils.selectFirst("TED_EXPORT > FORM_SECTION > *[CATEGORY=ORIGINAL] > *", document);
+        Element originNode = JsoupUtils.selectFirst("TED_EXPORT > FORM_SECTION > *[CATEGORY=ORIGINAL]", document);
+
+        // origin node for old forms
+        if (originNode != null && originNode.children().size() == 1) {
+            originNode = originNode.child(0);
+        }
 
         if (originNode == null) {
             throw new UnrecoverableException("Unrecognized document structure");
@@ -324,6 +330,10 @@ final class TedTenderParserUtils {
      * @return address of implementation
      */
     public static ParsedAddress parseAddressOfImplementation(final Element contractNode) {
+        if (contractNode == null) {
+            return null;
+        }
+
         String nuts = JsoupUtils.selectAttribute("LOCATION_NUTS > NUTS", "CODE", contractNode);
         if (nuts == null) {
             nuts = getDefaultNuts(contractNode.ownerDocument());
@@ -494,8 +504,10 @@ final class TedTenderParserUtils {
                 "VALUE", typeAndActivitiesNode);
         }
 
-        return TedTenderParserUtils.parseBody(JsoupUtils.selectFirst("NAME_ADDRESSES_CONTACT_CONTRACT,"
-            + " NAME_ADDRESSES_CONTACT_CONTRACT_AWARD", buyerNode))
+        ParsedBody body = TedTenderParserUtils.parseBody(JsoupUtils.selectFirst("NAME_ADDRESSES_CONTACT_CONTRACT,"
+            + " NAME_ADDRESSES_CONTACT_CONTRACT_AWARD, NAME_ADDRESSES_CONTACT_PRIOR_INFORMATION", buyerNode));
+        
+        return (body == null ? new ParsedBody() : body)
                 .setMainActivities(TedTenderParserUtils.parseBuyerMainActivities(JsoupUtils.select("TYPE_OF_ACTIVITY,"
                     + " TYPE_OF_ACTIVITY_OTHER", typeAndActivitiesNode), buyerNode.ownerDocument()))
                 .setBuyerType(buyerType);
@@ -511,9 +523,11 @@ final class TedTenderParserUtils {
     public static ParsedPublication initMainPublication(final Document doc) {
         Element codedDataNode = getCodedDataNode(doc);
 
+        String url = JsoupUtils.selectText("NOTICE_DATA > URI_LIST > URI_DOC", codedDataNode);
+
         return new ParsedPublication()
             .setLanguage(JsoupUtils.selectText("NOTICE_DATA > LG_ORIG", codedDataNode))
-            .setHumanReadableUrl(JsoupUtils.selectText("NOTICE_DATA > URI_LIST > URI_DOC[LG=EN]", codedDataNode))
+            .setHumanReadableUrl(url != null ? url.replaceAll("(?<=TEXT:)[A-Z]{2}(?=:HTML)", "EN") : null)
             .setSourceFormType(getMainPublicationSourceFormType(doc))
             .setSourceId(JsoupUtils.selectText("NOTICE_DATA > NO_DOC_OJS", codedDataNode))
             .setIsIncluded(true)
@@ -593,5 +607,32 @@ final class TedTenderParserUtils {
 
         return String.format("F%02d", type.getCode()) + "_"
             + (version.is(TedFormVersionType.R209, TedFormVersionType.IS_OLDER) ? "2011" : "2014");
+    }
+
+    /**
+     * Appends notice reference to the tender publications list if needed.
+     *
+     * @param document
+     *      parsed document
+     * @param tender
+     *      parsed tender
+     */
+    public static void appendNoticeReference(final Document document, final ParsedTender tender) {
+        if (document == null || tender == null) {
+            return;
+        }
+
+        final String buyerAssignedId = JsoupUtils.selectText("REF_NOTICE > NO_DOC_OJS", getCodedDataNode(document));
+        if (buyerAssignedId == null || buyerAssignedId.isEmpty()) {
+            return;
+        }
+
+        if (tender.getPublications() == null
+            || tender.getPublications().stream().noneMatch(n -> buyerAssignedId.equals(n.getBuyerAssignedId()))) {
+            tender.addPublication(new ParsedPublication()
+                .setBuyerAssignedId(buyerAssignedId)
+                .setIsIncluded(false)
+                .setSource(PublicationSources.EU_TED));
+        }
     }
 }

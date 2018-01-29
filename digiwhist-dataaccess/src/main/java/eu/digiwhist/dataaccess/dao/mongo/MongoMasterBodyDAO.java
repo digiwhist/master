@@ -1,13 +1,13 @@
 package eu.digiwhist.dataaccess.dao.mongo;
 
-import java.util.Collection;
-import java.util.List;
-
-import org.mongojack.DBQuery;
-
+import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dao.MasterBodyDAO;
 import eu.dl.dataaccess.dao.mongo.GenericMongoDAO;
 import eu.dl.dataaccess.dto.master.MasterBody;
+import org.mongojack.DBQuery;
+
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Mastered body DAO implementation for MongoDB.
@@ -23,6 +23,11 @@ class MongoMasterBodyDAO extends GenericMongoDAO<MasterBody> implements MasterBo
     @Override
     protected final String getCollectionName() {
         return MASTERED_TENDER_COLLECTION_NAME;
+    }
+
+    @Override
+    public final boolean existsInPoliticalExposedPersons(final String bvdIdNumber) {
+        throw new UnrecoverableException("Unsupported feature");
     }
 
     @Override

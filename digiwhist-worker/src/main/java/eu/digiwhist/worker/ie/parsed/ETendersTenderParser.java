@@ -156,7 +156,7 @@ public class ETendersTenderParser extends BaseDigiwhistTenderParser {
      */
     private List<ParsedPublication> parsePublications(final Element document, final String url,
                                                       final HashMap<String, Object> metadata) {
-        final Elements publications = JsoupUtils.select("tbody:contains(Date of publishing) > tr", document);
+        final Elements publications = JsoupUtils.select("tbody:contains(Date of Dispatch) > tr", document);
 
         final List<ParsedPublication> parsedPublications = new ArrayList<>();
 

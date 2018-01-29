@@ -8,7 +8,9 @@ import com.gargoylesoftware.htmlunit.html.HtmlTableRow;
 import eu.digiwhist.worker.raw.BaseDigiwhistIncrementalPagedSourceHttpCrawler;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.worker.raw.utils.CrawlerUtils;
+import eu.dl.worker.utils.ThreadUtils;
 import eu.dl.worker.utils.http.URLUtils;
+
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -81,7 +83,7 @@ public final class BASENoticeTenderCrawler extends BaseDigiwhistIncrementalPaged
             logger.error("Table does not have just one body. It has {} bodies!", tableBodies.size());
         }
         // dont shut the server down
-        humanize(SLEEP_LENGTH);
+        ThreadUtils.humanize(SLEEP_LENGTH);
         return page;
     }
 

@@ -109,9 +109,9 @@ public class SPATenderCleaner extends BaseDigiwhistTenderCleaner {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
         mapping.put(PublicationFormType.CONTRACT_NOTICE, Arrays.asList("Tender announced", "Bidding commenced",
-                "Additional rounds of trade ended", "Selection/Evaluation", "Winner identified",
+                "Additional rounds of trade ended", "Selection/Evaluation"));
+        mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("Contract awarded", "Winner identified",
                 "Finalization of contract"));
-        mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("Contract awarded"));
         mapping.put(PublicationFormType.CONTRACT_CANCELLATION, Arrays.asList("No bids received", "Cancelled",
                 "Contract not awarded"));
 

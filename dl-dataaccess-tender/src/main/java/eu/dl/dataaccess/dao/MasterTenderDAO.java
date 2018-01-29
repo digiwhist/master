@@ -63,6 +63,22 @@ public interface MasterTenderDAO<T extends MasterTender> extends MasterDAO<T> {
     List<T> getModifiedAfter(LocalDateTime timestamp, Integer page);
 
     /**
+     * Returns objects which has been modified after timestamp by certain
+     * source. The result is paged with 1000 records per page.
+     *
+     * @param timestamp
+     *            objects modified after this timestamp will be returned (can be null)
+     * @param modifiedBy
+     *            "author" of the change (can be null)
+     * @param page
+     *            order of the page in the result (for first page set 0); can be null
+     * @param opentender
+     *          whether returns only opentender records (tender.metaData.opentender = true)
+     * @return set of objects modified after timestamp
+     */
+    List<T> getModifiedAfter(LocalDateTime timestamp, String modifiedBy, Integer page, boolean opentender);
+
+    /**
      * Returns paged list of master items for a specific country.
      *
      * @param countryCode
@@ -73,6 +89,34 @@ public interface MasterTenderDAO<T extends MasterTender> extends MasterDAO<T> {
      * @return paged list of master items from given country
      */
     List<T> getByCountry(String countryCode, Integer page);
+
+    /**
+     * Returns paged list of master items for a specific country and source.
+     *
+     * @param countryCode
+     *            ISO country code
+     * @param page
+     *            page number
+     * @param source
+     *          source
+     * @return paged list of master items from given country and source
+     */
+    List<T> getByCountry(String countryCode, Integer page, String source);
+
+    /**
+     * Returns paged list of master items for a specific country and source.
+     *
+     * @param countryCode
+     *            ISO country code (can be null)
+     * @param page
+     *            page number (can be null)
+     * @param source
+     *          source (can be null)
+     * @param opentender
+     *          whether returns only opentender records (tender.metaData.opentender = true)
+     * @return paged list of master items from given country and source
+     */
+    List<T> getByCountry(String countryCode, Integer page, String source, boolean opentender);
 
     /**
      * Returns list of tender ids modified by source and version. The IDs are sorted.

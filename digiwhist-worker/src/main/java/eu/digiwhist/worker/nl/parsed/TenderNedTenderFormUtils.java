@@ -4,6 +4,7 @@ import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.nodes.Element;
 
 import static eu.digiwhist.worker.nl.parsed.TenderNedTenderAncientFormUtils.ANCIENT_SUBSECTION_I_1_CONTENT_SELECTOR;
+import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 
 /**
  * Utilities for TenderNed.
@@ -73,4 +74,19 @@ final class TenderNedTenderFormUtils {
         }
     }
 
+    /**
+     * @param value
+     *      body id, may be null
+     * @return body identifier for non-null {@code value} or null
+     */
+    static BodyIdentifier parseBodyIdentifier(final String value) {
+        if (value == null) {
+            return null;
+        }
+
+        return new BodyIdentifier()
+            .setId(value)
+            .setType(BodyIdentifier.Type.ORGANIZATION_ID)
+            .setScope(BodyIdentifier.Scope.NL);
+    }
 }

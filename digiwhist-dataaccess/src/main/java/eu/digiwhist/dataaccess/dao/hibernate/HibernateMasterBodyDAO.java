@@ -1,13 +1,13 @@
 package eu.digiwhist.dataaccess.dao.hibernate;
 
-import java.util.Collection;
-import java.util.List;
-
-import javax.persistence.Query;
-
+import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dao.MasterBodyDAO;
 import eu.dl.dataaccess.dao.hibernate.GenericHibernateDAO;
 import eu.dl.dataaccess.dto.master.MasterBody;
+
+import javax.persistence.Query;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Hibernate DAO implementation for Master bodies.
@@ -22,6 +22,11 @@ public class HibernateMasterBodyDAO extends GenericHibernateDAO<MasterBody> impl
     @Override
     public final MasterBody getEmptyInstance() {
         return new MasterBody();
+    }
+
+    @Override
+    public final boolean existsInPoliticalExposedPersons(final String bvdIdNumber) {
+        throw new UnrecoverableException("Unsupported feature");
     }
 
     @Override

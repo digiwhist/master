@@ -46,16 +46,18 @@ public class PricePlugin extends BaseNumberPlugin<ParsedTender, CleanTender> {
      */
     @Override
     public final CleanTender clean(final ParsedTender parsedTender, final CleanTender cleanTender) {
+        String country = parsedTender.getCountry();
+
         logger.debug("Cleaning document price for parsed tender {} starts", parsedTender.getId());
-        cleanTender.setDocumentsPrice(PriceUtils.cleanPrice(parsedTender.getDocumentsPrice(), formats));
+        cleanTender.setDocumentsPrice(PriceUtils.cleanPrice(parsedTender.getDocumentsPrice(), formats, country));
         logger.debug("Cleaning document price for parsed tender {} finished", parsedTender.getId());
 
         logger.debug("Cleaning estimated price for parsed tender {} starts", parsedTender.getId());
-        cleanTender.setEstimatedPrice(PriceUtils.cleanPrice(parsedTender.getEstimatedPrice(), formats));
+        cleanTender.setEstimatedPrice(PriceUtils.cleanPrice(parsedTender.getEstimatedPrice(), formats, country));
         logger.debug("Cleaning estimated price for parsed tender {} finished", parsedTender.getId());
 
         logger.debug("Cleaning final price for parsed tender {} starts", parsedTender.getId());
-        cleanTender.setFinalPrice(PriceUtils.cleanPrice(parsedTender.getFinalPrice(), formats));
+        cleanTender.setFinalPrice(PriceUtils.cleanPrice(parsedTender.getFinalPrice(), formats, country));
         logger.debug("Cleaning final price for parsed tender {} finished", parsedTender.getId());
 
         return cleanTender;

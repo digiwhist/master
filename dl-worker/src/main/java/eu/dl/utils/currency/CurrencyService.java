@@ -1,10 +1,10 @@
 package eu.dl.utils.currency;
 
+import eu.dl.dataaccess.dto.ExchangeRates;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Currency;
-
-import eu.dl.dataaccess.dto.ExchangeRates;
 
 /**
  * This service provides methods to work with currencies. For example conversion from/to EUR.
@@ -45,4 +45,12 @@ public interface CurrencyService {
      * @return found result or null
      */
     ExchangeRates getExchangeRates(LocalDate date);
+
+    /**
+     * Updates the exchange rates for given date.
+     *
+     * @param date date for which exchange rates should be updated
+     * @param exchangeRates updated exchange rates
+     */
+    void updateExchangeRates(LocalDate date, ExchangeRates exchangeRates);
 }

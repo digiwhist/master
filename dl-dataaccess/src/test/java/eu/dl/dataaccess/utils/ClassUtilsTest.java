@@ -81,4 +81,22 @@ public final class ClassUtilsTest {
 
         assertNull(body.getMainActivities());
     }
+
+    /**
+     * Test of {@link ClassUtils#getProperty(java.lang.Object, java.lang.String)}.
+     */
+    @Test
+    public void getPropertyTest() {
+        assertEquals("street", ClassUtils.getProperty(NONEMTPY_BODY, "address.street"));
+        assertEquals("12345678", ClassUtils.getProperty(NONEMTPY_BODY, "bodyIds.0.id"));
+        assertNull(ClassUtils.getProperty(NONEMTPY_BODY, "name"));
+
+        assertNull(ClassUtils.getProperty(NONEMTPY_BODY, "address.unknown"));
+        assertNull(ClassUtils.getProperty(null, "name"));
+        assertNull(ClassUtils.getProperty(NONEMTPY_BODY, null));
+        // index is out of range
+        assertNull(ClassUtils.getProperty(NONEMTPY_BODY, "bodyIds.1.id"));
+        // bodyIds is an list, so the number index is expected. 'a' isn't number so null is returned.
+        assertNull(ClassUtils.getProperty(NONEMTPY_BODY, "bodyIds.a.id"));
+    }
 }

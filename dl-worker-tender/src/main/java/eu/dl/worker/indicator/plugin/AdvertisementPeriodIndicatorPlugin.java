@@ -3,7 +3,6 @@ package eu.dl.worker.indicator.plugin;
 import eu.dl.core.config.Config;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.generic.Publication;
-import eu.dl.dataaccess.dto.indicator.BasicEntityRelatedIndicator;
 import eu.dl.dataaccess.dto.indicator.Indicator;
 import eu.dl.dataaccess.dto.indicator.TenderIndicatorType;
 import eu.dl.dataaccess.dto.master.MasterTender;
@@ -15,61 +14,57 @@ import java.util.HashMap;
 /**
  * This plugin calculates advertisement period length.
  */
-public class AdvertisementPeriodIndicatorPlugin implements IndicatorPlugin<MasterTender> {
+public class AdvertisementPeriodIndicatorPlugin extends BaseIndicatorPlugin implements IndicatorPlugin<MasterTender> {
 
     @Override
-    public final Indicator evaulate(final MasterTender tender) {
+    public final Indicator evaluate(final MasterTender tender) {
         if (tender == null || tender.getCountry() == null) {
-            return null;
+            return insufficient();
         }
-
-        Indicator indicator = new BasicEntityRelatedIndicator();
-        indicator.setType(getType());
 
         if (tender.getBidDeadline() == null) {
-            // no deadline specified
-            if (isMissingBidDeadlineRedFlag(tender.getCountry())) {
-                return indicator;
+            return isMissingBidDeadlineRedFlag(tender.getCountry()) ? calculated(0d) : calculated(100d);
+        } else {
+            if (tender.getPublications() == null) {
+                return insufficient();
             }
-        } else if (tender.getPublications() != null) {
+
             // iterate over lots and pick the oldest callForTenderDate
-            LocalDate callForTenderDate = null;
+            LocalDate oldestCallForTenderDate = null;
             for (Publication publication: tender.getPublications()) {
                 if (publication.getFormType() != null
-                        && publication.getFormType().equals(PublicationFormType.CONTRACT_NOTICE)) {
-                    if (publication.getPublicationDate() != null && (
-                            callForTenderDate == null
-                            || callForTenderDate.isAfter(publication.getPublicationDate())
-                        )
-                    ) {
-                        callForTenderDate = publication.getPublicationDate();
-                    }
+                        && publication.getFormType().equals(PublicationFormType.CONTRACT_NOTICE)
+                        && publication.getPublicationDate() != null
+                        && (oldestCallForTenderDate == null
+                            || oldestCallForTenderDate.isAfter(publication.getPublicationDate()))) {
+                        oldestCallForTenderDate = publication.getPublicationDate();
                 }
             }
 
-            if (callForTenderDate != null) {
+            if (oldestCallForTenderDate == null) {
+                return insufficient();
+            }
 
-                Long advertisementPeriodLength = ChronoUnit.DAYS.between(
-                        callForTenderDate, LocalDate.from(tender.getBidDeadline()));
-                if (checkAdvertisementPeriod(tender.getCountry(), advertisementPeriodLength)) {
-                    // fill in metadata and return indicator
-                    HashMap<String, Object> metaData = new HashMap<String, Object>();
-                    metaData.put("advertisementPeriodLength", advertisementPeriodLength);
-                    metaData.put("callForTenderDate", callForTenderDate);
-                    metaData.put("bidDeadline", tender.getBidDeadline());
-                    indicator.setMetaData(metaData);
-
-                    return indicator;
-                }
+            Long advertisementPeriodLength = ChronoUnit.DAYS.between(
+                    oldestCallForTenderDate, LocalDate.from(tender.getBidDeadline()));
+            HashMap<String, Object> metaData = new HashMap<String, Object>();
+            metaData.put("advertisementPeriodLength", advertisementPeriodLength);
+            metaData.put("callForTenderDate", oldestCallForTenderDate);
+            metaData.put("bidDeadline", tender.getBidDeadline());
+            if (advertisementPeriodLength.compareTo(0L) < 0) {
+                // the period is negative
+                return insufficient(metaData);
+            } else {
+                    return checkAdvertisementPeriod(tender.getCountry(), advertisementPeriodLength)
+                            ? calculated(0d, metaData)
+                            : calculated(100d, metaData);
             }
         }
-
-        return null;
     }
 
     @Override
     public final String getType() {
-        return TenderIndicatorType.CORRUPTION_ADVERTISEMENT_PERIOD.name();
+        return TenderIndicatorType.INTEGRITY_ADVERTISEMENT_PERIOD.name();
     }
 
     /**
@@ -79,8 +74,7 @@ public class AdvertisementPeriodIndicatorPlugin implements IndicatorPlugin<Maste
      */
     private Boolean isMissingBidDeadlineRedFlag(final String countryCode) {
         // get configuration for given country
-        String value = Config.getInstance().getParam(
-                "indicator." + countryCode + ".advertisementPeriod.missing");
+        String value = Config.getInstance().getParam("indicator." + countryCode + ".advertisementPeriod.missing");
 
         return value != null && value.equals("1");
     }

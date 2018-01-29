@@ -13,6 +13,7 @@ import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
 import eu.dl.dataaccess.dto.codetables.BuyerType;
 import eu.dl.dataaccess.dto.generic.Address;
+import eu.dl.dataaccess.dto.indicator.Indicator;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 
 /**
@@ -107,6 +108,11 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      */
     private Boolean isPreferred;
 
+    /*
+     * Indicators related to this tender.
+     */
+    private List<Indicator> indicators;
+    
     /**
      * Creates empty master body.
      */
@@ -570,6 +576,23 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      */
     public final MasterBody setIsPreferred(final Boolean newIsPreferred) {
         this.isPreferred = newIsPreferred;
+        return this;
+    }
+    
+    /**
+     * @return the indicators
+     */
+    public final List<Indicator> getIndicators() {
+        return indicators;
+    }
+
+    /**
+     * @param indicators the indicators to set
+     * 
+     * @return the master tender
+     */
+    public final MasterBody setIndicators(final List<Indicator> indicators) {
+        this.indicators = indicators;
         return this;
     }
 }

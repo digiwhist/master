@@ -5,9 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import eu.dl.dataaccess.dao.IndicatorDAO;
 import eu.dl.dataaccess.dao.MasterBodyDAO;
-import eu.dl.dataaccess.dto.indicator.EntitySpecificIndicator;
 import eu.dl.dataaccess.dto.master.MasterBid;
 import eu.dl.dataaccess.dto.master.MasterBody;
 import eu.dl.dataaccess.dto.master.MasterTender;
@@ -21,8 +19,6 @@ import eu.dl.dataaccess.dto.master.MasterTenderLot;
 public class PopulateUtils {
 
     private MasterBodyDAO<MasterBody> masterBodyDao;
-    
-    private IndicatorDAO indicatorDao;
 
     /**
      * Initialisation.
@@ -30,12 +26,9 @@ public class PopulateUtils {
      * @param masterBodyDAO
      *            master body dao
      *            
-     * @param indicatorDao
-     *            indicator dao
      */
-    public PopulateUtils(final MasterBodyDAO<MasterBody> masterBodyDAO, final IndicatorDAO indicatorDao) {
+    public PopulateUtils(final MasterBodyDAO<MasterBody> masterBodyDAO) {
         this.masterBodyDao = masterBodyDAO;
-        this.indicatorDao = indicatorDao;
     }
 
     /**
@@ -43,13 +36,12 @@ public class PopulateUtils {
      * 
      * @param tenders
      *            list of tenders
-     * @return tenders with master bodies
      */
-    public final List<MasterTender> populateBodies(final List<MasterTender> tenders) {
+    public final void populateBodies(final List<MasterTender> tenders) {
         HashMap<String, MasterBody> bodies = new HashMap<String, MasterBody>(); 
         
         // get all bodies from tenders first
-        for (MasterTender tender : tenders) {            
+        for (MasterTender tender : tenders) {
             addBodies(bodies, tender.getAdministrators());
             addBodies(bodies, tender.getApproachedBidders());
             addBodies(bodies, tender.getCandidates());
@@ -104,8 +96,77 @@ public class PopulateUtils {
                 tender.setLots(lots);
             }
         }
+    }
 
-        return tenders;
+    /**
+     * Depopulates the master tender, so the bodies will have just group ID.
+     *
+     * @param tenders
+     *            list of tenders
+     */
+    public final void depopulateBodies(final List<MasterTender> tenders) {
+        for (MasterTender tender : tenders) {
+            tender.setAdministrators(unsetAllExceptGroupIdInBodies(tender.getAdministrators()));
+            tender.setApproachedBidders(unsetAllExceptGroupIdInBodies(tender.getApproachedBidders()));
+            tender.setCandidates(unsetAllExceptGroupIdInBodies(tender.getCandidates()));
+            tender.setSupervisors(unsetAllExceptGroupIdInBodies(tender.getSupervisors()));
+            tender.setBuyers(unsetAllExceptGroupIdInBodies(tender.getBuyers()));
+
+            tender.setOnBehalfOf(unsetAllExceptGroupIdInBodies(tender.getOnBehalfOf()));
+            tender.setBidsRecipient(unsetAllExceptGroupIdInBody(tender.getBidsRecipient()));
+            tender.setFurtherInformationProvider(unsetAllExceptGroupIdInBody(tender.getFurtherInformationProvider()));
+            tender.setSpecificationsCreator(unsetAllExceptGroupIdInBody(tender.getSpecificationsCreator()));
+            tender.setSpecificationsProvider(unsetAllExceptGroupIdInBody(tender.getSpecificationsProvider()));
+
+            List<MasterTenderLot> lots = tender.getLots();
+            if (lots != null) {
+                for (MasterTenderLot lot : lots) {
+                    List<MasterBid> bids = lot.getBids();
+                    if (bids != null) {
+                        for (MasterBid bid : bids) {
+                            bid.setBidders(unsetAllExceptGroupIdInBodies(bid.getBidders()));
+                        }
+                    }
+                    lot.setBids(bids);
+                }
+                tender.setLots(lots);
+            }
+        }
+    }
+
+    /**
+     * Depopulates the master bodies, so the bodies will have just group ID.
+     *
+     * @param bodies
+     *            list of bodies
+     *
+     * @return depopulated master bodies or null when there are no bodies
+     */
+    private List<MasterBody> unsetAllExceptGroupIdInBodies(final List<MasterBody> bodies) {
+        if (bodies == null || bodies.isEmpty()) {
+            return null;
+        }
+
+        List<MasterBody> result = new ArrayList<>();
+        for (MasterBody body : bodies) {
+            result.add(unsetAllExceptGroupIdInBody(body));
+        }
+        return result;
+    }
+
+    /**
+     * Depopulates the master body, so the body will have just group ID.
+     *
+     * @param body
+     *            body
+     *
+     * @return depopulated master body or null when there is no body
+     */
+    private MasterBody unsetAllExceptGroupIdInBody(final MasterBody body) {
+        return body == null
+                ? null
+                : new MasterBody()
+                .setGroupId(body.getGroupId());
     }
 
     /**
@@ -168,43 +229,6 @@ public class PopulateUtils {
         }
         
         return result;
-    }
-    
-    /**
-     * Populates the master tender with all possible master bodies.
-     * 
-     * @param tenders
-     *            list of tenders
-     * @return tenders with master bodies
-     */
-    public final List<MasterTender> populateIndicators(final List<MasterTender> tenders) {
-        List<String> tenderIds = tenders.stream().map(MasterTender::getId).collect(Collectors.toList());
-        List<EntitySpecificIndicator> indicators = indicatorDao.getByEntityIds(tenderIds);
-        
-        if (indicators == null || indicators.isEmpty()) {
-            return tenders;
-        }
-        
-        HashMap<String, List<EntitySpecificIndicator>> indicatorStorage = 
-                new HashMap<String, List<EntitySpecificIndicator>>(); 
-        
-        for (EntitySpecificIndicator indicator: indicators) {
-            if (indicatorStorage.containsKey(indicator.getRelatedEntityId())) {
-                indicatorStorage.get(indicator.getRelatedEntityId()).add(indicator);
-            } else {
-                List<EntitySpecificIndicator> list  = new ArrayList<EntitySpecificIndicator>();
-                list.add(indicator);
-                indicatorStorage.put(indicator.getRelatedEntityId(), list);
-            }
-        }
-        
-        for (MasterTender tender : tenders) {
-            if (indicators != null && !indicators.isEmpty()) {
-                tender.setIndicators(indicatorStorage.get(tender.getId()));
-            }
-        }
-
-        return tenders;
     }
 
     /**

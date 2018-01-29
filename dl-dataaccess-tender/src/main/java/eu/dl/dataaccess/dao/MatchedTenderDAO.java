@@ -3,7 +3,9 @@ package eu.dl.dataaccess.dao;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
 
 import java.net.URL;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 /**
  * DAO for matched body.
@@ -101,4 +103,15 @@ public interface MatchedTenderDAO<T extends MatchedTender> extends MatchedDAO<T>
      * @return set of objects with only one attribute id and one attribute group ID having set.
      */
     List<T> getForResend(String name, String version);
+
+    /**
+     * Returns list of tenders that have non-empty intersection with the given list of tender publications source ids
+     * and publication dates.
+     *
+     * @param sourceIdsAndDates
+     *         map of clean tender publications source ids and publication dates
+     *
+     * @return list of tenders
+     */
+    List<T> getByPublicationSourceIdsAndPublicationDates(Map<String, LocalDate> sourceIdsAndDates);
 }

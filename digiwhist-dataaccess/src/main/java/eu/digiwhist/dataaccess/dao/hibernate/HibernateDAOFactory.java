@@ -1,5 +1,9 @@
 package eu.digiwhist.dataaccess.dao.hibernate;
 
+import java.util.List;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import eu.digiwhist.dataaccess.dao.CleanBudgetItemDAO;
 import eu.digiwhist.dataaccess.dao.DAOFactory;
 import eu.digiwhist.dataaccess.dao.ParsedBudgetItemDAO;
@@ -11,7 +15,6 @@ import eu.digiwhist.dataaccess.dao.RawPublicOfficialDAO;
 import eu.dl.dataaccess.dao.CleanTenderDAO;
 import eu.dl.dataaccess.dao.CrawlerAuditDAO;
 import eu.dl.dataaccess.dao.EtalonBodyDAO;
-import eu.dl.dataaccess.dao.IndicatorDAO;
 import eu.dl.dataaccess.dao.ManualMatchDAO;
 import eu.dl.dataaccess.dao.MasterBodyDAO;
 import eu.dl.dataaccess.dao.MasterTenderDAO;
@@ -24,9 +27,6 @@ import eu.dl.dataaccess.dao.hibernate.HibernateCrawlerAuditDAO;
 import eu.dl.dataaccess.dao.hibernate.HibernateRawDataDAO;
 import eu.dl.dataaccess.dao.hibernate.HibernateTransactionUtils;
 import eu.dl.dataaccess.dto.matched.ManualMatch;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.List;
 
 /**
  * DAO factory implementation for Hibernate data sources.
@@ -143,10 +143,5 @@ public final class HibernateDAOFactory extends DAOFactory {
     @Override
     public EtalonBodyDAO getBVDEtalonBodyDAO() {
         return HibernateBVDEtalonBodyDAO.getInstance();
-    }
-
-    @Override
-    public IndicatorDAO getIndicatorDAO(final String workerName, final String workerVersion) {
-        throw new UnsupportedOperationException("Operation not supported");
     }
 }

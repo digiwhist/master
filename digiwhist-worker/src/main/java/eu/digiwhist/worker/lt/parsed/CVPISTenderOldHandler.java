@@ -36,10 +36,11 @@ public final class CVPISTenderOldHandler {
      *
      * @param document document to be parsed
      * @param url url
-     *
+     * @param publicationDate
+     *      date of publishing of the tender
      * @return parsed tender
      */
-    public static ParsedTender parse(final Element document, final String url) {
+    public static ParsedTender parse(final Element document, final String url, final String publicationDate) {
         ParsedTender parsedTender = new ParsedTender()
                 .setBuyerAssignedId(parseBuyerAssignedId(document))
                 .addBuyer(new ParsedBody()
@@ -132,6 +133,7 @@ public final class CVPISTenderOldHandler {
                                 "Šio skelbimo išsiuntimo dat",
                                 "o skelbimo i�siuntimo data"
                         }, document))
+                        .setPublicationDate(publicationDate)
                 )
                 .setFinalPrice(parseFinalPrice(document))
                 .addLot(parseLot(document))

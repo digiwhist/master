@@ -20,7 +20,7 @@ public interface IndicatorPlugin<T> {
      * 
      * @return calculated indicator or null if none
      */
-    Indicator evaulate(T item);
+    Indicator evaluate(T item);
 
     /**
      * Indicator type calculated by this plugin.

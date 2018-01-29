@@ -61,4 +61,12 @@ public final class CleanDateTest {
         assertNull(DateUtils.cleanDate("2012-03-32", formatters.get(0)));
     }
 
+    /**
+     * Nonsensical values test.
+     */
+    @Test
+    public void nonsensicalValuesTest() {
+        assertNull(DateUtils.cleanDate("1999-12-31", formatters.get(0)));
+        assertNull(DateUtils.cleanDate("2025-01-02", formatters.get(0)));
+    }
 }

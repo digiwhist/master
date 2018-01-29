@@ -73,10 +73,10 @@ public final class PCETenderXmlContractAwardHandler {
                                         .setMaxNetAmount(selectText("cbc|HigherTenderAmount", lot)))
                                 .addBidder(new ParsedBody()
                                         .addBodyId(new BodyIdentifier()
-                                                .setId(selectText("cbc|ID", lot))
+                                                .setId(selectText("cac|WinningParty cbc|ID", lot))
                                                 .setType(BodyIdentifier.Type.TAX_ID)
                                                 .setScope(BodyIdentifier.Scope.ES))
-                                        .setName(selectText("cbc|Name", lot)))
+                                        .setName(selectText("cac|WinningParty cbc|Name", lot)))
                                 .setIsWinning(String.valueOf(true)))
                         .setLotNumber(selectText("cbc|ProcurementProjectLotID", lot))
                         .setContractSignatureDate(selectText("cbc|IssueDate", lot)));

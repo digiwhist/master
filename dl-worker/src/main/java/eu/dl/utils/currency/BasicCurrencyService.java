@@ -1,5 +1,16 @@
 package eu.dl.utils.currency;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import eu.dl.core.UnrecoverableException;
+import eu.dl.dataaccess.dao.ExchangeRatesDAO;
+import eu.dl.dataaccess.dao.jdbc.JdbcExhangeRatesDAO;
+import eu.dl.dataaccess.dto.ExchangeRates;
+import eu.dl.worker.utils.ThreadUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.math.BigDecimal;
@@ -14,18 +25,6 @@ import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
-import eu.dl.core.UnrecoverableException;
-import eu.dl.dataaccess.dao.ExchangeRatesDAO;
-import eu.dl.dataaccess.dao.jdbc.JdbcExhangeRatesDAO;
-import eu.dl.dataaccess.dto.ExchangeRates;
-
 /**
  * Provides functionality related currency and its conversions.
  *
@@ -38,7 +37,7 @@ public class BasicCurrencyService implements CurrencyService {
     
     private Map<LocalDate, ExchangeRates> cache;
     
-    private static final long RETENTION_PERIOD = 30;
+    private static final long RETENTION_PERIOD = 5;
     
     /**
      * Creates currency service.
@@ -147,7 +146,7 @@ public class BasicCurrencyService implements CurrencyService {
                 logger.debug("Exchange rates for {} not found in db.", date);
                 exchangeRates = getExchangeRatesFromRemote(date);
                 if (exchangeRates != null) {
-                    dao.save(exchangeRates);
+                    dao.save(exchangeRates.setDate(date));
                     logger.debug("Exchange rates retrieved from API, storing to db with id {}.", exchangeRates.getId());
                 }
                 cache.put(date, exchangeRates);
@@ -164,6 +163,7 @@ public class BasicCurrencyService implements CurrencyService {
      */
     private ExchangeRates getExchangeRatesFromRemote(final LocalDate date) {
         try {
+            ThreadUtils.humanize(2000);
             logger.debug("Querying exchange rates API for {}", date);
             URL url = new URL("http://api.fixer.io/" + date.format(DateTimeFormatter.ISO_LOCAL_DATE));
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -206,5 +206,11 @@ public class BasicCurrencyService implements CurrencyService {
         } catch (Exception e) {
             throw new UnrecoverableException("Unable to retrieve exchange rates for " + date, e);
         }
+    }
+
+    @Override
+    public final void updateExchangeRates(final LocalDate date, final ExchangeRates exchangeRates) {
+        cache.put(date, exchangeRates);
+        dao.save(exchangeRates);
     }
 }

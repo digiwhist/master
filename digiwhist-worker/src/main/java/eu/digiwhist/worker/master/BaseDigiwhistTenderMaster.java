@@ -5,9 +5,9 @@ import java.util.Arrays;
 import eu.digiwhist.dataaccess.dao.DAOFactory;
 import eu.digiwhist.worker.master.plugin.DigiwhistDocumentPlugin;
 import eu.digiwhist.worker.master.plugin.DigiwhistTenderLotPlugin;
-import eu.dl.dataaccess.dao.IndicatorDAO;
 import eu.dl.dataaccess.dao.MasterDAO;
 import eu.dl.dataaccess.dao.MatchedDAO;
+import eu.dl.dataaccess.dao.MatchedTenderDAO;
 import eu.dl.dataaccess.dao.TransactionUtils;
 import eu.dl.dataaccess.dto.master.MasterTender;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
@@ -19,6 +19,7 @@ import eu.dl.worker.indicator.plugin.DecisionPeriodIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.ElectronicAuctionIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.EnglishLanguageIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.FrameworkAgreementIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.NoticeAndAwardDiscrepanciesIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.ProcedureTypeIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.SingleBidIndicatorPlugin;
 import eu.dl.worker.master.BaseTenderMaster;
@@ -54,11 +55,6 @@ public abstract class BaseDigiwhistTenderMaster extends BaseTenderMaster<Matched
     @Override
     protected final TransactionUtils getTransactionUtils() {
         return DAOFactory.getDAOFactory().getTransactionUtils();
-    }
-
-    @Override
-    protected final IndicatorDAO getIndicatorDAO() {
-        return DAOFactory.getDAOFactory().getIndicatorDAO(getName(), getVersion());
     }
 
     @SuppressWarnings("unchecked")
@@ -156,5 +152,9 @@ public abstract class BaseDigiwhistTenderMaster extends BaseTenderMaster<Matched
                 new ProcedureTypeIndicatorPlugin();
         indicatorPluginRegistry.registerPlugin(
                 procedureTypePlugin.getType(), procedureTypePlugin);
+
+        NoticeAndAwardDiscrepanciesIndicatorPlugin noticeAndAwardDiscPlugin =
+            new NoticeAndAwardDiscrepanciesIndicatorPlugin((MatchedTenderDAO) getMatchedDAO());
+        indicatorPluginRegistry.registerPlugin(noticeAndAwardDiscPlugin.getType(), noticeAndAwardDiscPlugin);
     }
 }

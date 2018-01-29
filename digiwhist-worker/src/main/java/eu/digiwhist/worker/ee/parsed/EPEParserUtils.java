@@ -2,7 +2,6 @@ package eu.digiwhist.worker.ee.parsed;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -28,6 +27,12 @@ import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.utils.StringUtils;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.BiFunction;
+import java.util.stream.Stream;
 
 /**
  * Class provides useful functions for EPE parsing.
@@ -38,6 +43,23 @@ public final class EPEParserUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(EPEParserUtils.class);
 
+    private static final String IS_CANCELLED_TITLE = "Riigihanke hankemenetluse lõppemise aluseks on:";
+
+    private static final List<String> CANCELLATION_REASONS = Arrays.asList(new String[] {
+        "hankelepingu või raamlepingu sõlmimine",
+        "hankemenetluse kehtetuks tunnistamine Rahandusministeeriumii või hankija omal otsusel",
+        "hankemenetluse kehtetuks tunnistamine Rahandusministeeriumi või hankija omal otsusel",
+        "kõikide pakkujate või taotlejate hankemenetlusest kõrvaldamine või kvalifitseerimata jätmine",
+        "kõikide pakkumuste jõusoleku tähtaja lõppemine, sest ükski pakkuja ei olnud nõus jõusoleku tähtaega pikendama",
+        "kõikide pakkumuste tagasilükkamine põhjusel, et ühtegi pakkumust ei tunnistatud vastavaks",
+        "kõikide pakkumuste tagasilükkamisega RHS §-s 49 sätestatud alustel",
+        "pakkumuste või hankemenetluses osalemise taotluste mitteesitamine"
+    });
+
+    private static final String OTHER_CANCELLATION_REASON = "Põhjused, miks hankija otsustas tunnistada hankemenetluse"
+        + " kehtetuks enne hankelepinguvõi raamlepingusõlmimist või dünaamilise hankesüsteemi loomist või on kõik"
+        + " pakkumused tagasi lükata";
+
     /**
      * Supress default constructor for noninstantiability.
      */
@@ -47,8 +69,9 @@ public final class EPEParserUtils {
 
     /**
      * In the given {@code context} attempts to find an tr element that includes the {@code label}. If such element
-     * exists, applies the {@code regex} and returns value. Method assumes that regex includes group named "value"
-     * ({@code (?<value>...)} - {@link Pattern}).
+     * exists, removes label string from text content of the found element, applies {@code regex} on a trimmed result
+     * string, and returns value. Method assumes that regex includes group named "value" ({@code (?<value>...)} -
+     * {@link Pattern}).
      *
      * @param label
      *      wanted label
@@ -63,7 +86,8 @@ public final class EPEParserUtils {
         if (node == null) {
             return null;
         }
-        Matcher m = Pattern.compile(regex).matcher(node.text());
+        // remove label from string that includes also wanted value, then apply regex
+        Matcher m = Pattern.compile(regex).matcher(node.text().replaceAll(label, "").trim());
         return m.find() ? m.group("value") : null;
     }
 
@@ -86,13 +110,15 @@ public final class EPEParserUtils {
         if (selectionMethod.equals("Madalaim hind")) {
             criteria.add(new ParsedAwardCriterion().setName(selectionMethod));
         } else {
-            Element node = context.select("tr:matches(" + label + ") + tr + tr > td:eq(1)").first();
+            Element node = context.select("tr:matches(" + label + ") ~ tr > td:containsOwn(Kirjeldus:)").first();
             if (node != null) {
                 // data spliterator for easier matching
                 String data = node.html().replace("<br>", "~");
                 Matcher m = Pattern.compile("(Kirjeldus: (?<name>[^~]+)~ Osakaal: (?<weight>[^~]+))").matcher(data);
                 while (m.find()) {
-                    criteria.add(new ParsedAwardCriterion().setName(m.group("name")).setWeight(m.group("weight")));
+                    criteria.add(new ParsedAwardCriterion()
+                        .setName(m.group("name")).setWeight(m.group("weight"))
+                        .setIsPriceRelated(Objects.equals(m.group("name"), "Maksumus") ? String.valueOf(true) : null));
                 }
             }
         }
@@ -185,22 +211,28 @@ public final class EPEParserUtils {
      * {@code parser} on each element.
      *
      * @param parser
-     *      lot parser
+     *      lot parser, accepts two parameters, parsed row and metaData
      * @param firstRow
      *      row where the lots data starts     
      * @param lastRow
      *      row where lots parsing ends, in case it is null parsing ends at the end of table
+     * @param metaData
+     *      meta data
      * @return non-empty list of lots or null
      */
-    public static List<ParsedTenderLot> parseLots(final Function<Element, ParsedTenderLot> parser,
-        final Element firstRow, final Element lastRow) {
+    public static List<ParsedTenderLot> parseLots(
+        final BiFunction<Element, Map<String, Object>, List<ParsedTenderLot>> parser,
+        final Element firstRow, final Element lastRow, final Map<String, Object> metaData) {
         
-        final List<Element> lotNodes = parseRepeatedParts(firstRow, lastRow, "(?i)(OSA|LEPING) d+");
+        final List<Element> lotNodes = parseRepeatedParts(firstRow, lastRow, "(?i)(OSA|LEPING) \\d+");
         if (lotNodes == null) {
             return null;
         }
-        
-        return lotNodes.stream().map(parser).collect(Collectors.toList());
+
+        return lotNodes.stream().flatMap(n -> {
+            List<ParsedTenderLot> lots = parser.apply(n, metaData);
+            return lots == null ? Stream.empty() : lots.stream();
+        }).collect(Collectors.toList());
     }
 
     /**
@@ -265,7 +297,53 @@ public final class EPEParserUtils {
      * @return "true" only and only if the input string ends with "jah" (ignoring case), otherwise "false"
      */
     public static Boolean parseBoolean(final String input) {
-        return (input != null && input.equalsIgnoreCase("jah") ? Boolean.TRUE : Boolean.FALSE);
+        return (input != null && input.matches("(?i).*jah$") ? Boolean.TRUE : Boolean.FALSE);
+    }
+
+    /**
+     * @param input
+     *      string to be parsed
+     * @return parsed body or null
+     */
+    public static ParsedBody parseBody(final String input) {
+        if (input == null) {
+            return null;
+        }
+
+        Matcher m = Pattern.compile(
+            "(?<name>[^,]+)(?:, (?<id>\\d+))?(?:, (?<street>[^,~]+))?(?:, (?<city>[^,~0-9]+))?(?:, [^,\\d]+)*"
+            + "(?:, (?<zip>[^ \\d]*\\d+[^ \\d]*))? (?<country>[^~]+)(?:~\\((?<iso>[A-Z]{2})\\))?"
+            + "(~Kontaktisik: (?<contact>[^~]+))?"
+            + "(~Tel\\.: (?<phone>[^~]+))?"
+            + "(?:~Faks: [^~]+)?"
+            + "(~E\\-post: (?<email>[^~]+))?"
+            + "(~URL: (?<url>[^~]+))?"
+            + "(?:~Hankijaprofiili aadress: [^~]+)?")
+            // append data separator '~' for easier matching
+            .matcher(input.replaceAll(" (\\([A-Z]{2}\\)|((Kontaktisik|Tel\\.|Faks|E\\-post|URL|Hankijaprofiili"
+                + " aadress):))", "~$1"));
+
+        if (!m.find()) {
+            logger.error("Unable to parse body because of unexpected data structure");
+            throw new UnrecoverableException("Unable to parse body");
+        }
+
+        ParsedBody body = new ParsedBody().setName(m.group("name"))
+            .setAddress(new ParsedAddress().setCountry(m.group("iso"))
+                .setCity(m.group("city")).setStreet(m.group("street")).setPostcode(m.group("zip"))
+                .setUrl(m.group("url")))
+            .setContactName(m.group("contact"))
+            .setPhone(m.group("phone"))
+            .setEmail(m.group("email"));
+
+        if (m.group("id") != null) {
+            body.addBodyId(
+                new BodyIdentifier().setId(m.group("id"))
+                    .setType(BodyIdentifier.Type.TRADE_REGISTER)
+                    .setScope(BodyIdentifier.Scope.EE));
+        }
+
+        return body;
     }
 
     /**
@@ -276,46 +354,7 @@ public final class EPEParserUtils {
      * @return parsed body or null
      */
     public static ParsedBody parseBody(final String label, final Element context) {
-        String data = tableValueByLabel(label, context);
-        if (data == null) {
-            return null;
-        }
-
-        Matcher m = Pattern.compile(
-            "(?<name>[^,]+)(?:, (?<id>\\d+))?(?:, (?<street>[^,]+))?(?:, (?<city>[^,]+))?(?:, [^,\\d]+)*"
-            + "(?:, (?<zip>\\d+))? (?<country>[^~]+)(?:~\\((?<iso>[A-Z]{2})\\))?"
-            + "(~Kontaktisik: (?<contact>[^~]+))?"
-            + "(~Tel\\.: (?<phone>[^~]+))?"
-            + "(?:~Faks: [^~]+)?"
-            + "(~E\\-post: (?<email>[^~]+))?"
-            + "(~URL: (?<url>[^~]+))?"
-            + "(?:~Hankijaprofiili aadress: [^~]+)?")
-            // append data separator '~' for easier matching
-            .matcher(data.replaceAll(" (\\([A-Z]{2}\\)|((Kontaktisik|Tel\\.|Faks|E\\-post|URL|Hankijaprofiili"
-                + " aadress):))", "~$1"));
-
-        if (!m.find()) {
-            logger.error("Unable to parse body because of unexpected data structure");
-            throw new UnrecoverableException("Unable to parse body");
-        }
-
-        ParsedBody body = new ParsedBody().setName(m.group("name"))            
-            .setAddress(new ParsedAddress().setCountry(m.group("iso"))
-                .setCity(m.group("city")).setStreet(m.group("street")).setPostcode(m.group("zip"))
-                .setUrl(m.group("url")))
-            .setContactName(m.group("contact"))
-            .setPhone(m.group("phone"))
-            .setEmail(m.group("email"));
-
-        if (m.group("id") != null) {
-            body.addBodyId(
-                // BodyIdentifier.Type.TRADE_REGISTER ???
-                new BodyIdentifier().setId(m.group("id"))
-                    .setType(BodyIdentifier.Type.TRADE_REGISTER)
-                    .setScope(BodyIdentifier.Scope.EE));
-        }
-        
-        return body;
+        return parseBody(tableValueByLabel(label, context));
     }
 
     /**
@@ -323,12 +362,17 @@ public final class EPEParserUtils {
      *
      * @param context
      *      context
-     * @return "BELOW_THE_THRESHOLD" or null
+     * @return "BELOW_THE_THRESHOLD", "ABOVE_THE_THRESHOLD" or null
      */
     public static String parseTenderSize(final Element context) {
-        String aboveTheThreshold = EPEParserUtils.parseBoolean("Kas riigihanke eeldatav maksumus on võrdne"
-            + " rahvusvahelise piirmääraga või ületab seda", context);
-        return aboveTheThreshold.equals(Boolean.FALSE.toString()) ? TenderSize.BELOW_THE_THRESHOLD.name() : null;
+        String aboveTheThreshold = regexValueByLabel("Kas riigihanke eeldatav maksumus on võrdne"
+            + " rahvusvahelise piirmääraga või ületab seda", "(?i)(?<value>.+)", context);
+        if (aboveTheThreshold == null) {
+            return null;
+        }
+        
+        return (parseBoolean(aboveTheThreshold) ? TenderSize.ABOVE_THE_THRESHOLD : TenderSize.BELOW_THE_THRESHOLD)
+            .name();
     }
 
     /**
@@ -350,9 +394,9 @@ public final class EPEParserUtils {
      */
     public static ParsedAddress parseAddressOfImplementation(final Element context) {
         String rawAddress = EPEParserUtils.regexValueByLabel(
-            "Ehitustööde teostamise koht|Asjade tarnekoht|Teenuse osutamise koht", ": (?<value>.+)", context);
+            "Ehitustööde teostamise koht|Asjade tarnekoht|Teenuse osutamise koht:", "(?<value>.+)", context);
         
-        String nuts = EPEParserUtils.regexValueByLabel("NUTS kood", ": (?<value>.+)", context);
+        String nuts = EPEParserUtils.regexValueByLabel("NUTS kood:", "(?<value>.+)", context);
 
         if (rawAddress == null && nuts == null) {
             return null;
@@ -375,17 +419,18 @@ public final class EPEParserUtils {
             return null;
         }
         // find node with currency (it is always listed) unlike the price
-        while (node != null && node.siblingIndex() <= node.lastElementSibling().siblingIndex()) {
+        while (node != null && node.child(0).text().isEmpty()) {
             if (node.text().contains("Rahaühik")) {
                 // in case the price is listed is placed in the node that precedes the currency node and its label
                 // includes string 'maksumus' (case insesitively)
                 Element priceNode = node.previousElementSibling();
-                if (priceNode != null && priceNode.text().matches("(?i).*maksumus.*")) {
+                if (priceNode != null && priceNode.child(0).text().isEmpty()
+                    && priceNode.text().matches("(?i).*maksumus.*")) {
+                    
                     return new ParsedPrice()
                         .setNetAmount(priceNode.text().replaceAll(".+: ([\\d,]+)", "$1"))
                         .setCurrency(parseCurrency(node.text()));
                 }
-                break;
             }
 
             node = node.nextElementSibling();
@@ -449,19 +494,32 @@ public final class EPEParserUtils {
      * @return EU funding or null
      */
     public static ParsedFunding parseEUFunding(final String label, final Element context) {
-        Element node = tableValueNodeByLabel(label, context);
-        if (node != null) {
-            // if true, the following row includes program name
-            if (parseBoolean(node.text())) {
-                return new ParsedFunding()
-                    .setIsEuFund(Boolean.TRUE.toString())
-                    .setProgramme(node.nextElementSibling().text());
-            } else {
-                return new ParsedFunding().setIsEuFund(Boolean.FALSE.toString());
-            }
-        }
+        return parseEUFunding(tableValueNodeByLabel(label, context));
+    }
 
-        return null;
+    /**
+     * Parses EU funding if exists.
+     *
+     * @param node
+     *      node that includes EU funding data
+     * @return EU funding or null
+     */
+    public static ParsedFunding parseEUFunding(final Element node) {
+        if (node == null) {
+            return null;
+        }
+        // if true, the following row includes program name
+        if (parseBoolean(node.text())) {
+            Element projectNameNode = node.parent().nextElementSibling();
+            String projektNameTitle = "Viide projekti(de)le ja/või programmi(de)le:";
+
+            return new ParsedFunding()
+                .setIsEuFund(Boolean.TRUE.toString())
+                .setProgramme(projectNameNode != null && projectNameNode.text().startsWith(projektNameTitle)
+                    ? projectNameNode.text().replace(projektNameTitle, "").trim() : null);
+        } else {
+            return new ParsedFunding().setIsEuFund(Boolean.FALSE.toString());
+        }
     }
 
     /**
@@ -476,7 +534,7 @@ public final class EPEParserUtils {
      */
     public static Element parseFormPart(final String label, final Element context) {
         String lotHtml = "";
-        Element part = Jsoup.parse("<table></tbale>").select("table").first();
+        Element part = Jsoup.parse("<table></table>").select("table").first();
 
         // the first row of a form part is the row that inmediately follows after the row with the given label
         Element row = JsoupUtils.selectFirst("tr:matches(" + label + ") + tr", context);
@@ -498,10 +556,17 @@ public final class EPEParserUtils {
     /**
      * @param doc
      *      parsed document
+     * @param publicationDate
+     *      publication date
      * @return parsed tender with included publication and title
      */
-    public static ParsedTender parsePublicationAndTitle(final Document doc) {
+    public static ParsedTender parsePublicationAndTitle(final Document doc, final String publicationDate) {
         Element dataTable = getDataTable(doc);
+
+        String date = EPEParserUtils.regexValueByLabel("Teate avaldamise kuupäev", "(?<value>\\d.*)", dataTable);
+        if (date == null) {
+            date = publicationDate;
+        }
 
         return new ParsedTender()
             .addPublication(new ParsedPublication()
@@ -510,9 +575,8 @@ public final class EPEParserUtils {
                 .setSourceFormType(JsoupUtils.selectText("tr:eq(0)", dataTable))
                 .setSourceTenderId(EPEParserUtils.regexValueByLabel("Hanke viitenumber", "(?<value>\\d+)", dataTable))
                 .setHumanReadableUrl(JsoupUtils.selectAttribute("#GenericLink", "href", doc))
-                .setPublicationDate(EPEParserUtils.regexValueByLabel("Teate avaldamise kuupäev", "(?<value>\\d.*)",
-                        dataTable)))
-            .setTitle(EPEParserUtils.regexValueByLabel("Hanke nimetus", "nimetus (?<value>.+)", dataTable));
+                .setPublicationDate(date))
+            .setTitle(EPEParserUtils.regexValueByLabel("Hanke nimetus", "(?<value>.+)", dataTable));
     }
 
     /**
@@ -529,14 +593,37 @@ public final class EPEParserUtils {
      *
      * @param doc
      *      parsed document
+     * @param publicationDate
+     *      date of publishing of the tender
      * @return parsed tender with common fields
      */
-    public static ParsedTender parseNoticeAwardCommonData(final Document doc) {
+    public static ParsedTender parseNoticeAwardCommonData(final Document doc, final String publicationDate) {
         Element dataTable = EPEParserUtils.getDataTable(doc);
 
         String procedureType = EPEParserUtils.tableValueByLabel("^IV\\.1\\.1\\)", dataTable);
 
-        return EPEParserUtils.parsePublicationAndTitle(doc)
+        Element tenderIsCancelledNode = EPEParserUtils.tableValueNodeByLabel(IS_CANCELLED_TITLE, dataTable);
+        String tenderIsCancelled = null;
+        String tenderCancellationReason = null;
+        if (tenderIsCancelledNode != null) {
+            if (CANCELLATION_REASONS.stream().anyMatch(n -> n.equalsIgnoreCase(tenderIsCancelledNode.text()))) {
+                tenderIsCancelled = Boolean.TRUE.toString();
+
+                Element reasonNode = tenderIsCancelledNode.parent().nextElementSibling();
+                if (reasonNode != null && JsoupUtils.hasText("b", reasonNode, OTHER_CANCELLATION_REASON)) {
+                    tenderCancellationReason = reasonNode.text();
+                } else {
+                    tenderCancellationReason = tenderIsCancelledNode.text();
+                }
+            } else {                
+                logger.error("Unknown cancellation reason '{}'", tenderIsCancelledNode.text());
+                throw new UnrecoverableException("Unknown cancellation reason");
+            }
+        }
+        
+        return EPEParserUtils.parsePublicationAndTitle(doc, publicationDate)
+            .setIsWholeTenderCancelled(tenderIsCancelled)
+            .setCancellationReason(tenderCancellationReason)
             .setSize(EPEParserUtils.parseTenderSize(dataTable))
             .addBuyer(EPEParserUtils.parseBuyer(dataTable))
             .setIsOnBehalfOf(EPEParserUtils.parseBoolean("Hankija teostab hanget teiste hankijate nimel", dataTable))
@@ -545,7 +632,52 @@ public final class EPEParserUtils {
             .setNationalProcedureType(procedureType)
             .setProcedureType(procedureType)
             .setSelectionMethod(EPEParserUtils.tableValueByLabel("^IV\\.2\\.1\\)", dataTable))
-            .setAwardCriteria(EPEParserUtils.parseAwardCriteria("^IV\\.2\\.1\\)", dataTable))
+            .setAwardCriteria(parseTenderRelatedCriteria(dataTable))
             .setIsElectronicAuction(EPEParserUtils.parseBoolean("^IV\\.2\\.2\\)", dataTable));
+    }
+
+    /**
+     * @param context
+     *      context that includes lot related award criteria
+     * @return non-empty map of lot related criteria or null
+     */
+    public static Map<String, List<ParsedAwardCriterion>> parseLotsRelatedCriteria(final Element context) {
+        List<ParsedAwardCriterion> criteria = EPEParserUtils.parseAwardCriteria("^IV\\.2\\.1\\)", context);
+        final Map<String, List<ParsedAwardCriterion>> lotsCriteria = new HashMap<>();
+        // some criteria can be related to the lot. The name of such criterion starts with 'Osa <lot_number>.' string.
+        if (criteria != null) {
+            criteria.forEach(n -> {
+                Matcher m = Pattern.compile("Osa (?<number>[0-9]+)\\. (?<name>.+)").matcher(n.getName());
+                if (m.find()) {
+                    n.setName(n.getName().replaceAll("^Osa [0-9]+\\.", ""));
+                    if (!lotsCriteria.containsKey(m.group("number"))) {
+                        lotsCriteria.put(m.group("number"), new ArrayList<>());
+                    }
+                    lotsCriteria.get(m.group("number")).add(n.setName(m.group("name")));
+                }
+            });
+        }
+
+        return lotsCriteria.isEmpty() ? null : lotsCriteria;
+    }
+
+    /**
+     * @param context
+     *      context that includes tender related criteria
+     * @return non-empty list of tender related criteria or null
+     */
+    public static List<ParsedAwardCriterion> parseTenderRelatedCriteria(final Element context) {
+        List<ParsedAwardCriterion> criteria = EPEParserUtils.parseAwardCriteria("^IV\\.2\\.1\\)", context);
+        if (criteria == null) {
+            return null;
+        }
+
+        // some criteria can be related to the lot. The name of such criterion starts with 'Osa <lot_number>.' string.
+        // select only 'tender level' criteria (their names don't start with string mentioned above)
+        criteria = criteria.stream()
+            .filter(n -> !n.getName().matches("^Osa [0-9]+\\..*"))
+            .collect(Collectors.toList());
+
+        return criteria.isEmpty() ? null : criteria;
     }
 }

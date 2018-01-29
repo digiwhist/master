@@ -22,9 +22,13 @@ public final class StringUtils {
     private static final Logger logger = LoggerFactory.getLogger(StringUtils.class.getName());
 
     /**
+     * Minimum length of the body id.
+     */
+    private static final int BODYID_MIN_LENGTH = 3;
+    /**
      * Maximum length of the body id.
      */
-    public static final int BODYID_MAX_LENGTH = 100;
+    private static final int BODYID_MAX_LENGTH = 100;
 
     /**
      * Utility class should not have public constructor.
@@ -212,8 +216,15 @@ public final class StringUtils {
 
         logger.debug("Cleaning URL string \"{}\"", url);
 
+        URL cleanUrl;
         try {
-            return new URL(urlForCleaning);
+            cleanUrl = new URL(urlForCleaning);
+
+            // attempt to get URL host, if it's not empty returns URL (unfortunately eg. calling `new URL("https:")`
+            // doesn't throw an exception but returns new URL instance), otherwise continue in cleaning process.
+            if (!cleanUrl.getHost().isEmpty()) {
+                return cleanUrl;
+            }
         } catch (MalformedURLException e) {
             // something in the URL is wrong. We will try to repair it
         }
@@ -236,10 +247,18 @@ public final class StringUtils {
             String urlForCleaningByRegexp = urlForCleaning;
             try {
                 urlForCleaningByRegexp = urlForCleaningByRegexp.replaceFirst(entry.getKey(), entry.getValue());
-                return new URL(urlForCleaningByRegexp);
+                cleanUrl = new URL(urlForCleaningByRegexp);
+                
+                // attempt to get URL host, if it's not empty returns URL (unfortunately eg. calling `new URL("https:")`
+                // doesn't throw an exception but returns new URL instance), otherwise continue in cleaning process.
+                if (!cleanUrl.getHost().isEmpty()) {
+                    return cleanUrl;
+                }
             } catch (MalformedURLException e1) {
                 if (scheme != null && e1.getMessage().contains("no protocol")) {
                     try {
+                        // on this place is not necessary to resolve empty host. For this case, the given URL has no set
+                        // the protocol.
                         return new URL(scheme.getScheme() + urlForCleaningByRegexp);
                     } catch (MalformedURLException e2) {
                         // no operation - just try another regexp
@@ -270,7 +289,8 @@ public final class StringUtils {
      * @param value
      *            value to be cleaned
      *
-     * @return cleaned value or null in case that the identifier is longer than {@link StringUtils#BODYID_MAX_LENGTH}
+     * @return cleaned value or null in case that the identifier is shorter than {@link StringUtils#BODYID_MIN_LENGTH}
+     *          or longer than {@link StringUtils#BODYID_MAX_LENGTH}
      */
     public static String cleanBodyIdentifier(final String value) {
         String cleaned = cleanShortString(value);
@@ -280,8 +300,8 @@ public final class StringUtils {
 
         // delete all whitespaces
         cleaned = cleaned.replaceAll("\\s+", "");
-        
-        return cleaned.length() > BODYID_MAX_LENGTH ? null : cleaned;
+
+        return BODYID_MIN_LENGTH <= cleaned.length() && cleaned.length() <= BODYID_MAX_LENGTH ? cleaned : null;
     }
 
     /**

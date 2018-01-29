@@ -9,6 +9,7 @@ import java.util.List;
 
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlCheckBoxInput;
+import com.gargoylesoftware.htmlunit.html.HtmlDivision;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlOption;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
@@ -17,6 +18,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import eu.digiwhist.worker.raw.BaseDigiwhistIncrementalPagedSourceHttpCrawler;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.worker.raw.utils.CrawlerUtils;
+import java.util.HashMap;
 
 /**
  * Tender crawler for Doffin in Norway.
@@ -97,8 +99,16 @@ public final class DOFFINTenderCrawler extends BaseDigiwhistIncrementalPagedSour
         for (HtmlAnchor noticeLink : noticeLinks) {
             int lastIndexOfSlash = noticeLink.getHrefAttribute().lastIndexOf('/');
             assert lastIndexOfSlash != -1;
+
+            HtmlDivision dateDiv = ((HtmlDivision) noticeLink.getEnclosingElement("div")
+                    .getFirstByXPath("following-sibling::div/div[contains(.,'Kunngjøringsdato:')]"));
+
+            HashMap<String, Object> metaData = new HashMap<>();
+            metaData.put("publicationDate",
+                dateDiv != null ? dateDiv.asText().replaceAll("[^0-9\\-]", "") : actualDate.toString());
+
             createAndPublishMessage(String.format(NOTICE_XML_PERMALINK_PATTERN,
-                    noticeLink.getHrefAttribute().substring(lastIndexOfSlash + 1)));
+                noticeLink.getHrefAttribute().substring(lastIndexOfSlash + 1)), metaData);
         }
 
         return page;

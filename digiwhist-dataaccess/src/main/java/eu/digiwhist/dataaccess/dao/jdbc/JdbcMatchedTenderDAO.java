@@ -8,9 +8,13 @@ import eu.dl.dataaccess.dto.matched.MatchedTender;
 import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * JDBC implemenation of MatchedTenderDAO.
@@ -339,4 +343,90 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
             throw new UnrecoverableException("Unable to perform query.", e);
         }
     }
+
+    @Override
+    public final List<MatchedTender> getByPublicationSourceIdsAndPublicationDates(
+        final Map<String, LocalDate> sourceIdsAndDates) {
+
+        if (sourceIdsAndDates == null || sourceIdsAndDates.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<MatchedTender> result = new ArrayList<>();
+
+        // Number of IDs can be ten, twenty or more than one hundred.
+        // We know that big query is slow (more than 16 seconds) even if sequential scan and index scan are disabled,
+        // because PostgreSQL still wants to use the scan for jsonb. But small query takes about 20 ms.
+        // So we split query to many small queries and set execution plan (disable sequential scan and index scan) to
+        // reduce query execution time.
+
+        final int maxIdCountInOneQuery = 15;
+
+        List<Map<String, LocalDate>> queries = new ArrayList<>();
+        Map<String, LocalDate> subMap = null;
+        for (Map.Entry<String, LocalDate> n : sourceIdsAndDates.entrySet()) {
+            if (subMap == null || subMap.size() == maxIdCountInOneQuery) {
+                queries.add(new HashMap<>());
+                subMap = queries.get(queries.size() - 1);
+            }
+            
+            subMap.put(n.getKey(), n.getValue());
+        }
+        
+        final String additionalMatchersRestriction = prepareAdditionalWorkersCondition();
+
+        for (Map<String, LocalDate> query : queries) {
+            assert query.size() <= maxIdCountInOneQuery;
+
+            String restriction = query.entrySet().stream()
+                .map(n -> {
+                    return "data @> '{\"publications\":[{"
+                        + "\"sourceId\":\"" + n.getKey() + "\","
+                        + "\"publicationDate\":\"" + n.getValue() + "\"}]}'";
+                })
+                .collect(Collectors.joining(" OR "));
+            
+            try {
+                PreparedStatement statement = connection.prepareStatement(
+                        "SELECT * FROM " + getTableWithSchema() + " WHERE ((modifiedBy = ? AND modifiedByVersion = ?)"
+                                + "" + " " + additionalMatchersRestriction + ") AND (" + restriction + ")");
+
+                statement.setString(1, workerName);
+                statement.setString(2, workerVersion);
+
+                disableSeqScan();
+                disableIndexScan();
+
+                long selectStartTime = System.currentTimeMillis();
+                ResultSet rs = statement.executeQuery();
+                long selectEndTime = System.currentTimeMillis();
+                logger.info("Selection of matched tenders by publicationsSourceIdIntersection {} took {} ms.",
+                        this.getClass().getName(), selectEndTime - selectStartTime);
+                if (selectEndTime - selectStartTime > SELECT_DURATION_THRESHOLD) {
+                    logger.warn("Too long selection of matched tenders {} ms. Query {} ",
+                            selectEndTime - selectStartTime, rs.getStatement().toString());
+                }
+
+                enableSeqScan();
+                enableIndexScan();
+
+                while (rs.next()) {
+                    MatchedTender matchedTender = createFromResultSet(rs);
+                    if (!result.stream().anyMatch(t -> t.getId().equals(matchedTender.getId()))) {
+                        result.add(matchedTender);
+                    }
+                }
+
+                rs.close();
+                statement.close();
+            } catch (Exception e) {
+                logger.error("Unable to perform query, because of of {}", e);
+                throw new UnrecoverableException("Unable to perform query.", e);
+            }
+        }
+
+        return result;
+    }
+
+
 }

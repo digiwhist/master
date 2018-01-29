@@ -15,38 +15,6 @@ final class BOAMPTenderParserUtils {
     private BOAMPTenderParserUtils() {}
 
     /**
-     * Removes dots at the end of input string. The string is trimmed to remove spaces and get the dots at the end.
-     *
-     * @param string
-     *         string to remove dots
-     *
-     * @return trimmed input string without dots and spaces at the end of input string
-     */
-    static String removeDotsAtTheEnd(final String string) {
-        if (string == null) {
-            return null;
-        }
-
-        String stringToModify = string;
-
-        boolean wasStringModified;
-        // while loop is necessary, because the string can be " , à 17 heures . ."
-        do {
-            if (stringToModify.endsWith(" ")) {
-                stringToModify = stringToModify.trim();
-                wasStringModified = true;
-            } else if (stringToModify.endsWith(".")) {
-                stringToModify = stringToModify.substring(0, stringToModify.length() - 1);
-                wasStringModified = true;
-            } else {
-                wasStringModified = false;
-            }
-        } while (wasStringModified);
-
-        return stringToModify;
-    }
-
-    /**
      * Gets number at the beginning of string.
      * It can be used to get just percent value without '%' character (possible strings are "10 %", "61 %.",
      * "4 points %", "60 ", " 60%.", "60", " 33,33 %.", " 33.33 %.", ..).

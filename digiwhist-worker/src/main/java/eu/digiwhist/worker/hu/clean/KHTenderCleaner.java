@@ -2,8 +2,13 @@ package eu.digiwhist.worker.hu.clean;
 
 import eu.digiwhist.worker.clean.BaseDigiwhistTenderCleaner;
 import eu.dl.dataaccess.dto.clean.CleanTender;
+import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
+import eu.dl.dataaccess.dto.codetables.BuyerType;
 import eu.dl.dataaccess.dto.codetables.CountryCode;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
+import eu.dl.dataaccess.dto.codetables.SelectionMethod;
+import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
+import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.clean.plugin.AddressPlugin;
 import eu.dl.worker.clean.plugin.BodyPlugin;
@@ -13,10 +18,13 @@ import eu.dl.worker.clean.plugin.IntegerPlugin;
 import eu.dl.worker.clean.plugin.LotPlugin;
 import eu.dl.worker.clean.plugin.PricePlugin;
 import eu.dl.worker.clean.plugin.PublicationPlugin;
+import eu.dl.worker.clean.plugin.SelectionMethodPlugin;
+import eu.dl.worker.clean.plugin.TenderProcedureTypePlugin;
 import eu.dl.worker.clean.plugin.TenderSupplyTypePlugin;
 
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +40,8 @@ public class KHTenderCleaner extends BaseDigiwhistTenderCleaner {
 
     private static final List<DateTimeFormatter> DATE_FORMATTERS = Arrays.asList(
             DateTimeFormatter.ofPattern("uuuu.MM.dd"),
-            DateTimeFormatter.ofPattern("uuuu.MM.dd."));
+            DateTimeFormatter.ofPattern("uuuu.MM.dd."),
+            DateTimeFormatter.ofPattern("uuuu/MM/dd"));
 
     private static final List<DateTimeFormatter> DATETIME_FORMATTERS = Arrays.asList(
             DateTimeFormatter.ISO_LOCAL_DATE_TIME, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
@@ -48,12 +57,52 @@ public class KHTenderCleaner extends BaseDigiwhistTenderCleaner {
                 .registerPlugin("date", new DatePlugin<>(DATE_FORMATTERS))
                 .registerPlugin("datetime", new DateTimePlugin<>(DATETIME_FORMATTERS))
                 .registerPlugin("publications",
-                        new PublicationPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, formTypeMapping()))
-                .registerPlugin("lots", new LotPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, lotMappings))
+                        new PublicationPlugin(NUMBER_FORMAT, DATE_FORMATTERS, formTypeMapping()))
+                .registerPlugin("lots", new LotPlugin(NUMBER_FORMAT, DATE_FORMATTERS, lotMappings))
                 .registerPlugin("prices", new PricePlugin(NUMBER_FORMAT))
                 .registerPlugin("address", new AddressPlugin())
-                .registerPlugin("bodies", new BodyPlugin(null, null, countryMapping()))
-                .registerPlugin("supplyType", new TenderSupplyTypePlugin(null));
+                .registerPlugin("bodies", new BodyPlugin(buyerTypeMapping(), activityMapping(), countryMapping()))
+                .registerPlugin("procedureType",
+                        new TenderProcedureTypePlugin(procedureTypeMapping(), acceleratedProcedures()))
+                .registerPlugin("selectionMethod", new SelectionMethodPlugin(selectionMethodMapping()))
+                .registerPlugin("supplyType", new TenderSupplyTypePlugin(supplyTypeMapping()));
+    }
+
+    /**
+     * @return selection Method mapping for cleaning process
+     */
+    private Map<Enum, List<String>> selectionMethodMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+        mapping.put(SelectionMethod.MEAT, Arrays.asList("Az összességében legelőnyösebb ajánlat az alábbiak szerint"));
+        mapping.put(SelectionMethod.LOWEST_PRICE, Arrays.asList("Ár – Súlyszám:"));
+        return mapping;
+    }
+
+    /**
+     * @return buyer activity type mapping.
+     */
+    private Map<Enum, List<String>> activityMapping() {
+        Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(BuyerActivityType.OTHER, Arrays.asList(
+                "elektronikus közigazgatási informatikai és távközlési közszolgáltatás"));
+        mapping.put(BuyerActivityType.HEALTH, Arrays.asList("Egészségügy"));
+        mapping.put(BuyerActivityType.URBAN_TRANSPORT,
+                Arrays.asList("Városi vasúti, villamos-, trolibusz- és autóbusz-szolgáltatások"));
+
+
+        return mapping;
+    }
+
+    /**
+     * @return buyer type mapping
+     */
+    private Map<Enum, List<String>> buyerTypeMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(BuyerType.PUBLIC_BODY, Arrays.asList("Közjogi intézmény"));
+
+        return mapping;
     }
 
     @Override
@@ -69,7 +118,71 @@ public class KHTenderCleaner extends BaseDigiwhistTenderCleaner {
 
     @Override
     protected final ParsedTender preProcessParsedItem(final ParsedTender parsedItem) {
+        parsedItem.setIsCoveredByGpa(toBooleanString(parsedItem.getIsCoveredByGpa()));
+        parsedItem.setHasLots(toBooleanString(parsedItem.getHasLots()));
+        parsedItem.setHasOptions(toBooleanString(parsedItem.getHasOptions()));
+        parsedItem.setAreVariantsAccepted(toBooleanString(parsedItem.getAreVariantsAccepted()));
+
         return parsedItem;
+    }
+
+    /**
+     * @return supply type mapping for cleaning process
+     */
+    private static Map<Enum, List<String>> supplyTypeMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+        mapping.put(TenderSupplyType.SERVICES, Arrays.asList("Szolgáltatásmegrendelés", "Szolgáltatás megrendelés"));
+        mapping.put(TenderSupplyType.WORKS, Arrays.asList("Építési beruházás", "Építési beruházás Kivitelezés",
+                "Építési beruházás Tervezés és kivitelezés"));
+        mapping.put(TenderSupplyType.SUPPLIES, Arrays.asList("Árubeszerzés", "Árubeszerzés Adásvétel"));
+
+        return mapping;
+    }
+
+    /**
+     * @return accelerated procedures
+     */
+    private List<String> acceleratedProcedures() {
+        return new ArrayList<>(Arrays.asList("Gyorsított tárgyalásos", "Gyorsított meghívásos"));
+    }
+
+    /**
+     * @return procedure type mapping for cleaning process
+     */
+    private static Map<Enum, List<String>> procedureTypeMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+        mapping.put(TenderProcedureType.OPEN,
+                Arrays.asList("Nyílt", "Kbt. 122/A. § szerinti eljárás", "A Kbt. 113. § szerinti nyílt eljárás",
+                        "A Kbt. 115. § szerinti nyílt eljárás", "Nyílt eljárás",
+                        "A Kbt. 115. § szerinti nyílt eljárás", "A Kbt. 113. § szerinti nyílt eljárás",
+                        "Nyílt eljárás"));
+        mapping.put(TenderProcedureType.RESTRICTED,
+                Arrays.asList("A Kbt. 113. § szerinti meghívásos eljárás", "Meghívásos"));
+        mapping.put(TenderProcedureType.COMPETITIVE_DIALOG, Arrays.asList());
+        mapping.put(TenderProcedureType.NEGOTIATED, Arrays.asList("Tárgyalásos", "Felhívással induló tárgyalásos " +
+                "eljárás", "Gyorsított tárgyalásos", "Tárgyalásos eljárás"));
+        mapping.put(TenderProcedureType.NEGOTIATED_WITH_PUBLICATION, Arrays.asList("Hirdetmény közzétételével induló " +
+                "tárgyalásos", "Ajánlati/részvételi felhívás közzététele nélküli/hirdetmény nélküli tárgyalásos"));
+        mapping.put(TenderProcedureType.NEGOTIATED_WITHOUT_PUBLICATION, Arrays.asList("A Kbt. 115. § szerinti " +
+                        "hirdetmény nélküli tárgyalásos eljárás", "Hirdetmény nélküli tárgyalásos", "Eljárást " +
+                        "megindító " +
+                        "felhívás Közbeszerzési Értesítőben történt közzététele nélkül odaítélt szerződés az alább " +
+                        "felsorolt " +
+                        "esetekben A Kbt. 115. § szerinti nyílt eljárás", "Eljárást megindító felhívás Közbeszerzési " +
+                        "Értesítőben történt közzététele nélkül odaítélt szerződés az alább felsorolt esetekben A Kbt" +
+                        ". 113. §" +
+                        " szerinti nyílt eljárás", "Eljárást megindító felhívás Közbeszerzési Értesítőben történt " +
+                        "közzététele" +
+                        " nélkül odaítélt szerződés az alább felsorolt esetekben A Kbt. 115. § szerinti hirdetmény " +
+                        "nélküli " +
+                        "tárgyalásos eljárás",
+                "Ajánlati/részvételi felhívásnak az Európai Unió Hivatalos Lapjában történő közzététele nélkül " +
+                        "megvalósított beszerzés"));
+        mapping.put(TenderProcedureType.DESIGN_CONTEST, Arrays.asList());
+        mapping.put(TenderProcedureType.OUTRIGHT_AWARD, Arrays.asList());
+        mapping.put(TenderProcedureType.APPROACHING_BIDDERS, Arrays.asList("Gyorsított meghívásos"));
+
+        return mapping;
     }
 
     /**
@@ -90,7 +203,6 @@ public class KHTenderCleaner extends BaseDigiwhistTenderCleaner {
         mapping.put(CountryCode.FR, Arrays.asList("FR"));
         mapping.put(CountryCode.GQ, Arrays.asList("GQ"));
         mapping.put(CountryCode.HR, Arrays.asList("HR"));
-        mapping.put(CountryCode.HU, Arrays.asList("HU"));
         mapping.put(CountryCode.IL, Arrays.asList("IL"));
         mapping.put(CountryCode.IT, Arrays.asList("IT"));
         mapping.put(CountryCode.JP, Arrays.asList("JP"));
@@ -124,14 +236,14 @@ public class KHTenderCleaner extends BaseDigiwhistTenderCleaner {
                         "felhívás/EU/2011.08.19. EUHL", "Ajánlati felhívás", "Ajánlati/Részvételi felhívás/2015 EUHL",
                 "Ajánlati/Részvételi felhívás", "Részvételi felhívás - Egyes ágazatokban/EU/2011.08.19. EUHL",
                 "Részvételi felhívás", "Tájékoztató a koncessziós eljárás eredményéről/2015 KÉ",
-                "Koncessziós hirdetmény"));
+                "Koncessziós hirdetmény", "Részvételi felhívás/EU/2011.08.19. EUHL",
+                "Tájékoztató az eljárás eredményéről – Közszolgáltatások/2015 EUHL"));
         mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("Tájékoztató az eljárás eredményéről (1-es " +
                         "minta)/KÉ/2013.07.01 KÉ", "Tájékoztató az eljárás eredményéről (1-es minta)/KÉ/2011.12.30 KÉ",
                 "Tájékoztató az eljárás eredményéről", "Tájékoztató az eljárás eredményéről/2015 KÉ",
-                "Szociális és egyéb " +
-                        "meghatározott " +
-                        "szolgáltatások – Általános közbeszerzés/2015 EUHL",
-                "Szociális és egyéb meghatározott szolgáltatások"));
+                "Szociális és egyéb meghatározott szolgáltatások – Általános közbeszerzés/2015 EUHL",
+                "Szociális és egyéb meghatározott szolgáltatások", "Tájékoztató az eljárás " +
+                        "eredményéről/EU/2011.08.19. EUHL", "Tájékoztató az eljárás eredményéről/2015 EUHL"));
         mapping.put(PublicationFormType.CONTRACT_CANCELLATION, Arrays.asList("tájékoztató a szerződés teljesítéséről_" +
                 " KÉ", "tájékoztató a szerződés teljesítéséről KÉ"));
         mapping.put(PublicationFormType.CONTRACT_UPDATE, Arrays.asList("Tájékoztató a szerződés " +
@@ -143,7 +255,7 @@ public class KHTenderCleaner extends BaseDigiwhistTenderCleaner {
                 "Tájékoztató a hirdetmény visszavonásáról, módosításáról", "Helyesbítés/2015 EUHL",
                 "Módosítás/helyesbítés/visszavonás/2015 KÉ"));
         mapping.put(PublicationFormType.PRIOR_INFORMATION_NOTICE, Arrays.asList("Előzetes tájékoztató/EU/2011.08.19. " +
-                "EUHL", "Előzetes tájékoztató"));
+                "EUHL", "Előzetes tájékoztató", "A hirdetmény kizárólag előzetes tájékoztatás céljára szolgál"));
         mapping.put(PublicationFormType.OTHER, Arrays.asList("Tervpályázati kiírás/EU/2011.08.19. EUHL",
                 "Tervpályázati kiírás", "Tájékoztató a tervpályázati eljárás eredményéről", "Önkéntes előzetes " +
                         "átláthatóságra vonatkozó hirdetmény",
@@ -153,5 +265,24 @@ public class KHTenderCleaner extends BaseDigiwhistTenderCleaner {
                 "Előminősítési hirdetmény – Közszolgáltatások/2015 EUHL"));
 
         return mapping;
+    }
+
+    /**
+     * Create boolean string from hungarian yes and no.
+     * @param input input
+     * @return String or null
+     */
+    private String toBooleanString(final String input) {
+        if (input == null) {
+            return null;
+        }
+
+        if (input.toLowerCase().contains("igen")) {
+            return Boolean.TRUE.toString();
+        } else if (input.toLowerCase().contains("nem")) {
+            return Boolean.FALSE.toString();
+        } else {
+            return null;
+        }
     }
 }

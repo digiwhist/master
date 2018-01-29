@@ -17,6 +17,7 @@ import eu.digiwhist.dataaccess.dto.codetables.PublicationSources;
 import eu.digiwhist.worker.raw.BaseDigiwhistIncrementalPagedSourceHttpCrawler;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.worker.raw.utils.CrawlerUtils;
+import java.util.HashMap;
 
 /**
  * Tender crawler for E-narocanje in Slovenia.
@@ -92,7 +93,11 @@ public final class ENarocanjeTenderCrawler extends BaseDigiwhistIncrementalPaged
                         .getAttribute("class")
                         .contentEquals("dataTables_empty");
             } else {
-                createAndPublishMessage(String.format(NOTICE_PERMALINK_PATTERN, noticeId));
+                HashMap<String, Object> metaData = new HashMap<>();
+                metaData.put("publicationDate",
+                    noticeTableRow.getChildElementCount() > 1 ? noticeTableRow.getCell(1).asText() : actualDate);
+
+                createAndPublishMessage(String.format(NOTICE_PERMALINK_PATTERN, noticeId), metaData);
             }
         }
 

@@ -83,4 +83,13 @@ public interface MasterBodyDAO<T extends MasterBody> extends MasterDAO<T> {
      * @return empty instance
      */
     T getEmptyInstance();
+
+    /**
+     * Find out if BVD id is in table political exposed persons.
+     *
+     * @param bvdIdNumber bvd id number to search for
+     *
+     * @return boolean
+     */
+    boolean existsInPoliticalExposedPersons(String bvdIdNumber);
 }

@@ -2,7 +2,9 @@ package eu.digiwhist.worker.hr.clean;
 
 import eu.digiwhist.worker.clean.BaseDigiwhistTenderCleaner;
 import eu.dl.dataaccess.dto.clean.CleanTender;
+import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
+import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
 import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
 import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
@@ -132,7 +134,48 @@ public class EOJNTenderCleaner extends BaseDigiwhistTenderCleaner {
     private Map<Enum, List<String>> getBuyerActivityMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
-        // todo: implement when task #3726 is done
+        mapping.put(BuyerActivityType.AIRPORT, Arrays.asList(
+                "Djelatnosti povezane sa zračnim lukama"));
+        mapping.put(BuyerActivityType.ECONOMIC_AND_FINANCIAL_AFFAIRS, Arrays.asList(
+                "Gospodarstvo i financije"));
+        mapping.put(BuyerActivityType.EDUCATION, Arrays.asList(
+                "Obrazovanje"));
+        mapping.put(BuyerActivityType.ENVIRONMENT, Arrays.asList(
+                "Okoliš"));
+        mapping.put(BuyerActivityType.ELECTRICITY, Arrays.asList(
+                "Električna energija"));
+        mapping.put(BuyerActivityType.DEFENCE, Arrays.asList(
+                "Obrana"));
+        mapping.put(BuyerActivityType.GAS_AND_HEAT_PRODUCTION, Arrays.asList(
+                "Proizvodnja, prijenos i distribucija plina i  toplinske energije"));
+        mapping.put(BuyerActivityType.GAS_AND_OIL_EXTRACTION, Arrays.asList(
+                "Istraživanje i vađenje plina i nafte"));
+        mapping.put(BuyerActivityType.GENERAL_PUBLIC_SERVICES, Arrays.asList(
+                "Opće javne usluge"));
+        mapping.put(BuyerActivityType.HEALTH, Arrays.asList(
+                "Zdravstvo"));
+        mapping.put(BuyerActivityType.HOUSING_AND_COMMUNITY_AMENITIES, Arrays.asList(
+                "Stambeno i komunalno gospodarstvo i usluge"));
+        mapping.put(BuyerActivityType.PORT, Arrays.asList(
+                "Djelatnosti povezane s lukama"));
+        mapping.put(BuyerActivityType.POSTAL, Arrays.asList(
+                "Poštanske usluge"));
+        mapping.put(BuyerActivityType.PUBLIC_ORDER_AND_SAFETY, Arrays.asList(
+                "Javni red i sigurnost",
+                "Javni  red i sigurnost"));
+        mapping.put(BuyerActivityType.RAILWAY, Arrays.asList(
+                "Željezničke usluge"));
+        mapping.put(BuyerActivityType.RECREATION_CULTURE_AND_RELIGION, Arrays.asList(
+                "Rekreacija, kultura i religija"));
+        mapping.put(BuyerActivityType.SOCIAL_PROTECTION, Arrays.asList(
+                "Socijalna skrb"));
+        mapping.put(BuyerActivityType.URBAN_TRANSPORT, Arrays.asList(
+                "Usluge gradske željeznice, tramvaja, trolejbusa ili autobusa"));
+        mapping.put(BuyerActivityType.WATER, Arrays.asList(
+                "Vodoopskrba",
+                "Ostalo: Vodno gospodarstvo"));
+        mapping.put(BuyerActivityType.OTHER, Arrays.asList(
+                "Ostalo:"));
 
         return mapping;
     }
@@ -143,12 +186,26 @@ public class EOJNTenderCleaner extends BaseDigiwhistTenderCleaner {
     private Map<Enum, List<String>> getFormTypeMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
-        // todo: implement when task #3729 is done
-        mapping.put(PublicationFormType.CONTRACT_NOTICE, Arrays.asList("Poziv na nadmetanje", "POZIV NA NADMETANJE",
-                "Poziv na nadmetanje – sektor", "POZIV NA NADMETANJE - SEKTOR"));
-        mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("Obavijest o sklopljenim ugovorima",
-                "OBAVIJEST O SKLOPLJENIM UGOVORIMA", "Obavijest o sklopljenim ugovorima - sektor",
-                "OBAVIJEST O SKLOPLJENIM UGOVORIMA - SEKTORSKI"));
+        mapping.put(PublicationFormType.CONTRACT_NOTICE, Arrays.asList(
+                "Poziv na nadmetanje",
+                "Poziv na nadmetanje – sektor",
+                "POZIV NA NADMETANJE - SEKTOR",
+                "Poziv na nadmetanje za ugovore u području obrane i sigurnosti",
+                "Obavijest o nadmetanju",
+                "Obavijest o nadmetanju – sektorska nabava",
+                "POZIV NA NATJEČAJ"));
+        mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList(
+                "Obavijest o sklopljenim ugovorima",
+                "Obavijest o sklopljenim ugovorima - sektor",
+                "OBAVIJEST O SKLOPLJENIM UGOVORIMA - SEKTORSKI",
+                "Obavijest o sklopljenim ugovorima u području obrane i sigurnosti",
+                "Obavijest o dodjeli ugovora",
+                "Obavijest o dodjeli ugovora – sektorska nabava",
+                "OBAVIJEST O REZULTATIMA NATJEČAJA"));
+        mapping.put(PublicationFormType.CONTRACT_CANCELLATION, Arrays.asList(
+                "OBJAVA O PONIŠTENJU NADMETANJA/ ISPRAVKU OBJAVE"));
+        mapping.put(PublicationFormType.CONTRACT_UPDATE, Arrays.asList(
+                "Ispravak Obavijest o izmjenama ili dodatnim informacijama"));
 
         return mapping;
     }
@@ -159,7 +216,21 @@ public class EOJNTenderCleaner extends BaseDigiwhistTenderCleaner {
     private static Map<Enum, List<String>> getProcedureTypeMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
-        // todo: implement when task #3730 is done
+        mapping.put(TenderProcedureType.COMPETITIVE_DIALOG, Arrays.asList(
+                "Natjecateljski dijalog"));
+        mapping.put(TenderProcedureType.NEGOTIATED_WITH_PUBLICATION, Arrays.asList(
+                "Pregovarački s prethodnom objavom",
+                "Pregovarački s prethodnom objavom zbog žurnosti"));
+        mapping.put(TenderProcedureType.NEGOTIATED_WITHOUT_PUBLICATION, Arrays.asList(
+                "Pregovarački bez prethodne objave",
+                "Sklapanje ugovora bez prethodne objave poziva na nadmetanje (u slučajevima navedenim u Odjeljku 2 " +
+                        "Priloga D1) Obrazloženje odluke za sklapanje ugovora bez objave poziva na nadmetanje: " +
+                        "molimo popunite Prilog D1"));
+        mapping.put(TenderProcedureType.OPEN, Arrays.asList(
+                "Otvoreni"));
+        mapping.put(TenderProcedureType.RESTRICTED, Arrays.asList(
+                "Ograničeni",
+                "Ograničeni zbog žurnosti"));
 
         return mapping;
     }

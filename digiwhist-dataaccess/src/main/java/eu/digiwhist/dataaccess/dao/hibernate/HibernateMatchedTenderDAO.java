@@ -6,9 +6,12 @@ import eu.dl.dataaccess.dto.matched.MatchedTender;
 
 import javax.persistence.Query;
 import java.net.URL;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Hibernate DAO implementation for tenders.
@@ -204,5 +207,34 @@ public class HibernateMatchedTenderDAO extends GenericHibernateDAO<MatchedTender
         }
 
         return result;
+    }
+
+    @Override
+    public final List<MatchedTender> getByPublicationSourceIdsAndPublicationDates(
+        final Map<String, LocalDate> sourceIdsAndDates) {
+        
+        if (sourceIdsAndDates == null || sourceIdsAndDates.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        String restriction = sourceIdsAndDates.entrySet().stream()
+            .map(n -> {
+                return "data @> '{\"publications\":[{"
+                    + "\"sourceId\":\"" + n.getKey() + "\","
+                    + "\"publicationDate\":\"" + n.getValue() + "\"}]}'";
+            })
+            .collect(Collectors.joining(" OR "));
+
+        String additionalMatchersRestriction = prepareAdditionalWorkersCondition();
+
+        Query q = entityManager.createNativeQuery(
+                "SELECT * FROM {h-schema}matched_tender WHERE ((modifiedBy = :modifiedBy " + "AND modifiedByVersion ="
+                        + " :modifiedByVersion) " + additionalMatchersRestriction + ") AND (" + restriction + ")",
+            MatchedTender.class);
+        q.setParameter("modifiedBy", workerName);
+        q.setParameter("modifiedByVersion", workerVersion);
+
+        List<MatchedTender> result = (List<MatchedTender>) q.getResultList();
+        return deserialize(result);
     }
 }

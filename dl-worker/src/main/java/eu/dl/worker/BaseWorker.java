@@ -1,18 +1,7 @@
 package eu.dl.worker;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Random;
-import java.util.UUID;
-import java.util.concurrent.TimeoutException;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.logging.log4j.ThreadContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.AlreadyClosedException;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -20,12 +9,23 @@ import com.rabbitmq.client.Consumer;
 import com.rabbitmq.client.DefaultConsumer;
 import com.rabbitmq.client.Envelope;
 import com.rabbitmq.client.MessageProperties;
-
 import eu.dl.core.RecoverableException;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.core.config.Config;
 import eu.dl.core.config.MisconfigurationException;
 import eu.dl.dataaccess.dao.TransactionUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.ThreadContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.SocketException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.TimeoutException;
 
 /**
  * Provides encapsulated functionality to all workers. This class knows how to
@@ -76,12 +76,8 @@ public abstract class BaseWorker implements Worker {
      */
     private static String envPrefix;
     
-    /**
-     * Used to count send messages and sleep if there is too much messages published in a row.
-     */
-    private Integer messageCounter = 0;
-    
-    private static final Integer MESSAGE_SLEEP_INTERVAL = 20000;
+    private static final Integer PUBLISH_MESSAGE_FAILURE_LIMIT = 5;
+    private static final long PUBLISH_MESSAGE_FAILURE_SLEEP_TIME = 60000;
 
     /**
      * Initialization common for all the workers. Registers worker in the
@@ -397,8 +393,12 @@ public abstract class BaseWorker implements Worker {
         final Connection connection = factory.newConnection();
         final Channel channel = connection.createChannel();
         
-        // connect to the queue
-        channel.queueDeclare(envPrefix + getIncomingQueueName(), true, false, false, null);
+        // define the queue as lazy - store params on the disk
+        Map<String, Object> args = new HashMap<String, Object>();
+        args.put("x-queue-mode", "lazy");
+
+        // declare the queue itself
+        channel.queueDeclare(envPrefix + getIncomingQueueName(), true, false, false, args);
         channel.exchangeDeclare(envPrefix + getIncomingExchangeName(), "direct", true);
         channel.basicQos(1);
 
@@ -459,66 +459,47 @@ public abstract class BaseWorker implements Worker {
             logger.debug("Message body: {}", StringUtils.abbreviate(message.toJson(), RAW_MESSAGE_LONG));
             logger.trace("Message body: {}", message.toJson());
 
-            outgoingChannel.basicPublish(envPrefix + getOutgoingExchangeName(), 
-                                         envPrefix + tag, 
-                                         MessageProperties.PERSISTENT_TEXT_PLAIN, 
-                                         message.toJson().getBytes());
-            messageCounter++;
-            if ((messageCounter % MESSAGE_SLEEP_INTERVAL) == 0) {
-            		try {
-            			logger.error("Going to sleep for 1000miliseconds, message treshold reached.");
-            			Thread.sleep(1000);
-            		} catch (final InterruptedException ex) {
-                    logger.error("Thread interrupted, waiking up {}", ex);
+            int exceptionsCount = 0;
+            while (true) {
+                try {
+                    outgoingChannel.basicPublish(envPrefix + getOutgoingExchangeName(),
+                            envPrefix + tag,
+                            MessageProperties.PERSISTENT_TEXT_PLAIN,
+                            message.toJson().getBytes());
+                    break;
+                } catch (SocketException | AlreadyClosedException e1) {
+                    logger.error(e1.getClass().getName() + " exception occurred during message publish.", e1);
+                    if (exceptionsCount > 0) {
+                        throw new UnrecoverableException("Reconnection outgoing channel did not work");
+                    }
+                    while (true) {
+                        try {
+                            logger.error("Going to sleep for " + PUBLISH_MESSAGE_FAILURE_SLEEP_TIME + " ms.");
+                            Thread.sleep(PUBLISH_MESSAGE_FAILURE_SLEEP_TIME);
+                        } catch (InterruptedException ex) {
+                            logger.error("Thread interrupted, waking up {}", ex);
+                        }
+                        try {
+                            // reconnect outgoing channel
+                            connectOutgoingExchange();
+                            break;
+                        } catch (RuntimeException e2) {
+                            if (++exceptionsCount > PUBLISH_MESSAGE_FAILURE_LIMIT) {
+                                throw new UnrecoverableException(
+                                        "Unable to publish message. The worker have been waiting " +
+                                                PUBLISH_MESSAGE_FAILURE_LIMIT * PUBLISH_MESSAGE_FAILURE_SLEEP_TIME +
+                                                " ms with no success", e2);
+                            }
+                        }
+                    }
                 }
             }
+
             logger.info("Published json message to exchange {} , tag {}", envPrefix + getOutgoingExchangeName(),
                     envPrefix + tag);
         } catch (final IOException ex) {
             logger.error("Unable to publish message - {}", ex);
             throw new UnrecoverableException("Unable to publish message", ex);
-        }
-    }
-
-    /**
-     * Sleeps for random time. The total length is randomized from interval
-     * 100-(milliseconds+100). Out of working hours(20-7) sleeps for half amount
-     * of time.
-     *
-     * @param milliseconds
-     *            max time for how long the thread will sleep
-     */
-    protected final void humanize(final Integer milliseconds) {
-        try {
-            final Integer currentHour = LocalDateTime.now().getHour();
-            Integer sleepRange = milliseconds;
-            if (currentHour > 20 || currentHour < 7) {
-                // for non productive hours shorten the sleeping time
-                sleepRange = milliseconds / 2;
-            }
-            final Random rand = new Random();
-            final Integer sleepLength = rand.nextInt(sleepRange) + 100;
-            logger.debug("Sleeping for randomised {}ms", sleepRange);
-            Thread.sleep(sleepLength);
-            logger.debug("Awake again, lets continue to work");
-        } catch (final InterruptedException ex) {
-            logger.debug("Thread interrupted, waiking up {}", ex);
-        }
-    }
-
-    /**
-     * Sleeps for defined amount of time.
-     *
-     * @param milliseconds
-     *         max time for how long the thread will sleep
-     */
-    protected final void sleep(final Integer milliseconds) {
-        try {
-            logger.debug("Sleeping for {}ms", milliseconds);
-            Thread.sleep(milliseconds);
-            logger.debug("Awake again, lets continue to work");
-        } catch (final InterruptedException ex) {
-            logger.debug("Thread interrupted, waiking up {}", ex);
         }
     }
 

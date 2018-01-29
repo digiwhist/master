@@ -7,6 +7,7 @@ import java.util.List;
 
 import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
+import eu.dl.worker.clean.utils.CleanUtils;
 import eu.dl.worker.clean.utils.FundingUtils;
 import eu.dl.worker.utils.ArrayUtils;
 
@@ -56,7 +57,8 @@ public class FundingsPlugin extends BaseCleaningPlugin<ParsedTender, CleanTender
         if (parsedTender.getFundings() != null) {
             logger.debug("Cleaning fundings in parsed tender {} starts", parsedTender.getId());
             cleanTender.setFundings(ArrayUtils.walk(parsedTender.getFundings(),
-                (parsedFunding) -> FundingUtils.cleanFunding(parsedFunding, numberFormat)));
+                (parsedFunding) -> FundingUtils.cleanFunding(parsedFunding, numberFormat,
+                    CleanUtils.getParsedItemCountry(parsedTender))));
             logger.debug("Cleaning fundings in parsed tender {} finished", parsedTender.getId());
         }
 

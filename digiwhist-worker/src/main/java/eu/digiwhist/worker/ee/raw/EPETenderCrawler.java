@@ -108,6 +108,10 @@ public final class EPETenderCrawler extends BaseDigiwhistIncrementalPagedSourceH
                     final String sourceFormType = noticeCell.getTextContent();
                     metaData.put("sourceFormType", sourceFormType);
 
+                    HtmlTableCell dateCell = noticeTableRow.getFirstByXPath("td[7]");
+                    metaData.put("publicationDate",
+                        dateCell != null ? dateCell.asText() : actualDate.format(DATE_FORMATTER));
+                    
                     createAndPublishMessage(noticePermalink.getHrefAttribute(), metaData);
                 } else {
                     final HtmlTableCell noCell = noticeTableRow.getFirstByXPath("td[1]");

@@ -3,6 +3,7 @@ package eu.digiwhist.dataaccess.dao.hibernate;
 import eu.dl.dataaccess.dao.MasterTenderDAO;
 import eu.dl.dataaccess.dao.hibernate.GenericHibernateDAO;
 import eu.dl.dataaccess.dto.master.MasterTender;
+import java.time.LocalDateTime;
 
 import javax.persistence.Query;
 import java.util.Collection;
@@ -41,6 +42,23 @@ public class HibernateMasterTenderDAO extends GenericHibernateDAO<MasterTender> 
 
     @Override
     public final List<MasterTender> getByCountry(final String countryCode, final Integer page) {
+        return null;
+    }
+    
+    @Override
+    public final List<MasterTender> getByCountry(final String countryCode, final Integer page, final String source) {
+        return null;
+    }
+
+    @Override
+    public final List<MasterTender> getModifiedAfter(final LocalDateTime timestamp, final String modifiedBy,
+        final Integer page, final boolean opentender) {
+        return null;
+    }
+
+    @Override
+    public final List<MasterTender> getByCountry(final String countryCode, final Integer page, final String source,
+        final boolean opentender) {
         return null;
     }
 }

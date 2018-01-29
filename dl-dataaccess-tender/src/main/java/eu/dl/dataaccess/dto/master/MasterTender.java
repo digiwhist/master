@@ -20,7 +20,7 @@ import eu.dl.dataaccess.dto.generic.Corrigendum;
 import eu.dl.dataaccess.dto.generic.Document;
 import eu.dl.dataaccess.dto.generic.Price;
 import eu.dl.dataaccess.dto.generic.Publication;
-import eu.dl.dataaccess.dto.indicator.EntitySpecificIndicator;
+import eu.dl.dataaccess.dto.indicator.Indicator;
 
 // TODO: Auto-generated Javadoc
 
@@ -328,7 +328,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
     /*
      * Indicators related to this tender.
      */
-    private List<EntitySpecificIndicator> indicators;
+    private List<Indicator> indicators;
 
     /**
      * Gets the buyer assigned id.
@@ -1656,7 +1656,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
     /**
      * @return the indicators
      */
-    public final List<EntitySpecificIndicator> getIndicators() {
+    public final List<Indicator> getIndicators() {
         return indicators;
     }
 
@@ -1665,7 +1665,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      * 
      * @return the master tender
      */
-    public final MasterTender setIndicators(final List<EntitySpecificIndicator> indicators) {
+    public final MasterTender setIndicators(final List<Indicator> indicators) {
         this.indicators = indicators;
         return this;
     }

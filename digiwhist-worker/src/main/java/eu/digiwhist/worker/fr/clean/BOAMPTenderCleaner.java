@@ -6,6 +6,7 @@ import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
 import eu.dl.dataaccess.dto.codetables.BuyerType;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
+import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.clean.plugin.AddressPlugin;
 import eu.dl.worker.clean.plugin.AwardCriteriaPlugin;
@@ -259,6 +260,7 @@ public class BOAMPTenderCleaner extends BaseDigiwhistTenderCleaner {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
         // todo: implement when task #3362 is done
+        mapping.put(TenderSupplyType.WORKS, Arrays.asList("Travaux de construction"));
 
         return mapping;
     }
@@ -306,9 +308,6 @@ public class BOAMPTenderCleaner extends BaseDigiwhistTenderCleaner {
                 "negocie_apres_infru"));
         mapping.put(TenderProcedureType.NEGOTIATED_WITH_PUBLICATION, Arrays.asList(
                 "marche_negocie"));
-        mapping.put(TenderProcedureType.MINITENDER, Arrays.asList(
-                "procedure_adaptee",
-                "procedure_adapte"));
         mapping.put(TenderProcedureType.COMPETITIVE_DIALOG, Arrays.asList(
                 "dialogue_compe",
                 "dialogue_competitif"));
@@ -329,7 +328,9 @@ public class BOAMPTenderCleaner extends BaseDigiwhistTenderCleaner {
                 "negocie",
                 "partenariat_innovation",
                 "performances",
-                "simplifiee"));
+                "simplifiee",
+                "procedure_adaptee",
+                "procedure_adapte"));
 
         return mapping;
     }

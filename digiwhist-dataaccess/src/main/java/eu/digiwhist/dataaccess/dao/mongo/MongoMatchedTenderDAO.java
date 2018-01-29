@@ -8,8 +8,10 @@ import org.mongojack.DBProjection;
 import org.mongojack.DBQuery;
 
 import java.net.URL;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Matched tender DAO implementation for MongoDB.
@@ -112,5 +114,12 @@ class MongoMatchedTenderDAO extends GenericMongoDAO<MatchedTender> implements Ma
     @Override
     public final List<MatchedTender> getForResend(final String workerName, final String workerVersion) {
         return getMine(workerName, workerVersion, null, null);
+    }
+
+    @Override
+    public List<MatchedTender> getByPublicationSourceIdsAndPublicationDates(
+        final Map<String, LocalDate> sourceIdsAndDates) {
+        // it is not implemented
+        return new ArrayList<>();
     }
 }

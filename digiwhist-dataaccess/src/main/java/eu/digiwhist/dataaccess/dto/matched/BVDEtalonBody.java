@@ -21,6 +21,7 @@ import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 import eu.dl.dataaccess.dto.generic.Address;
 import eu.dl.dataaccess.dto.matched.EtalonBody;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
+import eu.dl.dataaccess.utils.DigestUtils;
 import eu.dl.dataaccess.utils.ValidationUtils;
 
 /**
@@ -125,6 +126,9 @@ public class BVDEtalonBody implements EtalonBody {
         matchedBody.setAddress(addr);
 
         matchedBody.setAlternativeHashes(generateAlternativeBodyHashes(matchedBody));
+
+        matchedBody.setFullHash(DigestUtils.bodyFullHash(matchedBody));
+        
         return matchedBody;
     }
     

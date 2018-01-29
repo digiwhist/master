@@ -1,7 +1,6 @@
 package eu.digiwhist.worker.si.parsed;
 
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
-import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.nodes.Element;
 
 /**
@@ -14,23 +13,25 @@ final class ENarocanjeContractNoticeHandler3 extends BaseENarocanjeFormInTableHa
     private ENarocanjeContractNoticeHandler3() {}
 
     /**
-     * Parses Form specific attributes and updates the passed tender.
+     * Parses form specific attributes and updates the passed tender.
      *
      * @param tender
      *         tender to be updated with parsed data
      * @param form
      *         parsed document for the source HTML page (parsed form)
      *
-     * @return updated tender object with data parsed from Form
+     * @return updated tender object with data parsed from form
      */
     public static ParsedTender parse(final ParsedTender tender, final Element form) {
-        parseCommonAttributes(tender, form);
+        parseCommonFormInTableAttributes(tender, form);
 
         tender
-                .setTitle(JsoupUtils.selectText(String.format(SECTION_SELECTOR_PATTERN, "I.2"), form))
-                .setBidDeadline(getSectionContent("I.8", form))
+                .setTitle(ENarocanjeTenderFormInTableUtils.getSectionContent("I.2", form))
+                .setBidDeadline(ENarocanjeTenderFormInTableUtils.getSectionContent("I.8", form))
                 .setCpvs(parseTenderCpvs("I.5", form))
-                .setHasLots(parseIfTenderHasLots("I.6", form));
+                .setHasLots(parseIfTenderHasLots("I.6", form))
+                .setSupplyType(parseSupplyType("I.3", form))
+                .setDescription(ENarocanjeTenderFormInTableUtils.getSectionContent("I.4", form));
 
         return tender;
     }

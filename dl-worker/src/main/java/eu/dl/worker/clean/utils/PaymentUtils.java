@@ -32,17 +32,19 @@ public final class PaymentUtils {
      *          list of number formats
      * @param formatter
      *          datetime formatter
+     * @param country
+     *          country
      * @return cleaned payment
      */
     public static Payment cleanPayment(final ParsedPayment parsedPayment, final List<NumberFormat> numberFormat,
-        final List<DateTimeFormatter> formatter) {
+        final List<DateTimeFormatter> formatter, final String country) {
         if (parsedPayment == null) {
             return null;
         }
 
         return new Payment()
             .setPaymentDate(DateUtils.cleanDate(parsedPayment.getPaymentDate(), formatter))
-            .setPrice(PriceUtils.cleanPrice(parsedPayment.getPrice(), numberFormat));
+            .setPrice(PriceUtils.cleanPrice(parsedPayment.getPrice(), numberFormat, country));
     }
 
     /**
@@ -54,10 +56,12 @@ public final class PaymentUtils {
      *          number format
      * @param formatter
      *          datetime formatter
+     * @param country
+     *          country
      * @return cleaned payment
      */
     public static Payment cleanPayment(final ParsedPayment parsedPayment, final NumberFormat numberFormat,
-        final List<DateTimeFormatter> formatter) {
-        return cleanPayment(parsedPayment, Arrays.asList(numberFormat), formatter);
+        final List<DateTimeFormatter> formatter, final String country) {
+        return cleanPayment(parsedPayment, Arrays.asList(numberFormat), formatter, country);
     }
 }

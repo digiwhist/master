@@ -3,6 +3,7 @@ package eu.digiwhist.worker.uk.clean;
 import eu.digiwhist.worker.clean.BaseDigiwhistTenderCleaner;
 import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.codetables.CountryCode;
+import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
 import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
@@ -40,6 +41,7 @@ public class GovUKTenderCleaner extends BaseDigiwhistTenderCleaner {
     private static final List<DateTimeFormatter> DATETIME_FORMATTERS = Arrays.asList(
             DateTimeFormatter.ISO_LOCAL_DATE_TIME, DateTimeFormatter.ISO_OFFSET_DATE_TIME);
 
+    @SuppressWarnings("unchecked")
     @Override
     protected final void registerSpecificPlugins() {
         Map<String, Map<Enum, List<String>>> lotMappings = new HashMap<>();
@@ -56,7 +58,7 @@ public class GovUKTenderCleaner extends BaseDigiwhistTenderCleaner {
                 .registerPlugin("datetime", new DateTimePlugin<>(DATETIME_FORMATTERS))
                 .registerPlugin("bodies", new BodyPlugin(null, null, countryMapping()))
                 .registerPlugin("publications",
-                        new PublicationPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, null))
+                        new PublicationPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, getFormTypeMapping()))
                 .registerPlugin("lots", new LotPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, lotMappings))
                 .registerPlugin("prices", new PricePlugin(NUMBER_FORMAT))
                 .registerPlugin("documents", new DocumentPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, null))
@@ -71,9 +73,8 @@ public class GovUKTenderCleaner extends BaseDigiwhistTenderCleaner {
      */
     private Map<Enum, List<String>> statusMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
-        mapping.put(TenderLotStatus.FINISHED, Arrays.asList("Closed"));
         mapping.put(TenderLotStatus.AWARDED, Arrays.asList("Awarded"));
-        mapping.put(TenderLotStatus.ANNOUNCED, Arrays.asList("Open"));
+        mapping.put(TenderLotStatus.ANNOUNCED, Arrays.asList("Open", "Closed"));
 
         return mapping;
     }
@@ -113,7 +114,21 @@ public class GovUKTenderCleaner extends BaseDigiwhistTenderCleaner {
         final Map<Enum, List<String>> mapping = new HashMap<>();
         mapping.put(TenderSupplyType.SERVICES, Arrays.asList("Services"));
         mapping.put(TenderSupplyType.WORKS, Arrays.asList("Works"));
-        mapping.put(TenderSupplyType.SUPPLIES, Arrays.asList("Supplies", "Products"));
+        mapping.put(TenderSupplyType.SUPPLIES, Arrays.asList("Supplies", "Products"));        
+        mapping.put(TenderSupplyType.OTHER, Arrays.asList("Other"));
+        mapping.put(null, Arrays.asList("NotSpecified", "NotApplicable"));
+
+        return mapping;
+    }
+
+    /**
+     * @return form type mapping
+     */
+    private Map<Enum, List<String>> getFormTypeMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(PublicationFormType.CONTRACT_NOTICE, Arrays.asList("open", "closed"));
+        mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("awarded"));
 
         return mapping;
     }

@@ -315,7 +315,7 @@ public class JdbcBVDEtalonBodyDAO extends BaseJdbcDAO<BVDEtalonBody> implements 
 	public final List<BVDEtalonBody> findAllById(final int id, final int amount) {
 		try {
             PreparedStatement statement = connection.prepareStatement(
-                    "SELECT * FROM bvd.registry_information WHERE id > ? ORDER BY id LIMIT ?;");
+                    "SELECT * FROM bvd.registry_information WHERE id >= ? ORDER BY id LIMIT ?;");
             
             statement.setInt(1, id);
             statement.setInt(2, amount);

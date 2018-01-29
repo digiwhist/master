@@ -1,6 +1,6 @@
 package eu.dl.worker.indicator.plugin;
 
-import eu.dl.dataaccess.dto.indicator.BasicEntityRelatedIndicator;
+import eu.dl.dataaccess.dto.indicator.BasicIndicator;
 import eu.dl.dataaccess.dto.indicator.Indicator;
 import eu.dl.dataaccess.dto.master.MasterTender;
 
@@ -9,20 +9,24 @@ import static eu.dl.dataaccess.dto.indicator.TenderIndicatorType.ADMINISTRATIVE_
 /**
  * This plugin calculates Single bid indicator.
  */
-public class CentralizedProcurementIndicatorPlugin implements IndicatorPlugin<MasterTender> {
+public class CentralizedProcurementIndicatorPlugin extends BaseIndicatorPlugin
+        implements IndicatorPlugin<MasterTender> {
 
     @Override
-    public final Indicator evaulate(final MasterTender tender) {
+    public final Indicator evaluate(final MasterTender tender) {
         if (tender == null) {
             return null;
         }
 
+        Indicator indicator = new BasicIndicator();
+        indicator.setType(getType());
+
         if (tender.getIsCentralProcurement() != null && tender.getIsCentralProcurement()) {
-            Indicator indicator = new BasicEntityRelatedIndicator();
-            indicator.setType(getType());
-            return indicator;
+            return calculated(100d);
+        } else if (tender.getIsCentralProcurement() != null && !tender.getIsCentralProcurement()) {
+            return calculated(0d);
         } else {
-            return null;
+            return insufficient();
         }
     }
 

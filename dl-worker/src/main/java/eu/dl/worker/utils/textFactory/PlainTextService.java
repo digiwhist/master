@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.tika.Tika;
 import org.apache.tika.exception.TikaException;
@@ -18,10 +20,24 @@ public final class PlainTextService {
 
     private static final Logger logger = LoggerFactory.getLogger(PlainTextService.class);
 
+    private static final List<String> SUPPORTED_EXTENSIONS = Arrays.asList("doc", "xls", "ppt", "rtf", "pdf", "html",
+        "xhtml", "txt", "vsd",
+        // OpenDocument extensions
+        "odt", "fodt", "ods", "fods", "odp", "fodp", "odg", "fodg");
+
     /**
      * Suppress default constructor for noninstantiability.
      */
     private PlainTextService() {
+    }
+
+    /**
+     * @param extension
+     *      extension to be tested
+     * @return TRUE only and only if the extension is supported, otherwise FALSE
+     */
+    public static boolean isSupportedExtension(final String extension) {
+        return extension != null && SUPPORTED_EXTENSIONS.contains(extension);
     }
 
     /**

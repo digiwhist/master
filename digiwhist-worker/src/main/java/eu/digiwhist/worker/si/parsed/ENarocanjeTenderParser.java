@@ -15,6 +15,8 @@ import org.jsoup.select.Elements;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Tender parser for E-narocanje in Slovenia.
@@ -33,8 +35,11 @@ public class ENarocanjeTenderParser extends BaseDigiwhistTenderParser {
 
     @Override
     public final List<ParsedTender> parse(final RawData rawTender) {
+        // fix broken table cells
+        String sourceData = rawTender.getSourceData().replaceAll("<tr><script>", "<tr><td><script>");
+        
         // get form element from the page
-        final Document page = Jsoup.parse(rawTender.getSourceData());
+        final Document page = Jsoup.parse(sourceData);
         final Elements forms = JsoupUtils.select("div.col-md-10 > div.panel.panel-default:has(" +
                 "div.panel-heading.panel-title > span > span.glyphicon.glyphicon-list-alt)", page);
         if (forms.size() != 1) {
@@ -45,18 +50,23 @@ public class ENarocanjeTenderParser extends BaseDigiwhistTenderParser {
 
         ParsedTender tender = new ParsedTender();
 
+        Element publicationDateNode = JsoupUtils.selectFirst("center:eq(0) >"
+            + " font.naslovmali:containsOwn(Datum objave:)", form);
+        String publicationDate = publicationDateNode != null
+            ? publicationDateNode.childNode(0).toString()
+            : (String) rawTender.getMetaData().get("publicationDate");
+
         // set common attributes (basic information of publications)
         // we get related publication table from the whole page, because it is not in the form
         Elements relatedPublicationsTables = JsoupUtils.select("table.table.table-bordered.table-hover", page);
         if (relatedPublicationsTables.isEmpty()) {
-            // e.g. https://www.enarocanje.si/Obrazci/?id_obrazec=206778
-            tender
-                    .addPublication(new ParsedPublication()
-                            .setIsIncluded(true)
-                            .setHumanReadableUrl(rawTender.getSourceUrl().toString())
-                            .setSource(SOURCE_DOMAIN)
-                            .setSourceId(parsePublicationSourceId(form))
-                            .setSourceFormType(parsePublicationSourceFormType(form)));
+            tender.addPublication(new ParsedPublication()
+                .setIsIncluded(true)
+                .setHumanReadableUrl(rawTender.getSourceUrl().toString())
+                .setSource(SOURCE_DOMAIN)
+                .setSourceId(parsePublicationSourceId(form))
+                .setSourceFormType(parsePublicationSourceFormType(form))
+                .setPublicationDate(publicationDate));
         } else {
             // e.g. https://www.enarocanje.si/Obrazci/?id_obrazec=207586
             assert relatedPublicationsTables.size() == 1
@@ -69,7 +79,6 @@ public class ENarocanjeTenderParser extends BaseDigiwhistTenderParser {
                     // e.g. location.href='?id_odlocitve=12419&id_obrazec=207586'
                     continue;
                 }
-                // we want this publication link
 
                 // get human readable URL
                 assert onclickAttributeValue.endsWith("'");
@@ -81,70 +90,89 @@ public class ENarocanjeTenderParser extends BaseDigiwhistTenderParser {
                 // we want get last occurrences of parentheses. See https://www.enarocanje.si/Obrazci/?id_obrazec=145732
                 assert rowText.contains("(") && rowText.contains(")")
                         && rowText.lastIndexOf('(') < rowText.lastIndexOf(')');
+
+                Matcher m = Pattern.compile("(?<=objavljeno dne )(?<date>\\d{1,2}.\\d{1,2}.\\d{4})").matcher(rowText);
+
                 final ParsedPublication publication = new ParsedPublication()
-                        .setHumanReadableUrl(humanReadableUrl)
-                        .setSource(SOURCE_DOMAIN)
-                        .setSourceId(rowText.substring(0, rowText.indexOf(NBSP_CHARACTER)))
-                        .setSourceFormType(rowText.substring(rowText.lastIndexOf('(') + 1, rowText.lastIndexOf(')'))
-                                .trim());
+                    .setHumanReadableUrl(humanReadableUrl)
+                    .setSource(SOURCE_DOMAIN)
+                    .setSourceId(rowText.substring(0, rowText.indexOf(NBSP_CHARACTER)))
+                    .setSourceFormType(rowText.substring(rowText.lastIndexOf('(') + 1, rowText.lastIndexOf(')')).trim())
+                    .setPublicationDate(m.find() ? m.group("date") : null);
 
                 // included publication is first in the list of publications
                 if (JsoupUtils.selectAttribute("class", row).equals("active")) {
                     assert publication.getHumanReadableUrl().equals(rawTender.getSourceUrl().toString());
                     assert publication.getSourceId().equals(parsePublicationSourceId(form));
                     assert publication.getSourceFormType().equals(parsePublicationSourceFormType(form));
-                    publication
-                            .setIsIncluded(true);
+                    
+                    publication.setIsIncluded(true).setPublicationDate(publicationDate);                    
                     publications.add(0, publication);
                 } else {
-                    publication
-                            .setIsIncluded(false);
+                    publication.setIsIncluded(false);
                     publications.add(publication);
                 }
             }
-            tender
-                    .setPublications(publications);
+
+            tender.setPublications(publications);
+        }
+        // update source form type when it is cancellation/correction (the form type contains "preklic/popravek")
+        // to distinguish cancellation and correction. We append the first sentence in I.1
+        if (tender.getPublications().get(0).getSourceFormType().contains("preklic/popravek")) {
+            final String sectionI1Content = ENarocanjeTenderFormInTableUtils.getSectionContent("I.1", form,
+                    Arrays.asList("TO OBVESTILO SE NANAŠA NA"));
+            if (sectionI1Content != null) {
+                tender.getPublications().get(0)
+                    .setSourceFormType(tender.getPublications().get(0).getSourceFormType() + " - "
+                        + sectionI1Content.split("\\.")[0]);
+            }
         }
 
         // parse form specific attributes
         final String sourceFormType = tender.getPublications().get(0).getSourceFormType();
         switch (sourceFormType) {
-            case "EU 2 - SL":
-            case "EU 5 - SL":
-            case "NMV1":
-                // the form can have old or new structure
+            case "EU 2 - SL": case "EU 5 - SL":
                 if (isNewForm(form)) {
                     tender = ENarocanjeContractNoticeHandler1New.parse(tender, form);
                 } else {
                     tender = ENarocanjeContractNoticeHandler1Old.parse(tender, form);
                 }
                 break;
-            case "PZPPO1 - ZJNVETPS":
-            case "PZPPO1 - ZJN-2":
+            case "NMV1":
+                if (isNewForm(form)) {
+                    tender = ENarocanjeContractNoticeHandler4New.parse(tender, form);
+                } else {
+                    tender = ENarocanjeContractNoticeHandler4Old.parse(tender, form);
+                }
+                break;
+            case "PZPPO1 - ZJN-2": case "PZPPO1 - ZJNVETPS":
                 tender = ENarocanjeContractNoticeHandler2.parse(tender, form);
                 break;
             case "PZP":
                 tender = ENarocanjeContractNoticeHandler3.parse(tender, form);
                 break;
             case "EU 3 - SL":
-            case "EU 6 - SL":
-            case "NMV2":
-                // the form can have old or new structure
                 if (isNewForm(form)) {
                     tender = ENarocanjeContractAwardHandler1New.parse(tender, form);
                 } else {
                     tender = ENarocanjeContractAwardHandler1Old.parse(tender, form);
                 }
                 break;
-            case "EU 18 - SL":
-            case "PZPPO2 - ZJN-2":
-            case "PZPPO2 - ZJNVETPS":
+            case "EU 6 - SL": case "NMV2":
+                if (isNewForm(form)) {
+                    tender = ENarocanjeContractAwardHandler3New.parse(tender, form);
+                } else {
+                    tender = ENarocanjeContractAwardHandler3Old.parse(tender, form);
+                }
+                break;
+            case "EU 18 - SL": case "PZPPO2 - ZJN-2": case "PZPPO2 - ZJNVETPS":
                 tender = ENarocanjeContractAwardHandler2.parse(tender, form);
                 break;
-            case "OS - ZJN-2":
-            case "OS - ZJNVETPS":
+            case "OS - ZJN-2": case "OS - ZJNVETPS":
                 tender = ENarocanjeContractImplementation.parse(tender, form);
                 break;
+//            case "EU 14 - SL":
+//                break;
             default:
                 logger.warn("No handler found for form code: {}", sourceFormType);
                 break;

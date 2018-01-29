@@ -191,4 +191,37 @@ public final class StringUtils {
     public static String justifyLeft(final String str, final int length, final String padStr) {
         return leftPad(right(str, length), length, padStr);
     }
+
+    /**
+     * Removes dots at the end of input string. The string is trimmed to remove spaces and get the dots at the end.
+     *
+     * @param string
+     *         string to remove dots
+     *
+     * @return trimmed input string without dots and spaces at the end of input string
+     */
+    public static String removeDotsAtTheEnd(final String string) {
+        if (string == null) {
+            return null;
+        }
+
+        String stringToModify = string;
+
+        boolean wasStringModified;
+        // while loop is necessary, because the string can be " , à 17 heures . ."
+        do {
+            if (stringToModify.endsWith(" ")) {
+                stringToModify = stringToModify.trim();
+                wasStringModified = true;
+            } else if (stringToModify.endsWith(".")) {
+                stringToModify = stringToModify.substring(0, stringToModify.length() - 1);
+                wasStringModified = true;
+            } else {
+                wasStringModified = false;
+            }
+        } while (wasStringModified);
+
+        return stringToModify;
+    }
+
 }

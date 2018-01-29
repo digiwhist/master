@@ -1,12 +1,12 @@
 package eu.dl.dataaccess.dao.jdbc;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.time.LocalDate;
-
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dao.CrawlerAuditDAO;
 import eu.dl.dataaccess.dto.raw.BasicCrawlerAuditRecord;
+
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.time.LocalDate;
 
 /**
  * Crawler Audit DAO implementation for JDBC.
@@ -66,7 +66,7 @@ public class JdbcCrawlerAuditDAO extends GenericJdbcDAO<BasicCrawlerAuditRecord>
     private BasicCrawlerAuditRecord getByNameAndVersion() {
         try {
             PreparedStatement statement = connection.prepareStatement(
-                    "SELECT * FROM " + getTableWithSchema() + " WHERE modifiedby = ? AND modifiedByVersion = ?");
+                    "SELECT * FROM " + getTableWithSchema() + " WHERE createdby = ? AND createdByVersion = ?");
 
             statement.setString(1, getWorkerName());
             statement.setString(2, getWorkerVersion());

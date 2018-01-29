@@ -30,28 +30,29 @@ public final class EPETenderParser extends BaseDigiwhistTenderParser {
         HashMap<String, Object> metaData = raw.getMetaData();
         String contractingAuthority = (String) metaData.get("contractingAuthority");
         String sourceFormType = (String) metaData.get("sourceFormType");
+        String publicationDate = (String) metaData.get("publicationDate");
 
         ParsedTender parsedTender;
         switch (sourceFormType) {
             // contract notice
             case "TV02": case "TV05":
-                parsedTender = EPEContractNoticeHandler.parse(doc);
+                parsedTender = EPEContractNoticeHandler.parse(doc, publicationDate);
                 break;
             // contract award
             case "TV15":
-                parsedTender = EPEContractAwardHandler.parse(doc);
+                parsedTender = EPEContractAwardHandler.parse(doc, publicationDate);
                 break;
             // design contest result
             case "TV13":
-                parsedTender = EPEDesignContestResultHandler.parse(doc);
+                parsedTender = EPEDesignContestResultHandler.parse(doc, publicationDate);
                 break;
             // anex
             case "TV15L":
-                parsedTender = EPEContractAnexHandler.parse(doc);
+                parsedTender = EPEContractAnexHandler.parse(doc, publicationDate);
                 break;
             default:
                 logger.warn("Unknown form type {}, default handler was used", sourceFormType);
-                parsedTender = EPEDefaultHandler.parse(doc);
+                parsedTender = EPEDefaultHandler.parse(doc, publicationDate);
         }
         
         return parsedTender != null ? Collections.singletonList(parsedTender) : Collections.emptyList();

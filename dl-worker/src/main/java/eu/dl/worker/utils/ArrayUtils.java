@@ -1,11 +1,13 @@
 package eu.dl.worker.utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collector;
@@ -118,5 +120,66 @@ public final class ArrayUtils {
                     return list1;
                 }
             });
+    }
+
+    /**
+     * Returns all entries from the list {@code a} which are presented in list {@code b}.
+     *
+     * @param <T>
+     *      class of list entries
+     * @param a
+     *      list a
+     * @param b
+     *      list b
+     * @param comp
+     *      comparator of the list entries, returns true for same entries
+     * @return all entries from the list a presented in the list b, otherwise empty list
+     */
+    public static <T> List<T> intersection(final List<T> a, final List<T> b, final BiPredicate<T, T> comp) {
+        if (a == null || b == null || a.isEmpty() || b.isEmpty()) {
+            return Collections.emptyList();
+        }
+        
+        List<T> intersection = new ArrayList<>();
+        a.forEach(aa -> {
+            if (b.stream().anyMatch(bb -> comp.test(aa, bb))) {
+                intersection.add(aa);
+            }
+        });
+
+        return intersection;
+    }
+
+    /**
+     * Returns list {@code a} complemented by all entries from list {@code b} which aren't presented in list a.
+     *
+     * @param <T>
+     *      class of list entries
+     * @param a
+     *      list a
+     * @param b
+     *      list b
+     * @param comp
+     *      comparator of the list entries, returns true for same entries
+     * @return list a complemented by all entries from list b which aren't presented in list a, otherwise empty list
+     */
+    public static <T> List<T> union(final List<T> a, final List<T> b, final BiPredicate<T, T> comp) {
+        if (a == null && b == null) {
+            return Collections.emptyList();
+        } else if (a == null) {
+            return b;
+        } else if (b == null) {
+            return a;
+        }
+
+        List<T> union = new ArrayList<>(a);
+        
+        b.forEach(bb -> {
+            if (a.stream().noneMatch(aa -> comp.test(aa, bb))) {
+                union.add(bb);
+            }
+        });
+
+        return union;
     }
 }

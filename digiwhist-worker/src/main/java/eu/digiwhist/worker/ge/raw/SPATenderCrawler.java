@@ -1,5 +1,22 @@
 package eu.digiwhist.worker.ge.raw;
 
+import com.gargoylesoftware.htmlunit.BrowserVersion;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlInput;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlSelect;
+import com.gargoylesoftware.htmlunit.util.Cookie;
+import eu.digiwhist.dataaccess.dto.codetables.PublicationSources;
+import eu.digiwhist.worker.ge.SPATenderUtils;
+import eu.digiwhist.worker.raw.BaseDigiwhistIncrementalCrawler;
+import eu.dl.core.UnrecoverableException;
+import eu.dl.worker.utils.ThreadUtils;
+import eu.dl.worker.utils.jsoup.JsoupUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.Month;
@@ -15,24 +32,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
-import com.gargoylesoftware.htmlunit.BrowserVersion;
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlInput;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlSelect;
-import com.gargoylesoftware.htmlunit.util.Cookie;
-
-import eu.digiwhist.dataaccess.dto.codetables.PublicationSources;
-import eu.digiwhist.worker.ge.SPATenderUtils;
-import eu.digiwhist.worker.raw.BaseDigiwhistIncrementalCrawler;
-import eu.dl.core.UnrecoverableException;
-import eu.dl.worker.utils.jsoup.JsoupUtils;
 
 /**
  * Class is searching https://tenders.procurement.gov.ge/public/?lang=en for tender details and their additional
@@ -344,7 +343,7 @@ public final class SPATenderCrawler extends BaseDigiwhistIncrementalCrawler {
         int sleepCount = 0;
         while (response == null && sleepCount < MAX_SLEEP_COUNT) {
             logger.info("Response is not loaded -> sleep");
-            sleep(SLEEP_TIME);
+            ThreadUtils.sleep(SLEEP_TIME);
             response = getControllerActionResponse(url);
             sleepCount++;
         }
@@ -448,7 +447,7 @@ public final class SPATenderCrawler extends BaseDigiwhistIncrementalCrawler {
 
         while (!hasResultSetPageValidRecords(resultPage, statusDateString) && sleepCount < MAX_SLEEP_COUNT) {
             logger.info("Page is not loaded -> sleep");
-            sleep(SLEEP_TIME);
+            ThreadUtils.sleep(SLEEP_TIME);
             resultPage = getResultSetPage(pageNumber);
             sleepCount++;
         }

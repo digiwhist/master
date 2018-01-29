@@ -40,11 +40,14 @@ public final class BidUtils {
      *          unit price mapping
      * @param countryMapping
      *          country mapping
+     * @param country
+     *          country
      * @return cleaned bid
      */
     public static CleanBid cleanBid(final ParsedBid parsedBid, final List<NumberFormat> numberFormats,
             final List<DateTimeFormatter> formatters, final Map<Enum, List<String>> documentTypeMapping,
-            final Map<Enum, List<String>> unitPriceMapping, final Map<Enum, List<String>> countryMapping) {
+            final Map<Enum, List<String>> unitPriceMapping, final Map<Enum, List<String>> countryMapping,
+            final String country) {
         if (parsedBid == null) {
             return null;
         }
@@ -67,9 +70,9 @@ public final class BidUtils {
             .setIsWinning(StringUtils.cleanBoolean(parsedBid.getIsWinning()))
             .setMonthlyPriceMonthsCount(NumberUtils.cleanInteger(parsedBid.getMonthlyPriceMonthsCount(), numberFormats))
             .setPayments(ArrayUtils.walk(parsedBid.getPayments(),
-                (parsedPayment) -> PaymentUtils.cleanPayment(parsedPayment, numberFormats, formatters)))
-            .setPrice(PriceUtils.cleanPrice(parsedBid.getPrice(), numberFormats))
-            .setSubcontractedValue(PriceUtils.cleanPrice(parsedBid.getSubcontractedValue(), numberFormats))
+                (parsedPayment) -> PaymentUtils.cleanPayment(parsedPayment, numberFormats, formatters, country)))
+            .setPrice(PriceUtils.cleanPrice(parsedBid.getPrice(), numberFormats, country))
+            .setSubcontractedValue(PriceUtils.cleanPrice(parsedBid.getSubcontractedValue(), numberFormats, country))
             .setSubcontractedProportion(NumberUtils.cleanInteger(parsedBid.getSubcontractedProportion(), numberFormats))
             //subcontractor doesn't specify the main activity type and the buyer type. Mappings should be null.
             .setSubcontractors(ArrayUtils.walk(parsedBid.getSubcontractors(),
@@ -96,12 +99,15 @@ public final class BidUtils {
      *          unit price mapping
      * @param countryMapping
      *          country mapping
+     * @param country
+     *          country
      * @return cleaned bid
      */
     public static CleanBid cleanBid(final ParsedBid parsedBid, final NumberFormat numberFormat,
             final List<DateTimeFormatter> formatter, final Map<Enum, List<String>> documentTypeMapping,
-            final Map<Enum, List<String>> unitPriceMapping, final Map<Enum, List<String>> countryMapping) {
+            final Map<Enum, List<String>> unitPriceMapping, final Map<Enum, List<String>> countryMapping,
+            final String country) {
         return cleanBid(parsedBid, Arrays.asList(numberFormat), formatter, documentTypeMapping, unitPriceMapping,
-                countryMapping);
+                countryMapping, country);
     }
 }

@@ -95,54 +95,6 @@ final class TenderNedTenderAncientFormUtils {
     }
 
     /**
-     * Parse buyer name from document.
-     *
-     * @param form
-     *         document to be parsed
-     *
-     * @return String or Null
-     */
-    static String parseBuyerName(final Element form) {
-        return ParserUtils.getFromContent(form, ANCIENT_SUBSECTION_I_1_CONTENT_SELECTOR, 0);
-    }
-
-    /**
-     * Parse buyer body identifier ID from document.
-     *
-     * @param form
-     *         document to be parsed
-     *
-     * @return String or Null
-     */
-    static String parseBuyerBodyIdentifierId(final Element form) {
-        return ParserUtils.getFromContent(form, ANCIENT_SUBSECTION_I_1_CONTENT_SELECTOR, 1);
-    }
-
-    /**
-     * Parse buyer raw address from document.
-     *
-     * @param form
-     *         document to be parsed
-     *
-     * @return String or Null
-     */
-    static String parseBuyerRawAddress(final Element form) {
-        return ParserUtils.getFromContent(form, ANCIENT_SUBSECTION_I_1_CONTENT_SELECTOR, 2);
-    }
-
-    /**
-     * Parse buyer contact name from document.
-     *
-     * @param form
-     *         document to be parsed
-     *
-     * @return String or Null
-     */
-    static String parseBuyerContactName(final Element form) {
-        return ParserUtils.getFromContent(form, ANCIENT_SUBSECTION_I_1_CONTENT_SELECTOR, "Ter attentie van:");
-    }
-
-    /**
      * Parse buyer phone from document.
      *
      * @param form
@@ -162,18 +114,6 @@ final class TenderNedTenderAncientFormUtils {
         return phoneAndFax.contains(",")
                 ? phoneAndFax.substring(0, phoneAndFax.indexOf(','))
                 : phoneAndFax;
-    }
-
-    /**
-     * Parse buyer email from document.
-     *
-     * @param form
-     *         document to be parsed
-     *
-     * @return String or Null
-     */
-    static String parseBuyerEmail(final Element form) {
-        return ParserUtils.getFromContent(form, ANCIENT_SUBSECTION_I_1_CONTENT_SELECTOR, "E-mail:");
     }
 
     /**
@@ -446,18 +386,27 @@ final class TenderNedTenderAncientFormUtils {
      *
      * @return award criteria or Null
      */
-    static List<ParsedAwardCriterion> parseAwardCriteria(final Element form) {
-        // annotation only says that we have to parse award criteria name if subsection IV.2.1 has one row filled
-
+    static List<ParsedAwardCriterion> parseAwardCriteria(final Element form) {        
         Element subsection = JsoupUtils.selectFirst(ANCIENT_SUBSECTION_IV_2_1_CONTENT_SELECTOR, form);
         if (subsection == null) {
             return null;
         }
-        String[] subsectionRows = subsection.html().split("<br>");
-        assert subsectionRows.length != 0;
-        return subsectionRows.length == 1
-                ? Arrays.asList(new ParsedAwardCriterion().setName(subsectionRows[0].trim()))
-                : null;
+
+        // attempt to find criteria in subsection content
+        Matcher m = Pattern.compile("(?im)^Criterium: (?<name>.+)$(.*\n)*?^WeegFactor: (?<weight>.+)$")
+            .matcher(subsection.html().replace("<br>", "\n"));
+
+        List<ParsedAwardCriterion> criteria = new ArrayList<>();        
+        // annotation only says that we have to parse award criteria name if subsection IV.2.1 has one row filled
+        if (!m.find()) {
+            criteria.add(new ParsedAwardCriterion().setName(subsection.html().split("<br>")[0].trim()));
+        } else {
+            do {
+                criteria.add(new ParsedAwardCriterion().setName(m.group("name")).setWeight(m.group("weight")));
+            } while (m.find());
+        }
+
+        return criteria.isEmpty() ? null : criteria;
     }
 
     /**
@@ -484,5 +433,41 @@ final class TenderNedTenderAncientFormUtils {
     static String parseTenderBuyerAssignedId(final Element form) {
         return ParserUtils.getFromContent(form, ANCIENT_SUBSECTION_IV_3_1_CONTENT_SELECTOR, 0);
     }
+    
+    /**
+     * @param form
+     *      document to be parsed
+     * @return first buyer
+     */
+    static ParsedBody parseFirstTenderBuyer(final Element form) {
+        Element subsection = JsoupUtils.selectFirst(ANCIENT_SUBSECTION_I_2_CONTENT_SELECTOR, form);
 
+        return new ParsedBody()
+            .setName(ParserUtils.getFromContent(form, ANCIENT_SUBSECTION_I_1_CONTENT_SELECTOR, 0))
+            .addBodyId(TenderNedTenderFormUtils.parseBodyIdentifier(
+                ParserUtils.getFromContent(form, ANCIENT_SUBSECTION_I_1_CONTENT_SELECTOR, 1)))
+            .setAddress(new ParsedAddress()
+                .setRawAddress(ParserUtils.getFromContent(form, ANCIENT_SUBSECTION_I_1_CONTENT_SELECTOR, 2))
+                .setUrl(TenderNedTenderAncientFormUtils.parseBuyerUrl(form)))
+            .setContactName(ParserUtils.getFromContent(form, ANCIENT_SUBSECTION_I_1_CONTENT_SELECTOR,
+                "Ter attentie van:"))
+            .setPhone(TenderNedTenderAncientFormUtils.parseBuyerPhone(form))
+            .setEmail(ParserUtils.getFromContent(form, ANCIENT_SUBSECTION_I_1_CONTENT_SELECTOR, "E-mail:"))
+            .addMainActivity(subsection != null ? subsection.childNode(2).toString() : null)
+            .setBuyerType(subsection != null ? subsection.childNode(0).toString() : null);
+    }
+
+    /**
+     * @param form
+     *      parsed form
+     * @return selection method
+     */
+    static String parseSelectionMethod(final Element form) {
+        Element subsection = JsoupUtils.selectFirst(ANCIENT_SUBSECTION_IV_2_1_CONTENT_SELECTOR, form);
+        if (subsection == null) {
+            return null;
+        }
+        
+        return subsection.html().split("<br>")[0].trim();
+    }
 }

@@ -13,7 +13,7 @@ public final class StatniPokladnaFINM207Handler implements StatniPokladnaHandler
     @Override
     public ParsedBudgetItem parse(final CSVRecord record) {
         return StatniPokladnaBudgetParserUtils.parseCommonFINMBudgetItem(record)
-            .setLevel3Code(record.get(0))
+            .setLevel3Code(record.get(9))
             .setValue(record.get(10));
     }
 

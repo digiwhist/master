@@ -8,6 +8,7 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -67,7 +68,10 @@ public final class ParserUtils {
                 subSectionRows.add(node);
                 subSectionRows.add(new Element(Tag.valueOf("br"), "")); // nodes will be separated (useful for text)
                 node = node.nextSibling();
-            } while (endRow == null ? node != null : !node.equals(endRow));
+                if (node == null) {
+                    break;
+                }
+            } while (endRow == null ? true : !node.equals(endRow));
             return cloneAndWrapByRootElement(subSectionRows);
         }
         return null;
@@ -92,9 +96,8 @@ public final class ParserUtils {
             return null;
         }
         String[] subsectionRows = subsection.html().split("<br>");
-        assert informationIndex < subsectionRows.length : "The information has to be on some row.";
-        String result = subsectionRows[informationIndex].trim();
-        return result.equals("-") ? null : result;
+        String result = informationIndex < subsectionRows.length ? subsectionRows[informationIndex].trim() : null;
+        return Objects.equals("-", result) ? null : result;
     }
 
     /**

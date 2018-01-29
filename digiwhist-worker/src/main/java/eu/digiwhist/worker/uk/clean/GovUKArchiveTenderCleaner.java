@@ -130,6 +130,8 @@ public class GovUKArchiveTenderCleaner extends BaseDigiwhistTenderCleaner {
         mapping.put(TenderSupplyType.SERVICES, Arrays.asList("Services"));
         mapping.put(TenderSupplyType.WORKS, Arrays.asList("Works"));
         mapping.put(TenderSupplyType.SUPPLIES, Arrays.asList("Supplies", "Products"));
+        mapping.put(TenderSupplyType.OTHER, Arrays.asList("Other"));
+        mapping.put(null, Arrays.asList("NotSpecified", "NotApplicable"));
 
         return mapping;
     }

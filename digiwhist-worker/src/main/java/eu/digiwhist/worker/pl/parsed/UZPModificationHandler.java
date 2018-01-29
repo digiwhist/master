@@ -12,6 +12,7 @@ import eu.dl.dataaccess.dto.parsed.ParsedCorrigendum;
 import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
+import java.util.Arrays;
 
 /**
  * Parser for contract notice form specific data.
@@ -27,15 +28,14 @@ public final class UZPModificationHandler {
     }
 
     /**
-     * @param parsedTender
-     *         parsed tender
      * @param document
      *         xml document
-     *
-     * @return parsed tender
+     * @param machineReadableUrl
+     *      machine readable URL of included publication
+     * @return list of parsed tenders
      */
-    public static ParsedTender parse(final ParsedTender parsedTender, final Document document) {
-        return parsedTender
+    public static List<ParsedTender> parse(final Document document, final String machineReadableUrl) {
+        return Arrays.asList(UZPTenderParserUtils.parseCommonFormData(document, machineReadableUrl)
             .addPublication(new ParsedPublication()
                 .setIsIncluded(false)
                 .setSource(PublicationSources.PL_UZP_FTP)
@@ -46,9 +46,9 @@ public final class UZPModificationHandler {
                 .setOriginal(JsoupUtils.selectText(":root > jest", document))
                 .setReplacement(JsoupUtils.selectText(":root > ma", document)))
             .addCorrections(parseCorrections(JsoupUtils.selectNumberedElements(
-                UZPModificationHandler::corrigendumSelectorProducer, JsoupUtils.selectFirst("zmiany", document))))
+                UZPModificationHandler::corrigendumSelectorProducer, JsoupUtils.selectFirst("zmiany", document), 0)))
             .addCorrections(parseCorrections(JsoupUtils.selectNumberedElements(
-                UZPModificationHandler::corrigendumSelectorProducer, JsoupUtils.selectFirst("dodane", document))));
+                UZPModificationHandler::corrigendumSelectorProducer, JsoupUtils.selectFirst("dodane", document), 0))));
     }
 
     /**

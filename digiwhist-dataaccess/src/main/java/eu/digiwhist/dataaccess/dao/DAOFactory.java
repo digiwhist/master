@@ -1,5 +1,11 @@
 package eu.digiwhist.dataaccess.dao;
 
+import java.util.List;
+
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import eu.digiwhist.dataaccess.dao.hibernate.HibernateDAOFactory;
 import eu.digiwhist.dataaccess.dao.jdbc.JdbcDAOFactory;
 import eu.digiwhist.dataaccess.dao.mongo.MongoDAOFactory;
@@ -7,7 +13,6 @@ import eu.dl.core.config.Config;
 import eu.dl.dataaccess.dao.CleanTenderDAO;
 import eu.dl.dataaccess.dao.CrawlerAuditDAO;
 import eu.dl.dataaccess.dao.EtalonBodyDAO;
-import eu.dl.dataaccess.dao.IndicatorDAO;
 import eu.dl.dataaccess.dao.ManualMatchDAO;
 import eu.dl.dataaccess.dao.MasterBodyDAO;
 import eu.dl.dataaccess.dao.MasterTenderDAO;
@@ -16,11 +21,6 @@ import eu.dl.dataaccess.dao.MatchedTenderDAO;
 import eu.dl.dataaccess.dao.ParsedTenderDAO;
 import eu.dl.dataaccess.dao.RawDataDAO;
 import eu.dl.dataaccess.dao.TransactionUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 /**
  * Abstract DAO factory class for creating DAO objects.
@@ -316,16 +316,4 @@ public abstract class DAOFactory {
      * @return DAO obejct for managing BvD etalon body
      */
     public abstract EtalonBodyDAO getBVDEtalonBodyDAO();
-
-    /**
-     * Gets the Indicator DAO.
-     *
-     * @param workerName
-     *         name of the worker manipulating with data via this DAO
-     * @param workerVersion
-     *         version of the worker manipulating with data via this DAO
-     *
-     * @return DAO object for managing indicators
-     */
-    public abstract IndicatorDAO getIndicatorDAO(String workerName, String workerVersion);
 }

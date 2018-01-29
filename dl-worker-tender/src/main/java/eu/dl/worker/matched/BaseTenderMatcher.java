@@ -1,21 +1,5 @@
 package eu.dl.worker.matched;
 
-import static eu.dl.dataaccess.utils.DigestUtils.bodyFullHash;
-import static eu.dl.dataaccess.utils.DigestUtils.generateAlternativeBodyHashes;
-
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-
-import org.apache.commons.lang3.tuple.Pair;
-import org.apache.logging.log4j.ThreadContext;
-import org.cache2k.Cache;
-import org.cache2k.Cache2kBuilder;
-
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dao.CleanTenderDAO;
 import eu.dl.dataaccess.dao.EtalonBodyDAO;
@@ -41,6 +25,21 @@ import eu.dl.worker.matched.plugin.MatchingPlugin;
 import eu.dl.worker.matched.plugin.MatchingResult;
 import eu.dl.worker.utils.BasicPluginRegistry;
 import eu.dl.worker.utils.PluginRegistry;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.ThreadContext;
+import org.cache2k.Cache;
+import org.cache2k.Cache2kBuilder;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import static eu.dl.dataaccess.utils.DigestUtils.bodyFullHash;
+import static eu.dl.dataaccess.utils.DigestUtils.generateAlternativeBodyHashes;
 
 /**
  * Base class for tender matchers. Waits for clean tender data, matches each
@@ -98,13 +97,13 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
     		.eternal(true)
     		.entryCapacity(20000000)
     		.build();
-    		
+
     	protected final Cache<String, Boolean> groupEtalonCache = new Cache2kBuilder<String, Boolean>() {}
     		.name("groupEtalonCache")
     		.eternal(true)
     		.entryCapacity(20000000)
     		.build();
-    		
+
     /**
      * Default constructor.
      */
@@ -129,9 +128,9 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
 
         registerCommonTenderPlugins();
         registerTenderPlugins();
-        
-        //populateBodyHashCache();
-        //populateEtalonCache();
+
+        populateBodyHashCache();
+        populateEtalonCache();
     }
 
 	@Override
@@ -157,7 +156,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
      *
      * @param matchedTender
      *         matched tender
-     * 
+     *
      * @param cleanTender
      *         clean tender
      *
@@ -227,7 +226,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
      *
      * @return list of matched bodies
      */
-    private MatchedBody matchBody(final MatchedBody body, final CleanTender cleanTender, 
+    private MatchedBody matchBody(final MatchedBody body, final CleanTender cleanTender,
             final LocalDate publicationDate, final String source) {
         if (body == null) {
             return null;
@@ -290,20 +289,20 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
             body.setFullHash(fullHash);
 
             body.setAlternativeHashes(generateAlternativeBodyHashes(body));
-            
+
             // search for potential matches in cache
             long pluginStartTime = System.currentTimeMillis();
             String matchedByHashGroupId = findByHashes(body);
             long pluginEndTime = System.currentTimeMillis();
-            
+
             long executionTime = pluginEndTime - pluginStartTime;
             ThreadContext.put("matching_time", new Long(executionTime).toString());
             ThreadContext.put("matching_plugin_name", "HASH");
             logger.error("Execution of body match plugin {} took {} ms.", "HASH", executionTime);
-            
+
             HashMap<String, Long> matchingTimes = new HashMap<String, Long>();
             matchingTimes.put("HASH", executionTime);
-            
+
             if (matchedByHashGroupId != null) {
                 // the same hash found, storing into the same group
                 body.setGroupId(matchedByHashGroupId);
@@ -323,7 +322,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
                     matchingTimes.put(plugin.getClass().getName(), executionTime);
                     logger.error("Execution of body match plugin {} took {} ms.", plugin.getClass().getName(),
                                 executionTime);
-                    
+
                     if (matchingResult.getMatched()) {
                         // match found, store group_id and matched by
                         body.setGroupId(matchingResult.getGroupId());
@@ -331,7 +330,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
                         metaData.put("matchedBy", matchingResult.getMatchedBy());
                         metaData.put("matchingData", matchingResult.getMetaData());
                         matched = true;
-                        
+
                         // save results to cache
                         if (matchingResult.getMatchedBy().equals(ExactMatchingEtalonPlugin.MATCHED_BY)
                         		|| matchingResult.getMatchedBy().equals(ApproximateMatchingEtalonPlugin.MATCHED_BY)) {
@@ -340,7 +339,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
                         } else {
                         		groupEtalonCache.put(matchingResult.getGroupId(), false);
                         }
-                        
+
                         // end the plugin loop
                         break;
                     }
@@ -355,9 +354,9 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
 
             logger.debug("Body with hash '{}' matched by '{}' with group id '{}'", body.getHash(), body.getMatchedBy(),
                     body.getGroupId());
-            
+
             putToCache(body.getGroupId(), body);
-            
+
             // save the result
             body.setCleanObjectId(cleanTender.getId());
             body.setPublicationDate(publicationDate);
@@ -366,7 +365,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
             metaData.put("completenessScore", completenessScore);
             metaData.put("cleanObjectPersistentId", cleanTender.getPersistentId());
             metaData.put("matchingTimes", matchingTimes);
-            
+
             body.setMetaData(metaData);
             matchedBodyDao.save(body);
 
@@ -393,10 +392,10 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
         return null;
     }
 
-    
+
     /**
      * Puts values with matching result to cache.
-     * 
+     *
      * @param groupId the group id where the body was stored
      * @param body matched body
      */
@@ -404,7 +403,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
     		if (body.getHash() != null) {
     			bodyHashCache.put(body.getHash(), groupId);
     		}
-    		
+
     		for (WeightedHash hash : body.getAlternativeHashes()) {
     			bodyHashCache.put(hash.getHash(), groupId);
     		}
@@ -412,35 +411,35 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
 
 	/**
      * This method searches by body hashes for potential matches.
-     * 
+     *
      * @param body for which body to search
      * @return groupid or null if nothing found
      */
     private String findByHashes(final MatchedBody body) {
     		// check first, whether there is not the "same"(in the sense of the equal hash) body
         String groupId = bodyHashCache.peek(body.getHash());
-        if (groupId != null) { 
+        if (groupId != null) {
         		return groupId;
     		}
-    
+
         String winningGroupId = null;
         Integer winnerWeight = null;
-        
+
         for (WeightedHash hash : body.getAlternativeHashes()) {
         		groupId = bodyHashCache.peek(hash.getHash());
-            
+
             if (groupId != null) {
             		Boolean isEtalonGroup = groupEtalonCache.peek(groupId);
- 
+
             		if (isEtalonGroup != null && isEtalonGroup) {
     					// etalon wins, no need to wait
     					return groupId;
             		}
-            		
+
             		if (winningGroupId == null) {
             			// first go through, init data
         				winningGroupId = groupId;
-        				winnerWeight = hash.getWeight();  				
+        				winnerWeight = hash.getWeight();
         			} else {
         				// next round, compare weight with previous
         				if (hash.getWeight() < winnerWeight) {
@@ -450,7 +449,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
         			}
         		}
         }
-        
+
     		return winningGroupId;
 	}
 
@@ -492,7 +491,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
                     matchedTender.setGroupId(matchingResult.getGroupId());
                     matchedTender.setMatchedBy(matchingResult.getMatchedBy());
                     matched = true;
-                    
+
                     // end the plugin loop
                     break;
                 }
@@ -556,7 +555,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
      * Registration of plugin used to clean all bodies.
      */
     private void registerCommonBodyPlugins() {
-        bodyPluginRegistry.registerPlugin(MANUAL_PLUGIN, 
+        bodyPluginRegistry.registerPlugin(MANUAL_PLUGIN,
         			new ManualMatchingPlugin<MatchedBody>(manualMatchDao, "body"));
         bodyPluginRegistry.registerPlugin(EXACT_MATCH_ETALON_PLUGIN,
                 new ExactMatchingEtalonPlugin(matchedBodyDao, etalonBodyDao, getSourceId()));
@@ -686,7 +685,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
     protected final String generateBodyFullHash(final MatchedBody matchedBody) {
         return bodyFullHash(matchedBody);
     }
-    
+
     /**
      * Populates body hash cache with already matched results.
      */
@@ -701,7 +700,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
 		}
 		logger.info("Body hash cache populated.");
 	}
-    
+
     /**
      * Populates body hash cache with already matched results.
      */

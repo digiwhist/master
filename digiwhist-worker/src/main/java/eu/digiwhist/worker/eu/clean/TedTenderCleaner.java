@@ -359,7 +359,8 @@ public final class TedTenderCleaner extends BaseDigiwhistTenderCleaner {
         mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("F03_2011", "F03_2014", "F06_2011", "F06_2014",
             "Contract award notice", "Contract award", "VOLUNTARY_EX_ANTE_TRANSPARENCY_NOTICE"));
         mapping.put(PublicationFormType.OTHER, Arrays.asList("other_previous_publication", "NOTICE_BUYER_PROFILE"));
-        mapping.put(PublicationFormType.PRIOR_INFORMATION_NOTICE, Arrays.asList("PRIOR_INFORMATION_NOTICE"));
+        mapping.put(PublicationFormType.PRIOR_INFORMATION_NOTICE, Arrays.asList("F01_2011", "F01_2014",
+            "PRIOR_INFORMATION_NOTICE"));
         mapping.put(PublicationFormType.CONTRACT_UPDATE, Arrays.asList("F14_2011", "F14_2014",
             "Additional information"));
 

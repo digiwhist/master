@@ -1,9 +1,5 @@
 package eu.digiwhist.worker.clean;
 
-import java.text.NumberFormat;
-import java.util.List;
-import java.util.Map;
-
 import eu.digiwhist.dataaccess.dto.clean.CleanBudgetItem;
 import eu.digiwhist.dataaccess.dto.codetables.BudgetItemReportType;
 import eu.digiwhist.dataaccess.dto.parsed.ParsedBudgetItem;
@@ -14,6 +10,10 @@ import eu.dl.worker.clean.utils.NumberUtils;
 import eu.dl.worker.clean.utils.PriceUtils;
 import eu.dl.worker.clean.utils.StringUtils;
 import eu.dl.worker.clean.utils.URLSchemeType;
+
+import java.text.NumberFormat;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Plugin for cleaning buget items.
@@ -56,6 +56,20 @@ public class BudgetItemPlugin extends BaseNumberPlugin<ParsedBudgetItem, CleanBu
     }
 
     /**
+     * BudgetItemPlugin with list of number formats and report type mapping initialization .
+     *
+     * @param formats
+     *        list of number formats
+     * @param mappings
+     *        mappings for cleaning process. Expects keys (buyerTypeMapping, buyerActivityTypeMapping, countryMapping,
+     *        budgetItemReportTypeMapping) that hodl appropriate mappings.
+     */
+    public BudgetItemPlugin(final List<NumberFormat> formats, final Map<String, Map<Enum, List<String>>> mappings) {
+        super(formats);
+        this.mappings = mappings;
+    }
+
+    /**
      * Cleans budget item.
      *
      * @param parsedBudget
@@ -78,11 +92,11 @@ public class BudgetItemPlugin extends BaseNumberPlugin<ParsedBudgetItem, CleanBu
             .setLevel3Name(StringUtils.cleanShortString(parsedBudget.getLevel3Name()))
             .setLevel3Code(StringUtils.cleanShortString(parsedBudget.getLevel3Code()))
             .setCurrency(PriceUtils.cleanPriceCurrency(parsedBudget.getCurrency()))            
-            .setPlannedValue(NumberUtils.cleanBigDecimal(parsedBudget.getYear(), formats))
+            .setPlannedValue(NumberUtils.cleanBigDecimal(parsedBudget.getPlannedValue(), formats))
             .setReport((BudgetItemReportType) CodeTableUtils.mapValue(parsedBudget.getReport(),
                 mappings.get(BUDGET_ITEM_REPORT_TYPE_MAPPING)))
             .setSource(StringUtils.cleanURL(parsedBudget.getSource(), URLSchemeType.HTTP))
-            .setValue(NumberUtils.cleanBigDecimal(parsedBudget.getYear(), formats))
+            .setValue(NumberUtils.cleanBigDecimal(parsedBudget.getValue(), formats))
             .setYear(NumberUtils.cleanInteger(parsedBudget.getYear(), formats));
 
         return cleanBudget;

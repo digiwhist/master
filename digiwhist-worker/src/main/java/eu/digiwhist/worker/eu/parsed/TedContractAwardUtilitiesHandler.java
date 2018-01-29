@@ -124,6 +124,8 @@ public final class TedContractAwardUtilitiesHandler {
             .setNpwpReasons(TedTenderParserUtils.parseNpwpReasons(JsoupUtils.selectFirst("TYPE_PROCEDURE_AWARD"
                 + " > F06_PT_NEGOTIATED_WITHOUT_COMPETITION", procedureNode)));
 
+        TedTenderParserUtils.appendNoticeReference(document, parsedTender);
+
         return parsedTender;
     }
 

@@ -7,37 +7,37 @@ public enum TenderIndicatorType {
     /**
      * Corruption - single bid.
      */
-    CORRUPTION_SINGLE_BID,
+    INTEGRITY_SINGLE_BID,
 
     /**
      * Corruption - new company.
      */
-    CORRUPTION_NEW_COMPANY,
+    INTEGRITY_NEW_COMPANY,
 
     /**
      * Corruption - decision period length.
      */
-    CORRUPTION_DECISION_PERIOD,
+    INTEGRITY_DECISION_PERIOD,
 
     /**
      * Corruption - advertisement period length.
      */
-    CORRUPTION_ADVERTISEMENT_PERIOD,
+    INTEGRITY_ADVERTISEMENT_PERIOD,
 
     /**
-     * Corruption - prior information notice.
+     * Corruption - call for tenders publication.
      */
-    CORRUPTION_PRIOR_INFORMATION_NOTICE,
+    INTEGRITY_CALL_FOR_TENDER_PUBLICATION,
     
     /**
      * Corruption - procedure type.
      */
-    CORRUPTION_PROCEDURE_TYPE,
+    INTEGRITY_PROCEDURE_TYPE,
     
     /**
      * Corruption - tax haven.
      */
-    CORRUPTION_TAX_HAVEN,
+    INTEGRITY_TAX_HAVEN,
 
     /**
      * Administrative capacity - centralized procurement.
@@ -63,5 +63,15 @@ public enum TenderIndicatorType {
      * Administrative capacity - english as foreign language.
      */
     ADMINISTRATIVE_ENGLISH_AS_FOREIGN_LANGUAGE,
+
+    /**
+     * Transparency - number of key missing fields.
+     */
+    TRANSPARENCY_NUMBER_OF_KEY_MISSING_FIELDS,
+
+    /**
+     * Transparency - notice and award discrepancies.
+     */
+    TRANSPARENCY_NOTICE_AND_AWARD_DISCREPANCIES
 }
 

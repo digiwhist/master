@@ -10,6 +10,7 @@ import org.jsoup.select.Elements;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by michalriha on 02/06/2017.
@@ -25,11 +26,14 @@ public class CVPISTenderParser extends BaseDigiwhistTenderParser {
     @Override
     public final List<ParsedTender> parse(final RawData raw) {
         final Element document = Jsoup.parse(raw.getSourceData()).select("div#skelbimo_turinys").first();
-
-        ParsedTender parsedTender = CVPISTenderOldHandler.parse(document, raw.getSourceUrl().toString());
+        final Map<String, Object> metaData = raw.getMetaData();
+        final String publicationDate = (String) metaData.get("publicationDate");
+        
+        ParsedTender parsedTender = CVPISTenderOldHandler.parse(document, raw.getSourceUrl().toString(),
+            publicationDate);
 
         if (parsedTender.getTitle() == null) {
-            parsedTender = CVPISTenderNewHandler.parse(document, raw.getSourceUrl().toString());
+            parsedTender = CVPISTenderNewHandler.parse(document, raw.getSourceUrl().toString(), publicationDate);
         }
 
         return Collections.singletonList(parsedTender);

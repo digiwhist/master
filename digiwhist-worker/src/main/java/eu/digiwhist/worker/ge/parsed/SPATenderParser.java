@@ -26,6 +26,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -109,8 +111,11 @@ public class SPATenderParser extends BaseDigiwhistTenderParser {
             }
         }
 
+        String procedureType = getFromTableFromMainSnippet("Tender type", mainSnippet);
+
         parsedTender
-                .setProcedureType(getFromTableFromMainSnippet("Tender type", mainSnippet))
+                .setProcedureType(procedureType)
+                .setNationalProcedureType(procedureType)
                 .setPublications(parsePublications(mainSnippet, chronologySnippet, rawTender.getSourceUrl().toString()))
                 .addLot(new ParsedTenderLot()
                         .setStatus(getFromTableFromMainSnippet("Tender proceeding status", mainSnippet))
@@ -139,9 +144,28 @@ public class SPATenderParser extends BaseDigiwhistTenderParser {
                 .setCpvs(parseTenderCpvs(mainSnippet))
                 .setDescription(JsoupUtils.selectText("div[id='print_area'] > table > tbody > tr > td > div.blabla",
                         mainSnippet))
-                .setDeposits(getFromTableFromMainSnippet("Bid reduction step", mainSnippet))
+                .setDeposits(getFromTableFromMainSnippet("Guarantee amount", mainSnippet))
                 .setAwardDeadlineDuration(parseAwardDeadlineDuration(mainSnippet))
                 .setDocuments(parseTenderDocuments(documentationSnippet, resultSnippet));
+
+        final Elements updateElements = getHighlightElements("Contract modification", resultSnippet);
+        if (updateElements != null && !updateElements.isEmpty()) {
+                Elements updates = updateElements.get(0).select("table > tbody > tr > td:nth-child(1)");
+                updates.forEach(n -> {
+                    Matcher m = Pattern.compile("Contract validity:"
+                        + " ?(?<start>\\d{2}.\\d{2}.\\d{4})? - (?<end>\\d{2}.\\d{2}.\\d{4})?").matcher(n.text());
+                    if (m.find()) {
+                        String start = m.group("start");
+                        if (start != null) {
+                            parsedTender.setEstimatedStartDate(start);
+                        }
+                        String end = m.group("end");
+                        if (end != null) {
+                            parsedTender.setEstimatedCompletionDate(end);
+                        }
+                    }
+                });
+        }
 
         return Arrays.asList(parsedTender);
     }
@@ -329,27 +353,24 @@ public class SPATenderParser extends BaseDigiwhistTenderParser {
             resultSnippetContext)));
 
 
-        final Elements contractAgreementLinkElements = JsoupUtils.select("div:has(p:containsOwn(Agreement)) > table"
-            + " > tbody > tr > td:eq(1) > a", resultSnippetContext);
-        
+        final Elements contractAgreementLinkElements = getHighlightElements("Agreement", resultSnippet);
         assert contractAgreementLinkElements.size() <= 1;
 
         if (!contractAgreementLinkElements.isEmpty()) {
             documents.add(new ParsedDocument()
                 .setType(DocumentType.CONTRACTOR_AGREEMENT.name())
-                .setUrl(parseAbsoluteDocumentUrl(contractAgreementLinkElements.get(0))));
+                .setUrl(parseAbsoluteDocumentUrl(JsoupUtils.selectFirst("table > tbody > tr > td:eq(1) > a",
+                    contractAgreementLinkElements.get(0)))));
         }
 
 
-        final Elements contractModificationElements =
-            JsoupUtils.select("div:has(div:containsOwn(Contract modification)) > table"
-            + " > tbody > tr > td:eq(1) > a", resultSnippetContext);
-
+        final Elements contractModificationElements = getHighlightElements("Contract modification", resultSnippet);
         assert contractModificationElements.size() <= 1;
 
         if (!contractModificationElements.isEmpty()) {
             documents.add(new ParsedDocument()
-                .setUrl(parseAbsoluteDocumentUrl(contractModificationElements.get(0))));
+                .setUrl(parseAbsoluteDocumentUrl(JsoupUtils.selectFirst("table > tbody > tr > td:eq(1) > a",
+                    contractModificationElements.get(0)))));
         }
 
         return documents.isEmpty() ? null : documents;
@@ -371,7 +392,7 @@ public class SPATenderParser extends BaseDigiwhistTenderParser {
      */
     private List<ParsedDocument> parseDocumentsFromTable(final Element table) {
         final Elements rows = JsoupUtils.select("tbody > tr", table);
-        if (rows.isEmpty()) {
+        if (rows == null || rows.isEmpty() || rows.get(0).text().contains("No documents attached")) {
             return Collections.emptyList();
         }
 
@@ -417,17 +438,20 @@ public class SPATenderParser extends BaseDigiwhistTenderParser {
 
         final Element winnerInfoElement = getWinnerInfoElementFrom(resultSnippet);
 
+        String winnerId = SPATenderUtils.getSubjectId(JsoupUtils.selectFirst("a", winnerInfoElement));
+
         // get disqualified bidders from result snippet
         final Elements disqualifiedBidderRows = JsoupUtils.select(
                 "div[id='agency_docs'] > div > table:has(tr:containsOwn(Disqualification)) > tbody > tr",
                 resultSnippet);
 
+
+
         List<ParsedBid> bids = new ArrayList<>();
         for (Element bidderRow : bidderRows) {
             // parse bidder info from the row
-            ParsedBid bid = new ParsedBid()
-                    .addBidder(new ParsedBody()
-                            .setName(JsoupUtils.selectText("td:nth-child(1) > span", bidderRow)));
+            ParsedBid bid = new ParsedBid();
+
             final String amount = JsoupUtils.selectText("td:nth-child(2) > strong", bidderRow);
             if (includingVat) {
                 bid.setPrice(new ParsedPrice()
@@ -443,24 +467,21 @@ public class SPATenderParser extends BaseDigiwhistTenderParser {
 
             // parse bidder info from bidder detail snippet
             final Document bidderSnippet = Jsoup.parse(subjectSnippetMap.get(bidderId));
-            bid.getBidders().get(0)
-                    .addBodyId(new BodyIdentifier()
-                            .setId(getFromTableFromSubjectSnippet(BODY_ID_TITLE_ON_SUBJECT_SNIPPET, bidderSnippet)))
-                    .setAddress(new ParsedAddress()
-                            .setCountry(getFromTableFromSubjectSnippet(COUNTRY_TITLE_ON_SUBJECT_SNIPPET,
-                                    bidderSnippet))
-                            .setCity(getFromTableFromSubjectSnippet(CITY_TITLE_ON_SUBJECT_SNIPPET, bidderSnippet))
-                            .setStreet(getFromTableFromSubjectSnippet(STREET_TITLE_ON_SUBJECT_SNIPPET,
-                                    bidderSnippet))
-                            .setUrl(getFromTableFromSubjectSnippet(URL_TITLE_ON_SUBJECT_SNIPPET, bidderSnippet)))
-                    .setPhone(getFromTableFromSubjectSnippet(PHONE_TITLE_ON_SUBJECT_SNIPPET, bidderSnippet))
-                    .setEmail(getFromTableFromSubjectSnippet(EMAIL_TITLE_ON_SUBJECT_SNIPPET, bidderSnippet))
-                    .setContactName(JsoupUtils.selectText(CONTACT_NAME_SELECTOR_ON_SUBJECT_SNIPPET, bidderSnippet));
-
+            bid.addBidder(new ParsedBody()
+                .setName(JsoupUtils.selectText("table > tbody > tr > td:eq(1) > strong", bidderSnippet))
+                .addBodyId(new BodyIdentifier()
+                    .setId(getFromTableFromSubjectSnippet(BODY_ID_TITLE_ON_SUBJECT_SNIPPET, bidderSnippet)))
+                .setAddress(new ParsedAddress()
+                    .setCountry(getFromTableFromSubjectSnippet(COUNTRY_TITLE_ON_SUBJECT_SNIPPET, bidderSnippet))
+                    .setCity(getFromTableFromSubjectSnippet(CITY_TITLE_ON_SUBJECT_SNIPPET, bidderSnippet))
+                    .setStreet(getFromTableFromSubjectSnippet(STREET_TITLE_ON_SUBJECT_SNIPPET, bidderSnippet))
+                    .setUrl(getFromTableFromSubjectSnippet(URL_TITLE_ON_SUBJECT_SNIPPET, bidderSnippet)))
+                .setPhone(getFromTableFromSubjectSnippet(PHONE_TITLE_ON_SUBJECT_SNIPPET, bidderSnippet))
+                .setEmail(getFromTableFromSubjectSnippet(EMAIL_TITLE_ON_SUBJECT_SNIPPET, bidderSnippet))
+                .setContactName(JsoupUtils.selectText(CONTACT_NAME_SELECTOR_ON_SUBJECT_SNIPPET, bidderSnippet)));
+            
             // parse whether the bid won
-            bid
-                    .setIsWinning(Boolean.valueOf(bidderId.equals(SPATenderUtils.getSubjectId(
-                            JsoupUtils.selectFirst("a", winnerInfoElement)))).toString());
+            bid.setIsWinning(Boolean.toString(bidderId.equals(winnerId)));
 
             List<Element> matchedDisqualifiedBidderRows = disqualifiedBidderRows
                     .stream()
@@ -490,12 +511,26 @@ public class SPATenderParser extends BaseDigiwhistTenderParser {
      * @return element containing information about winner from result snippet or null.
      */
     private Element getWinnerInfoElementFrom(final Document resultSnippet) {
-        final Elements winnerInfoElements = JsoupUtils.select(
-                "div[id='agency_docs'] > div:has(p:containsOwn(Agreement)) > table > tbody > tr > td:nth-child(1)",
-                resultSnippet);
+        final Elements winnerInfoElements = getHighlightElements("Agreement", resultSnippet);
         assert winnerInfoElements.size() <= 1;
-        return winnerInfoElements.isEmpty() ? null : winnerInfoElements.get(0);
+
+        return winnerInfoElements.isEmpty()
+            ? null : JsoupUtils.selectFirst("table > tbody > tr > td:nth-child(1)", winnerInfoElements.get(0));
     }
+
+    /**
+     * Selects all highlight elements with the given title.
+     *
+     * @param title
+     *      title of hte highlight element
+     * @param context
+     *      context to be searched     
+     * @return list of elements or null if the context is null
+     */
+    private Elements getHighlightElements(final String title, final Element context) {
+        return JsoupUtils.select("div.ui-state-highlight:has(*:containsOwn(" + title + "))", context);
+    }
+
 
     @Override
     protected final String countryOfOrigin(final ParsedTender parsed, final RawData raw){

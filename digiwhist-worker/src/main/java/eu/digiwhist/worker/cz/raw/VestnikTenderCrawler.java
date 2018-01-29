@@ -1,5 +1,14 @@
 package eu.digiwhist.worker.cz.raw;
 
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import eu.digiwhist.worker.raw.BaseDigiwhistIncrementalPagedSourceHttpCrawler;
+import eu.dl.core.UnrecoverableException;
+import eu.dl.worker.raw.utils.CrawlerUtils;
+import eu.dl.worker.utils.ThreadUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+
 import java.net.URLEncoder;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -7,16 +16,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-
-import eu.digiwhist.worker.raw.BaseDigiwhistIncrementalPagedSourceHttpCrawler;
-import eu.dl.core.UnrecoverableException;
-import eu.dl.worker.raw.utils.CrawlerUtils;
 
 /**
  * This class is searching https://old.vestnikverejnychzakazek.cz for the delta of new items.
@@ -51,7 +50,7 @@ public final class VestnikTenderCrawler extends BaseDigiwhistIncrementalPagedSou
     protected HtmlPage getSearchResultsStartPageForDate(final LocalDate incrementDate) {
         try {
             // don't shut the server down
-            humanize(SLEEP_LENGTH);
+            ThreadUtils.humanize(SLEEP_LENGTH);
             String url = String.format(PAGE_URL_TEMPLATE,
                     URLEncoder.encode(incrementDate.format(SEARCH_DATE_FORMATTER), "UTF-8"), PAGE_SIZE);
             return getWebClient().getPage(url);

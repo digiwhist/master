@@ -1,5 +1,6 @@
 package eu.digiwhist.worker.eu.parsed;
 
+import eu.digiwhist.dataaccess.dto.codetables.PublicationSources;
 import static eu.digiwhist.worker.eu.parsed.TedTenderParserUtils.getDefaultNuts;
 import static eu.digiwhist.worker.eu.parsed.TedTenderParserUtils.parseBodyIdentifier;
 
@@ -10,7 +11,6 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import eu.digiwhist.dataaccess.dto.codetables.PublicationSources;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedAwardCriterion;
 import eu.dl.dataaccess.dto.parsed.ParsedBid;
@@ -28,11 +28,6 @@ import eu.dl.worker.utils.jsoup.JsoupUtils;
  * @author Tomas Mrazek
  */
 final class TedTenderParserR209Utils {
-
-    /**
-     * Source for TED publications.
-     */
-    private static final String PUBLICATIONS_SOURCE = PublicationSources.EU_TED;
 
     /**
      * Suppress default constructor for noninstantiability.
@@ -119,25 +114,27 @@ final class TedTenderParserR209Utils {
         return TedTenderParserUtils.initMainPublication(document)
             .setDispatchDate(JsoupUtils.selectText("COMPLEMENTARY_INFO > DATE_DISPATCH_NOTICE", originNode))
             .setSourceTenderId(JsoupUtils.selectText("OBJECT_CONTRACT > REFERENCE_NUMBER", originNode))
-            .setSource(PUBLICATIONS_SOURCE);
+            .setSource(PublicationSources.EU_TED);
     }
 
     /**
      * Parses previous publication concerning this procedure.
      *
-     * @param originNode
-     *      origin node for document parsing
+     * @param document
+     *      parsed document
      * @return previous publication
      */
-    public static ParsedPublication parsePreviousPublication(final Element originNode) {
-        if (!JsoupUtils.exists("PROCEDURE > NOTICE_NUMBER_OJ", originNode)) {
+    public static ParsedPublication parsePreviousPublication(final Document document) {
+        String buyerAssignedId = JsoupUtils.selectText("PROCEDURE > NOTICE_NUMBER_OJ",
+            TedTenderParserUtils.getOriginNode(document));
+        if (buyerAssignedId == null || buyerAssignedId.isEmpty()) {
             return null;
         }
 
         return new ParsedPublication()
-            .setBuyerAssignedId(JsoupUtils.selectText("PROCEDURE > NOTICE_NUMBER_OJ", originNode))
+            .setBuyerAssignedId(buyerAssignedId)
             .setIsIncluded(false)
-            .setSource(PUBLICATIONS_SOURCE);
+            .setSource(PublicationSources.EU_TED);
     }
 
     /**
@@ -418,7 +415,7 @@ final class TedTenderParserR209Utils {
      */
     public static List<ParsedBody> parseBuyers(final Document doc) {
         final Elements bodyNodes = JsoupUtils.select("ADDRESS_CONTRACTING_BODY, ADDRESS_CONTRACTING_BODY_ADDITIONAL",
-                TedTenderParserR209Utils.getSectionI(TedTenderParserUtils.getOriginNode(doc)));
+            TedTenderParserR209Utils.getSectionI(TedTenderParserUtils.getOriginNode(doc)));
 
         if (bodyNodes == null || bodyNodes.isEmpty()) {
             return null;

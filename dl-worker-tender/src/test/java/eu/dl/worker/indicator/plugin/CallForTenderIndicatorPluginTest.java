@@ -1,21 +1,19 @@
 package eu.dl.worker.indicator.plugin;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-
-import java.util.Arrays;
-
-import org.junit.Before;
-import org.junit.Test;
-
 import eu.dl.core.config.Config;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.generic.Publication;
-import eu.dl.dataaccess.dto.indicator.TenderIndicatorType;
+import eu.dl.dataaccess.dto.indicator.IndicatorStatus;
 import eu.dl.dataaccess.dto.master.MasterTender;
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Arrays;
+
+import static org.junit.Assert.assertEquals;
 
 /**
- * Test of electronic auction indicator plugin.
+ * Test of call for tenders publication indicator plugin.
  *
  * @author Jakub Krafka
  */
@@ -24,25 +22,38 @@ public final class CallForTenderIndicatorPluginTest {
     private final MasterTender nullTender = new MasterTender();
 
     private final MasterTender tender1 = new MasterTender()
+            .setPublications(Arrays.asList(
+                    new Publication().setFormType(PublicationFormType.CONTRACT_AWARD),
+                    new Publication().setFormType(PublicationFormType.CONTRACT_IMPLEMENTATION)));
+
+    private final MasterTender tender2 = new MasterTender()
             .setCountry("CC")
+            .setPublications(null);
+
+    private final MasterTender tender3 = new MasterTender()
+            .setCountry("CZ")
             .setPublications(null);
 
     private final MasterTender tender4 = new MasterTender()
             .setCountry("CZ")
             .setPublications(Arrays.asList(
                     new Publication().setFormType(PublicationFormType.CONTRACT_AWARD),
-                    new Publication().setFormType(PublicationFormType.CONTRACT_NOTICE)));
+                    new Publication().setFormType(PublicationFormType.CONTRACT_IMPLEMENTATION)));
 
-    private final MasterTender tender2 = new MasterTender()
-            .setCountry("CZ")
-            .setPublications(null);
-
-    private final MasterTender tender3 = new MasterTender()
+    private final MasterTender tender5 = new MasterTender()
             .setCountry("CZ")
             .setPublications(Arrays.asList(
                     new Publication().setFormType(PublicationFormType.CONTRACT_AWARD),
-                    new Publication().setFormType(PublicationFormType.CONTRACT_IMPLEMENTATION)));
+                    new Publication().setFormType(PublicationFormType.CONTRACT_NOTICE)));
 
+    private final MasterTender tender6 = new MasterTender()
+            .setCountry("BG")
+            .setPublications(null);
+
+    private final MasterTender tender7 = new MasterTender()
+            .setPublications(Arrays.asList(
+                    new Publication().setFormType(PublicationFormType.CONTRACT_AWARD),
+                    new Publication().setFormType(PublicationFormType.CONTRACT_NOTICE)));
 
     private final CallForTenderIndicatorPlugin plugin = new CallForTenderIndicatorPlugin();
 
@@ -55,33 +66,37 @@ public final class CallForTenderIndicatorPluginTest {
     }
 
     /**
-     * Test of correct tender address.
+     * Test of insufficient indicators.
      */
     @Test
-    public void noIndicatorTest() {
-        assertNull(plugin.evaulate(null));
-        assertNull(plugin.evaulate(nullTender));
-        assertNull(plugin.evaulate(tender1));
-        assertNull(plugin.evaulate(tender1));
+    public void insufficientIndicatorTest() {
+        assertEquals(plugin.evaluate(null).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
+        assertEquals(plugin.evaluate(nullTender).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
+        assertEquals(plugin.evaluate(tender1).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
     }
 
     /**
-     * Test of positive result.
+     * Test of calculated indicators.
      */
     @Test
-    public void okTest() {
-        assertEquals(plugin.evaulate(tender2).getType(),
-                TenderIndicatorType.CORRUPTION_PRIOR_INFORMATION_NOTICE.name());
-        assertEquals(plugin.evaulate(tender3).getType(),
-                TenderIndicatorType.CORRUPTION_PRIOR_INFORMATION_NOTICE.name());
+    public void calculatedIndicatorTest() {
+        assertEquals(plugin.evaluate(tender2).getStatus(), IndicatorStatus.CALCULATED);
+        assertEquals(plugin.evaluate(tender2).getValue(), new Double(100d));
+
+        assertEquals(plugin.evaluate(tender3).getStatus(), IndicatorStatus.CALCULATED);
+        assertEquals(plugin.evaluate(tender3).getValue(), new Double(0d));
+
+        assertEquals(plugin.evaluate(tender4).getStatus(), IndicatorStatus.CALCULATED);
+        assertEquals(plugin.evaluate(tender4).getValue(), new Double(0d));
+
+        assertEquals(plugin.evaluate(tender5).getStatus(), IndicatorStatus.CALCULATED);
+        assertEquals(plugin.evaluate(tender5).getValue(), new Double(100d));
+
+        assertEquals(plugin.evaluate(tender6).getStatus(), IndicatorStatus.CALCULATED);
+        assertEquals(plugin.evaluate(tender6).getValue(), new Double(100d));
+
+        assertEquals(plugin.evaluate(tender7).getStatus(), IndicatorStatus.CALCULATED);
+        assertEquals(plugin.evaluate(tender7).getValue(), new Double(100d));
     }
 
-    /**
-     * Test of correct plugin type.
-     */
-    @Test
-    public void getTypeTest() {
-        assertEquals(plugin.getType(),
-                TenderIndicatorType.CORRUPTION_PRIOR_INFORMATION_NOTICE.name());
-    }
 }

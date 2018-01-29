@@ -215,7 +215,7 @@ public final class VVZTenderCleaner extends BaseVestnikTenderCleaner {
             CleanTenderLot lot2 = unmatchedLots.get(1);
             if (lot1.getLotNumber() == null && lot2.getLotNumber() == null && lot1.getPositionOnPage()
                     == lot2.getPositionOnPage()) {
-                return Collections.singletonList(mergeLots(lot1, lot2));
+                return new ArrayList<>(Collections.singletonList(mergeLots(lot1, lot2)));
             }
         } else if (unmatchedLots.size() > 2) {
             // result will be saved in mergedLots list

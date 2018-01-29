@@ -1,5 +1,9 @@
 package eu.digiwhist.dataaccess.dao.jdbc;
 
+import java.util.List;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import eu.digiwhist.dataaccess.dao.CleanBudgetItemDAO;
 import eu.digiwhist.dataaccess.dao.DAOFactory;
 import eu.digiwhist.dataaccess.dao.ParsedBudgetItemDAO;
@@ -9,7 +13,6 @@ import eu.digiwhist.dataaccess.dao.RawAssetDeclarationDAO;
 import eu.dl.dataaccess.dao.CleanTenderDAO;
 import eu.dl.dataaccess.dao.CrawlerAuditDAO;
 import eu.dl.dataaccess.dao.EtalonBodyDAO;
-import eu.dl.dataaccess.dao.IndicatorDAO;
 import eu.dl.dataaccess.dao.ManualMatchDAO;
 import eu.dl.dataaccess.dao.MasterBodyDAO;
 import eu.dl.dataaccess.dao.MasterTenderDAO;
@@ -19,13 +22,9 @@ import eu.dl.dataaccess.dao.ParsedTenderDAO;
 import eu.dl.dataaccess.dao.RawDataDAO;
 import eu.dl.dataaccess.dao.TransactionUtils;
 import eu.dl.dataaccess.dao.jdbc.JdbcCrawlerAuditDAO;
-import eu.dl.dataaccess.dao.jdbc.JdbcEntityRelatedIndicatorDAO;
 import eu.dl.dataaccess.dao.jdbc.JdbcRawDataDAO;
 import eu.dl.dataaccess.dao.jdbc.JdbcTransactionUtils;
 import eu.dl.dataaccess.dto.parsed.ParsedPublicOfficial;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.List;
 
 /**
  * DAO factory implementation for JDBC data sources.
@@ -134,10 +133,5 @@ public final class JdbcDAOFactory extends DAOFactory {
     @Override
     public EtalonBodyDAO getBVDEtalonBodyDAO() {
         return new JdbcBVDEtalonBodyDAO();
-    }
-
-    @Override
-    public IndicatorDAO getIndicatorDAO(final String workerName, final String workerVersion) {
-        return (IndicatorDAO) new JdbcEntityRelatedIndicatorDAO().populateWithWorkerMetadata(workerName, workerVersion);
     }
 }

@@ -51,7 +51,7 @@ public interface GenericDAO<T> extends BaseDAO<T> {
      * @param timestamp
      *            objects modified after this timestamp will be returned
      * @param page
-     *            order of the page in the result
+     *            order of the page in the result (for first page set 0)
      * 
      * @return set of objects modified after timestamp
      */
@@ -66,12 +66,12 @@ public interface GenericDAO<T> extends BaseDAO<T> {
      * @param modifiedBy
      *            "author" of the change
      * @param page
-     *            order of the page in the result
+     *            order of the page in the result (for first page set 0)
      *
      * @return set of objects modified after timestamp
      */
     List<T> getModifiedAfter(LocalDateTime timestamp, String modifiedBy, Integer page);
-
+    
     /**
      * Removes object identified by the id.
      *

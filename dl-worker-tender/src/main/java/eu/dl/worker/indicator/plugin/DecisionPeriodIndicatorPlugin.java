@@ -1,7 +1,7 @@
 package eu.dl.worker.indicator.plugin;
 
 import eu.dl.core.config.Config;
-import eu.dl.dataaccess.dto.indicator.BasicEntityRelatedIndicator;
+import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.indicator.Indicator;
 import eu.dl.dataaccess.dto.indicator.TenderIndicatorType;
 import eu.dl.dataaccess.dto.master.MasterTender;
@@ -14,56 +14,58 @@ import java.util.HashMap;
 /**
  * This plugin calculates decision period length.
  */
-public class DecisionPeriodIndicatorPlugin implements IndicatorPlugin<MasterTender> {
+public class DecisionPeriodIndicatorPlugin extends BaseIndicatorPlugin implements IndicatorPlugin<MasterTender> {
 
     @Override
-    public final Indicator evaulate(final MasterTender tender) {
+    public final Indicator evaluate(final MasterTender tender) {
         if (tender == null || tender.getCountry() == null) {
-            return null;
+            return insufficient();
         }
 
-        Indicator indicator = new BasicEntityRelatedIndicator();
-        indicator.setType(getType());
-
         if (tender.getBidDeadline() == null) {
-            // no deadline specified
-            if (isMissingBidDeadlineRedFlag(tender.getCountry())) {
-                return indicator;
-            }
-        } else if (tender.getLots() != null) {
+            return isMissingBidDeadlineRedFlag(tender.getCountry()) ? calculated(0d) : calculated(100d);
+        } else {
             // iterate over lots and pick the oldest awardDecisionDate
             LocalDate awardDecisionDate = null;
-            for (MasterTenderLot lot : tender.getLots()) {
-                if (lot.getAwardDecisionDate() != null) {
-                    if (awardDecisionDate == null || awardDecisionDate.isBefore(lot.getAwardDecisionDate())) {
-                        awardDecisionDate = lot.getAwardDecisionDate();
+            if (tender.getLots() != null) {
+                for (MasterTenderLot lot : tender.getLots()) {
+                    if (lot.getAwardDecisionDate() != null) {
+                        if (awardDecisionDate == null || awardDecisionDate.isAfter(lot.getAwardDecisionDate())) {
+                            awardDecisionDate = lot.getAwardDecisionDate();
+                        }
                     }
                 }
             }
 
-            if (awardDecisionDate != null) {
+            if (awardDecisionDate == null) {
+                return tender.getPublications() == null || tender.getPublications()
+                        .stream()
+                        .filter(p -> p.getIsIncluded() != null && p.getIsIncluded())
+                        .noneMatch(p -> p.getFormType() == PublicationFormType.CONTRACT_AWARD)
+                        ? undefined()
+                        : insufficient();
+            }
 
-                Long decisionPeriodLength = ChronoUnit.DAYS.between(
-                        LocalDate.from(tender.getBidDeadline()), awardDecisionDate);
-                if (checkDecisionPeriod(tender.getCountry(), decisionPeriodLength)) {
-                    // fill in metadata and return indicator
-                    HashMap<String, Object> metaData = new HashMap<String, Object>();
-                    metaData.put("decisionPeriodLEngth", decisionPeriodLength);
-                    metaData.put("awardDecisionDate", awardDecisionDate);
-                    metaData.put("bidDeadline", tender.getBidDeadline());
-                    indicator.setMetaData(metaData);
-
-                    return indicator;
-                }
+            Long decisionPeriodLength = ChronoUnit.DAYS.between(
+                    LocalDate.from(tender.getBidDeadline()), awardDecisionDate);
+            HashMap<String, Object> metaData = new HashMap<String, Object>();
+            metaData.put("decisionPeriodLength", decisionPeriodLength);
+            metaData.put("awardDecisionDate", awardDecisionDate);
+            metaData.put("bidDeadline", tender.getBidDeadline());
+            if (decisionPeriodLength.compareTo(0L) < 0) {
+                // the period is negative
+                return insufficient(metaData);
+            } else {
+                return checkDecisionPeriod(tender.getCountry(), decisionPeriodLength)
+                        ? calculated(0d, metaData)
+                        : calculated(100d, metaData);
             }
         }
-
-        return null;
     }
 
     @Override
     public final String getType() {
-        return TenderIndicatorType.CORRUPTION_DECISION_PERIOD.name();
+        return TenderIndicatorType.INTEGRITY_DECISION_PERIOD.name();
     }
 
     /**

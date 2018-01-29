@@ -5,6 +5,8 @@ import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
 import eu.dl.dataaccess.dto.codetables.BuyerType;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
+import eu.dl.dataaccess.dto.codetables.SelectionMethod;
+import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
 import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.clean.plugin.AddressPlugin;
@@ -16,12 +18,17 @@ import eu.dl.worker.clean.plugin.FundingsPlugin;
 import eu.dl.worker.clean.plugin.IntegerPlugin;
 import eu.dl.worker.clean.plugin.LotPlugin;
 import eu.dl.worker.clean.plugin.PublicationPlugin;
+import eu.dl.worker.clean.plugin.SelectionMethodPlugin;
+import eu.dl.worker.clean.plugin.TenderProcedureTypePlugin;
 import eu.dl.worker.clean.plugin.TenderSupplyTypePlugin;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +45,18 @@ public class TenderNedTenderCleaner extends BaseDigiwhistTenderCleaner {
 
     private static final Locale LOCALE = new Locale("nl");
 
-    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance(LOCALE);
+    private static final List<NumberFormat> NUMBER_FORMATS;
+
+    static {
+        NUMBER_FORMATS = new ArrayList<>();
+
+        NUMBER_FORMATS.add(NumberFormat.getInstance(LOCALE));
+
+        DecimalFormatSymbols formatSymbols = new DecimalFormatSymbols(LOCALE);
+        formatSymbols.setDecimalSeparator(',');
+        formatSymbols.setGroupingSeparator(' ');
+        NUMBER_FORMATS.add(new DecimalFormat("#,##0.###", formatSymbols));
+    }
 
     private static final List<DateTimeFormatter> DATE_FORMATTERS = Arrays.asList(
             DateTimeFormatter.ofPattern("dd/MM/yyyy"),
@@ -56,7 +74,9 @@ public class TenderNedTenderCleaner extends BaseDigiwhistTenderCleaner {
                     .toFormatter(LOCALE),
             new DateTimeFormatterBuilder()
                     .appendPattern("dd/MM/yyyy")
+                    .optionalStart()
                     .appendLiteral(" Plaatselijke tijd: ")
+                    .optionalEnd()
                     //optional time
                     .optionalStart()
                     .appendPattern("HH:mm")
@@ -83,6 +103,9 @@ public class TenderNedTenderCleaner extends BaseDigiwhistTenderCleaner {
             parsedItem.setBidDeadline(null);
         }
 
+        // use nationalProcedureType as procedureType
+        parsedItem.setProcedureType(parsedItem.getNationalProcedureType());
+
         return parsedItem;
     }
 
@@ -96,17 +119,19 @@ public class TenderNedTenderCleaner extends BaseDigiwhistTenderCleaner {
     @Override
     protected final void registerSpecificPlugins() {
         pluginRegistry
-                .registerPlugin("integerPlugin", new IntegerPlugin(NUMBER_FORMAT))
+                .registerPlugin("integerPlugin", new IntegerPlugin(NUMBER_FORMATS))
                 .registerPlugin("supplyType", new TenderSupplyTypePlugin(getSupplyTypeMapping()))
                 .registerPlugin("date", new DatePlugin(DATE_FORMATTERS))
                 .registerPlugin("datetime", new DateTimePlugin(DATETIME_FORMATTERS))
                 .registerPlugin("bodies", new BodyPlugin(getBuyerTypeMapping(), getBodyActivityMapping()))
-                .registerPlugin("lots", new LotPlugin(NUMBER_FORMAT, DATE_FORMATTERS, new HashMap<>()))
-                .registerPlugin("fundings", new FundingsPlugin(NUMBER_FORMAT))
+                .registerPlugin("lots", new LotPlugin(NUMBER_FORMATS, DATE_FORMATTERS, new HashMap<>()))
+                .registerPlugin("fundings", new FundingsPlugin(NUMBER_FORMATS))
                 .registerPlugin("address", new AddressPlugin())
-                .registerPlugin("awardCriteria", new AwardCriteriaPlugin(NUMBER_FORMAT))
+                .registerPlugin("awardCriteria", new AwardCriteriaPlugin(NUMBER_FORMATS))
                 .registerPlugin("publications",
-                        new PublicationPlugin(NUMBER_FORMAT, DATE_FORMATTERS, getFormTypeMapping()));
+                        new PublicationPlugin(NUMBER_FORMATS, DATE_FORMATTERS, getFormTypeMapping()))
+                .registerPlugin("procedureType", new TenderProcedureTypePlugin(procedureTypeMapping()))
+                .registerPlugin("selectionMethod", new SelectionMethodPlugin(selectionMethodMapping()));
     }
 
     /**
@@ -115,9 +140,9 @@ public class TenderNedTenderCleaner extends BaseDigiwhistTenderCleaner {
     private static Map<Enum, List<String>> getSupplyTypeMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
-        mapping.put(TenderSupplyType.WORKS, Arrays.asList("(a) Werken"));
-        mapping.put(TenderSupplyType.SUPPLIES, Arrays.asList("(b) Leveringen"));
-        mapping.put(TenderSupplyType.SERVICES, Arrays.asList("(c) Diensten"));
+        mapping.put(TenderSupplyType.WORKS, Arrays.asList("(a) Werken", "Werken"));
+        mapping.put(TenderSupplyType.SUPPLIES, Arrays.asList("(b) Leveringen", "Leveringen"));
+        mapping.put(TenderSupplyType.SERVICES, Arrays.asList("(c) Diensten", "Diensten"));
 
         return mapping;
     }
@@ -202,4 +227,44 @@ public class TenderNedTenderCleaner extends BaseDigiwhistTenderCleaner {
         return mapping;
     }
 
+    /**
+     * @return procedure type mapping
+     */
+    private Map<Enum, List<String>> procedureTypeMapping() {
+        Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(TenderProcedureType.COMPETITIVE_DIALOG, Arrays.asList("Concurrentiegerichte dialoog"));
+        mapping.put(TenderProcedureType.OUTRIGHT_AWARD, Arrays.asList(
+            "Gunning van een opdracht zonder voorafgaande bekendmaking van een aankondiging van de opdracht in het"
+                + " Publicatieblad van de Europese Unie (in de gevallen vermeld in afdeling 2 van bijlage D1)",
+            "Gunning van een opdracht zonder voorafgaande bekendmaking van een aankondiging van de opdracht in het"
+                + " Publicatieblad van de Europese Unie (in de gevallen vermeld onder k) en l) in bijlage D)",
+            "Gunning van een opdracht zonder voorafgaande bekendmaking van een oproep tot mededinging in het"
+                + " Publicatieblad van de Europese Unie in onderstaande gevallen"));
+        mapping.put(TenderProcedureType.INOVATION_PARTNERSHIP, Arrays.asList("Innovatiepartnerschap"));
+        mapping.put(TenderProcedureType.NEGOTIATED_WITH_PUBLICATION, Arrays.asList("Mededingingsprocedure met"
+            + " onderhandeling", "Onderhandelingsprocedure met een oproep tot mededinging"));
+        mapping.put(TenderProcedureType.RESTRICTED, Arrays.asList("Niet-openbaar", "Niet-openbare procedure",
+            "Versneld niet-openbaar"));
+        mapping.put(TenderProcedureType.NEGOTIATED, Arrays.asList("Onderhandeling",
+            "Versnelde onderhandelingsprocedure"));
+        mapping.put(TenderProcedureType.NEGOTIATED_WITHOUT_PUBLICATION, Arrays.asList("Onderhandelingsprocedure zonder"
+            + " bekendmaking van een aankondiging van een opdracht/een oproep tot mededinging",
+            "Onderhandelingsprocedure zonder een oproep tot mededinging"));
+        mapping.put(TenderProcedureType.OPEN, Arrays.asList("Openbaar", "Openbare procedure"));
+
+        return mapping;
+
+    }
+
+    /**
+     * @return selection method mapping
+     */
+    private Map<Enum, List<String>> selectionMethodMapping() {
+        Map<Enum, List<String>> mapping = new HashMap<>();
+        mapping.put(SelectionMethod.MEAT, Arrays.asList("Economisch meest voordelige inschrijving, gelet op"));
+        mapping.put(SelectionMethod.LOWEST_PRICE, Arrays.asList("Laagste prijs"));
+                
+        return mapping;
+    }
 }

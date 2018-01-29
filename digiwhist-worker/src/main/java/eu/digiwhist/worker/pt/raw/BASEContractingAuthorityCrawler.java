@@ -1,18 +1,18 @@
 package eu.digiwhist.worker.pt.raw;
 
-import java.util.List;
-
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlTable;
 import com.gargoylesoftware.htmlunit.html.HtmlTableBody;
 import com.gargoylesoftware.htmlunit.html.HtmlTableRow;
-
 import eu.digiwhist.dataaccess.dao.DAOFactory;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dao.TransactionUtils;
 import eu.dl.worker.raw.BasePagedSourceHttpCrawler;
 import eu.dl.worker.raw.utils.CrawlerUtils;
+import eu.dl.worker.utils.ThreadUtils;
+
+import java.util.List;
 
 /**
  * Contract authority crawler for Portugal.
@@ -50,7 +50,7 @@ public final class BASEContractingAuthorityCrawler extends BasePagedSourceHttpCr
         } else {
             logger.error("Table does not have just one body. It has {} bodies!", tableBodies.size());
         }
-        humanize(SLEEP_LENGTH);
+        ThreadUtils.humanize(SLEEP_LENGTH);
         return page;
     }
 

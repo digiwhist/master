@@ -1,7 +1,9 @@
 package eu.dl.worker.clean.utils;
 
+import eu.dl.dataaccess.utils.RemoveNonsenseUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
@@ -20,6 +22,8 @@ public final class DateUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(DateUtils.class.getName());
 
+    private static final LocalDate DATE_MIN = LocalDate.of(2000, Month.JANUARY, 1);
+    private static final LocalDate DATE_MAX = LocalDate.of(2025, Month.JANUARY, 1);
 
     /**
      * Utility classes should not have default constructor.
@@ -128,7 +132,8 @@ public final class DateUtils {
         DateTimeParseException exception = null;
         for (DateTimeFormatter formatter : formatters) {
             try {
-                return parser.apply(dateTime, formatter);
+                return RemoveNonsenseUtils.removeNonsensicalDateTime(parser.apply(dateTime, formatter), DATE_MIN,
+                    DATE_MAX);
             } catch (DateTimeParseException e) {
                 exception = e;
             }

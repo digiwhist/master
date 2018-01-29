@@ -10,6 +10,7 @@ import eu.digiwhist.worker.cz.clean.utils.VestnikLotUtils;
 import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.clean.plugin.BaseDateTimePlugin;
+import eu.dl.worker.clean.utils.CleanUtils;
 import eu.dl.worker.utils.ArrayUtils;
 
 /**
@@ -23,22 +24,10 @@ public class VestnikLotPlugin extends BaseDateTimePlugin<VestnikLotPlugin, Parse
      */
     private final List<NumberFormat> numberFormats;
     /**
-     * Document type mapping.
+     * Mapping.
      */
-    private final Map<Enum, List<String>> documentTypeMapping;
-    /**
-     * Selection method mapping.
-     */
-    private final Map<Enum, List<String>> selectionMethodMapping;
-    /**
-     * Status mapping.
-     */
-    private final Map<Enum, List<String>> statusMapping;
-    /**
-     * Unit price mapping.
-     */
-    private final Map<Enum, List<String>> unitPriceMapping;
-
+    private final Map<String, Map<Enum, List<String>>> mappings;
+    
     /**
      * Plugin constructor with configuration.
      *
@@ -46,24 +35,15 @@ public class VestnikLotPlugin extends BaseDateTimePlugin<VestnikLotPlugin, Parse
      *         number format
      * @param formatters
      *         list of datetime formatters
-     * @param documentTypeMapping
-     *         mapping for document type
-     * @param selectionMethodMapping
-     *         mapping for selection method
-     * @param statusMapping
-     *         mapping for status
-     * @param unitPriceMapping
-     *         mapping for price units
+     * @param mappings
+     *         mappings
      */
     public VestnikLotPlugin(final NumberFormat numberFormat, final List<DateTimeFormatter> formatters,
-            final Map<Enum, List<String>> documentTypeMapping, final Map<Enum, List<String>> selectionMethodMapping,
-            final Map<Enum, List<String>> statusMapping, final Map<Enum, List<String>> unitPriceMapping) {
+            final Map<String, Map<Enum, List<String>>> mappings) {
         super(formatters);
+
         this.numberFormats = Arrays.asList(numberFormat);
-        this.documentTypeMapping = documentTypeMapping;
-        this.selectionMethodMapping = selectionMethodMapping;
-        this.statusMapping = statusMapping;
-        this.unitPriceMapping = unitPriceMapping;
+        this.mappings = mappings;
     }
 
     /**
@@ -80,9 +60,10 @@ public class VestnikLotPlugin extends BaseDateTimePlugin<VestnikLotPlugin, Parse
     public final CleanTender clean(final ParsedTender parsedTender, final CleanTender cleanTender) {
         if (parsedTender.getLots() != null) {
             logger.debug("Cleaning lots for parsed tender {} starts", parsedTender.getId());
+            
             cleanTender.setLots(ArrayUtils.walk(parsedTender.getLots(),
-                    (parsedLot) -> VestnikLotUtils.cleanLot(parsedLot, numberFormats, formatters, documentTypeMapping,
-                            selectionMethodMapping, statusMapping, unitPriceMapping)));
+                (parsedLot) -> VestnikLotUtils.cleanLot(parsedLot, numberFormats, formatters, mappings,
+                    CleanUtils.getParsedItemCountry(parsedTender))));
             logger.debug("Cleaning lots for parsed tender {} finished", parsedTender.getId());
         }
 

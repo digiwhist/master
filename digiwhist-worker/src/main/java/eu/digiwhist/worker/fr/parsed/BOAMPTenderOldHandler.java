@@ -10,6 +10,7 @@ import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.raw.RawData;
 import eu.dl.worker.clean.utils.CodeTableUtils;
+import eu.dl.worker.utils.StringUtils;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -53,30 +54,33 @@ final class BOAMPTenderOldHandler {
         for (Element publicationElement : publicationElements) {
             // set common attributes
             ParsedTender parsedTender = new ParsedTender()
-                    .setPublications(parsePublications(publicationElement, rawTender.getSourceUrl().toString(),
-                            publicationDate))
-                    .addBuyer(new ParsedBody()
-                            .setName(JsoupUtils.selectText("DONNEES > IDENT > NOM", publicationElement))
-                            .setContactName(JsoupUtils.selectText("DONNEES > IDENT > PRM", publicationElement))
-                            .setAddress(new ParsedAddress()
-                                    .setStreet(JsoupUtils.selectText("DONNEES > IDENT > ADRESSE", publicationElement))
-                                    .setPostcode(JsoupUtils.selectText("DONNEES > IDENT > CP", publicationElement))
-                                    .setCity(JsoupUtils.selectText("DONNEES > IDENT > VILLE", publicationElement)))
-                            .setPhone(JsoupUtils.selectText("DONNEES > IDENT > TEL", publicationElement))
-                            .setEmail(BOAMPTenderParserUtils.removeDotsAtTheEnd(
-                                    JsoupUtils.selectText("DONNEES > IDENT > MEL", publicationElement)))
-                            .setMainActivities(parseBuyerMainActivities(publicationElement)))
-                    .setTitle(JsoupUtils.selectText("DONNEES > OBJET > OBJET_COMPLET", publicationElement))
-                    .setAddressOfImplementation(new ParsedAddress()
-                            .setRawAddress(BOAMPTenderParserUtils.removeDotsAtTheEnd(
-                                    JsoupUtils.selectText("DONNEES > OBJET > LIEU_LIVR", publicationElement)))
-                            .addNuts(BOAMPTenderParserUtils.removeDotsAtTheEnd(
-                                    JsoupUtils.selectText("DONNEES > OBJET > CODE_NUTS", publicationElement))))
-                    .setCpvs(parseTenderCpvs(publicationElement))
-                    .setSupplyType(parseTenderSupplyType(publicationElement))
-                    .setAppealBodyName(JsoupUtils.selectText(
-                            "DONNEES > PROCEDURES_RECOURS > INSTANCE_RECOURS > ACHETEUR", publicationElement))
-                    .setAwardDecisionDate(JsoupUtils.selectText("DONNEES > PROCEDURES > DATE_ATT", document));
+                .setPublications(parsePublications(publicationElement, rawTender.getSourceUrl().toString(),
+                    publicationDate))
+                .addBuyer(new ParsedBody()
+                    .setName(JsoupUtils.selectText("DONNEES > IDENT > NOM", publicationElement))
+                    .setContactName(JsoupUtils.selectText("DONNEES > IDENT > PRM", publicationElement))
+                    .setAddress(new ParsedAddress()
+                        .setStreet(JsoupUtils.selectText("DONNEES > IDENT > ADRESSE", publicationElement))
+                        .setPostcode(JsoupUtils.selectText("DONNEES > IDENT > CP", publicationElement))
+                        .setCity(JsoupUtils.selectText("DONNEES > IDENT > VILLE", publicationElement)))
+                    .setPhone(JsoupUtils.selectText("DONNEES > IDENT > TEL", publicationElement))
+                    .setEmail(StringUtils.removeDotsAtTheEnd(
+                        JsoupUtils.selectText("DONNEES > IDENT > MEL", publicationElement)))
+                    .setMainActivities(parseBuyerMainActivities(publicationElement)))
+                .setTitle(JsoupUtils.selectText("DONNEES > OBJET > OBJET_COMPLET, GESTION > K1", publicationElement))
+                .setAddressOfImplementation(new ParsedAddress()
+                    .setRawAddress(StringUtils.removeDotsAtTheEnd(
+                        JsoupUtils.selectText("DONNEES > OBJET > LIEU_LIVR, DONNEES > OBJET > LIEU_EXEC_LIVR",
+                            publicationElement)))
+                    .addNuts(StringUtils.removeDotsAtTheEnd(
+                        JsoupUtils.selectText("DONNEES > OBJET > CODE_NUTS", publicationElement))))
+                .setCpvs(parseTenderCpvs(publicationElement))
+                .setSupplyType(parseTenderSupplyType(publicationElement))
+                .setAppealBodyName(JsoupUtils.selectText(
+                    "DONNEES > PROCEDURES_RECOURS > INSTANCE_RECOURS > ACHETEUR", publicationElement))
+                .setAwardDecisionDate(JsoupUtils.selectText("DONNEES > PROCEDURES > DATE_ATT", document))
+                .setProcedureType(JsoupUtils.selectAttribute("DONNEES > PROCEDURE", "type", publicationElement))
+                .setDescription(JsoupUtils.selectCombinedText("DESCRIPTEURS > DESCRIPTEUR", publicationElement));
 
             final PublicationFormType formType = (PublicationFormType) CodeTableUtils.mapValue(
                     parsedTender.getPublications().get(0).getSourceFormType(), BOAMPTenderUtils.FORM_TYPE_MAPPING,
@@ -165,18 +169,18 @@ final class BOAMPTenderOldHandler {
         String mainCpvCode = JsoupUtils.selectText("DONNEES > OBJET > CPV_OBJ", publicationElement);
         if (mainCpvCode != null) {
             tenderCpvs.add(new ParsedCPV()
-                    .setCode(BOAMPTenderParserUtils.removeDotsAtTheEnd(mainCpvCode))
+                    .setCode(StringUtils.removeDotsAtTheEnd(mainCpvCode))
                     .setIsMain(Boolean.TRUE.toString()));
         }
 
         String complementCpvCodesString = JsoupUtils.selectText("DONNEES > OBJET > CPV_COMPLEMENT", publicationElement);
         if (complementCpvCodesString != null) {
             // E.g. "<CPV_COMPLEMENT>48781000, 48782000, 50000000.</CPV_COMPLEMENT>"
-            complementCpvCodesString = BOAMPTenderParserUtils.removeDotsAtTheEnd(complementCpvCodesString);
+            complementCpvCodesString = StringUtils.removeDotsAtTheEnd(complementCpvCodesString);
             String[] complementCpvCodes = complementCpvCodesString.split(",");
             for (String complementCpvCode : complementCpvCodes) {
                 tenderCpvs.add(new ParsedCPV()
-                        .setCode(BOAMPTenderParserUtils.removeDotsAtTheEnd(complementCpvCode))
+                        .setCode(StringUtils.removeDotsAtTheEnd(complementCpvCode))
                         .setIsMain(Boolean.FALSE.toString()));
             }
         }

@@ -54,7 +54,7 @@ public final class TedCSVContractNoticeHandler {
         String coctractAwardReference = record.get("future_can_id");
         if (coctractAwardReference != null) {
             parsedTender.addPublication(new ParsedPublication()
-                .setIsIncluded(true)
+                .setIsIncluded(false)
                 .setSource(PublicationSources.EU_TED_CSV)
                 .setSourceId(coctractAwardReference));
         }

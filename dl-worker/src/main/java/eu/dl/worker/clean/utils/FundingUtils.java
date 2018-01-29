@@ -29,15 +29,18 @@ public final class FundingUtils {
      *            parsed funding
      * @param numberFormats
      *            list of number formats
+     * @param country
+     *          country
      * @return cleaned funding
      */
-    public static Funding cleanFunding(final ParsedFunding parsedFunding, final List<NumberFormat> numberFormats) {
+    public static Funding cleanFunding(final ParsedFunding parsedFunding, final List<NumberFormat> numberFormats,
+        final String country) {
         if (parsedFunding == null) {
             return null;
         }
 
         return new Funding()
-            .setAmount(PriceUtils.cleanPrice(parsedFunding.getAmount(), numberFormats))
+            .setAmount(PriceUtils.cleanPrice(parsedFunding.getAmount(), numberFormats, country))
             .setIsEuFund(StringUtils.cleanBoolean(parsedFunding.getIsEuFund()))
             .setProgramme(StringUtils.cleanShortString(parsedFunding.getProgramme()))
             .setProportion(NumberUtils.cleanInteger(parsedFunding.getProportion(), numberFormats))
@@ -51,9 +54,12 @@ public final class FundingUtils {
      *            parsed funding
      * @param numberFormat
      *            number format
+     * @param country
+     *          country
      * @return cleaned funding
      */
-    public static Funding cleanFunding(final ParsedFunding parsedFunding, final NumberFormat numberFormat) {
-        return cleanFunding(parsedFunding, Arrays.asList(numberFormat));
+    public static Funding cleanFunding(final ParsedFunding parsedFunding, final NumberFormat numberFormat,
+        final String country) {
+        return cleanFunding(parsedFunding, Arrays.asList(numberFormat), country);
     }
 }

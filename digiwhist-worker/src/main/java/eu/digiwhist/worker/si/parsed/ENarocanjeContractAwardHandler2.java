@@ -6,52 +6,59 @@ import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.parsed.utils.ParserUtils;
+import eu.dl.worker.utils.StringUtils;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Handler for parsing forms "EU 18 - SL", "PZPPO2 - ZJN-2" and "PZPPO2 - ZJNVETPS".
  */
-final class ENarocanjeContractAwardHandler2 extends BaseENarocanjeFormInTableHandler {
+final class ENarocanjeContractAwardHandler2 extends BaseENarocanjeContractAwardInTableHandler {
+    private static final String sectionVTitle = "ODDELEK V: DOPOLNILNE INFORMACIJE";
+
     /**
      * Private constructor to make this class static.
      */
     private ENarocanjeContractAwardHandler2() {}
 
-    private static final String sectionVTitle = "ODDELEK V: DOPOLNILNE INFORMACIJE";
-
     /**
-     * Parses Form specific attributes and updates the passed tender.
+     * Parses form specific attributes and updates the passed tender.
      *
      * @param tender
      *         tender to be updated with parsed data
      * @param form
      *         parsed document for the source HTML page (parsed form)
      *
-     * @return updated tender object with data parsed from Form
+     * @return updated tender object with data parsed from form
      */
     public static ParsedTender parse(final ParsedTender tender, final Element form) {
-        parseCommonAttributes(tender, form);
+        parseCommonContractAwardAttributes(tender, form);
 
-        final Element sectionII21 = getSectionWithSeparatedNodes("II.2.1", form);
+        final Element sectionII21 = ENarocanjeTenderFormInTableUtils.getSectionWithSeparatedNodes("II.2.1", form);
         // I can not call getSectionWithSeparatedNodes, because it would return section IV.1, not V.1
         final Element sectionV1 = ParserUtils.getSubsectionOfNodes(
                 JsoupUtils.selectFirst("div.tab-content > table > tbody > tr:contains(" + sectionVTitle +
-                        ") ~ tr:contains(V.1) > *:first-child", form),
+                        ") ~ tr:contains(V.1) > td > *:first-child", form),
                 null);
 
         tender
-                .setTitle(JsoupUtils.selectText(String.format(SECTION_SELECTOR_PATTERN, "II.1.1"), form))
-                .setFinalPrice(parseTenderFinalPrice(sectionII21))
-                .setLots(parseLots(form))
-                .setCpvs(parseTenderCpvs("II.1.5", form))
-                .setFundings(parseFundings(sectionV1));
+            .setFinalPrice(parseTenderFinalPrice(sectionII21))
+            .setLots(parseLots(form))
+            .setCpvs(parseTenderCpvs("II.1.5", form))
+            .setFundings(parseFundings(sectionV1))
+            .setSupplyType(parseSupplyType("II.1.2", form))
+            .setDescription(ENarocanjeTenderFormInTableUtils.getSectionContent("II.1.4", form))
+            .setSelectionMethod(StringUtils.removeDotsAtTheEnd(ENarocanjeTenderFormInTableUtils.getSectionContent(
+                "III.1.1", form, Arrays.asList("Merila za oddajo"))));
 
         return tender;
     }
@@ -77,14 +84,15 @@ final class ENarocanjeContractAwardHandler2 extends BaseENarocanjeFormInTableHan
      * @return list of all parsed lots or empty list if no lots specified
      */
     private static List<ParsedTenderLot> parseLots(final Element form) {
-        final Elements lotTitleElements = getSections("ODDELEK IV: ODDAJA NAROČILA", form);
+        final Elements lotTitleElements = ENarocanjeTenderFormInTableUtils.getSections("ODDELEK IV: ODDAJA NAROČILA",
+                form);
         if (lotTitleElements.isEmpty()) {
             return null;
         }
 
         // get elements representing lots
         final List<Element> lotElements = new ArrayList<>();
-        final Element sectionVElement = getSection(sectionVTitle, form);
+        final Element sectionVElement = ENarocanjeTenderFormInTableUtils.getSection(sectionVTitle, form);
         for (int i = 0; i < lotTitleElements.size() - 1; ++i) {
             lotElements.add(ParserUtils.getSubsectionOfElements(lotTitleElements.get(i), lotTitleElements.get(i + 1)));
         }
@@ -97,95 +105,66 @@ final class ENarocanjeContractAwardHandler2 extends BaseENarocanjeFormInTableHan
             final String lotNumberTitle = "ŠT. SKLOPA:";
             final String lotTitleTitle = "NAZIV:";
             final Element lotNumberRow = ParserUtils.getSubsectionOfNodes(JsoupUtils.selectFirst(
-                    "tr:contains(" + lotNumberTitle + ") > *:first-child", lotElement), null);
+                    "tr:contains(" + lotNumberTitle + ") > td > *:first-child", lotElement), null);
             final Element lotTitleRow = ParserUtils.getSubsectionOfNodes(JsoupUtils.selectFirst(
-                    "tr:contains(" + lotTitleTitle + ") > *:first-child", lotElement), null);
+                    "tr:contains(" + lotTitleTitle + ") > td > *:first-child", lotElement), null);
             final Element sectionIV2 = ParserUtils.getSubsectionOfNodes(JsoupUtils.selectFirst(
-                    "tr:contains(IV.2) > *:first-child", lotElement), null);
+                    "tr:contains(IV.2) > td > *:first-child", lotElement), null);
             final Element sectionIV3 = ParserUtils.getSubsectionOfNodes(JsoupUtils.selectFirst(
-                    "tr:contains(IV.3) > *:first-child", lotElement), null);
+                    "tr:contains(IV.3) > td > *:first-child", lotElement), null);
             final Element sectionIV4 = ParserUtils.getSubsectionOfNodes(JsoupUtils.selectFirst(
-                    "tr:contains(IV.4) > *:first-child", lotElement), null);
+                    "tr:contains(IV.4) > td > *:first-child", lotElement), null);
+            final Element contractNumberRow = ParserUtils.getSubsectionOfNodes(JsoupUtils.selectFirst(
+                    "tr:contains(Št. naročila:) > td > *:first-child", lotElement), null);
+            final Element sectionIV1 = ParserUtils.getSubsectionOfNodes(JsoupUtils.selectFirst(
+                    "tr:contains(IV.1) > td > *:first-child", lotElement), null);
 
-            ParsedTenderLot lot = null;
-
-            if (lotNumberRow != null) {
-                lot = new ParsedTenderLot()
-                        .setLotNumber(ParserUtils.getFromContent(lotNumberRow, null, lotNumberTitle));
-            }
-
-            if (lotTitleRow != null) {
-                if (lot == null) {
-                    lot = new ParsedTenderLot();
+            ParsedTenderLot lot = new ParsedTenderLot();
+            lot.setContractNumber(ParserUtils.getFromContent(contractNumberRow, null, "Št. naročila:"))
+                .setLotNumber(ParserUtils.getFromContent(lotNumberRow, null, lotNumberTitle))
+                .setTitle(ParserUtils.getFromContent(lotTitleRow, null, lotTitleTitle));
+            
+            if (sectionIV1 != null) {
+                Matcher m = Pattern.compile("IV\\.1\\) Datum oddaje naročila:? (?<date>[0-9]{1,2}\\. [0-9]{1,2}\\."
+                    + " [0-9]{4})").matcher(sectionIV1.text());
+                if (m.find()) {
+                    lot.setAwardDecisionDate(m.group("date"));
                 }
-                lot
-                        .setTitle(ParserUtils.getFromContent(lotTitleRow, null, lotTitleTitle));
             }
 
             if (sectionIV2 != null) {
-                if (lot == null) {
-                    lot = new ParsedTenderLot();
+                Matcher m = Pattern.compile("IV\\.2\\) Število prejetih ponudb:?[^0-9]*(?<cnt>[0-9]+)")
+                    .matcher(sectionIV2.text());
+                if (m.find()) {
+                    lot.setBidsCount(m.group("cnt"));
                 }
-                final String bidsCount;
-                final String bidsCountTitleInContent = " Število prejetih ponudb:";
-                final String sectionIV2Text = sectionIV2.text();
-                if (sectionIV2Text.contains(bidsCountTitleInContent)) {
-                    bidsCount = ParserUtils.getFromContent(sectionIV2, null, bidsCountTitleInContent);
-                } else {
-                    // e.g. https://www.enarocanje.si/Obrazci/?id_obrazec=127347
-                    final String bidsCountTitleInTitle = "Število prejetih ponudb";
-                    bidsCount = sectionIV2Text.substring(sectionIV2Text.indexOf(bidsCountTitleInTitle) +
-                            bidsCountTitleInTitle.length());
-                }
-                lot
-                        .setBidsCount(bidsCount);
             }
 
             if (sectionIV3 != null) {
-                if (lot == null) {
-                    lot = new ParsedTenderLot();
-                }
                 if (lot.getBids() == null) {
-                    lot
-                            .addBid(new ParsedBid()
-                                    .setIsWinning(Boolean.TRUE.toString()));
+                    lot.addBid(new ParsedBid().setIsWinning(Boolean.TRUE.toString()));
                 }
 
-                // row index (6) is checked from observation (it is the first row in the section)
-                final String nameAndAddress = ParserUtils.getFromContent(sectionIV3, null, 6);
+                final String nameAndAddress = sectionIV3.text().split("oddano:?")[1];
 
                 parseNameAndAddressOfWinningBidder(nameAndAddress, lot);
             }
 
             if (sectionIV4 != null) {
-                if (lot == null) {
-                    lot = new ParsedTenderLot();
-                }
                 if (lot.getBids() == null) {
-                    lot
-                            .addBid(new ParsedBid()
-                                    .setIsWinning(Boolean.TRUE.toString()));
+                    lot.addBid(new ParsedBid().setIsWinning(Boolean.TRUE.toString()));
                 }
+                lot.setEstimatedPrice(parsePrice(ParserUtils.getFromContent(sectionIV4, null, " Začetna skupna ocenjena"
+                    + " vrednost naročila:")));
 
-                if (sectionIV4.text().contains("Vrednost:")) {
-                    // we have only winning price. E.g. https://www.enarocanje.si/Obrazci/?id_obrazec=127041
-                    lot.getBids().get(0)
-                            .setPrice(parsePrice(ParserUtils.getFromContent(sectionIV4, null, " Vrednost:")));
-                } else {
-                    // there is estimated price and winning price. E.g.
-                    // https://www.enarocanje.si/Obrazci/?id_obrazec=133481
-                    lot
-                            .setEstimatedPrice(parsePrice(ParserUtils.getFromContent(sectionIV4, null,
-                                    " Začetna skupna ocenjena vrednost naročila:")))
-                            .getBids().get(0)
-                                    .setPrice(parsePrice(ParserUtils.getFromContent(sectionIV4, null,
-                                            "Skupna končna vrednost naročila:")));
+                lot.getBids().get(0).setPrice(parsePrice(ParserUtils.getFromContent(sectionIV4, null, " Vrednost:")));
+                if (lot.getBids().get(0).getPrice() == null) {
+                    lot.getBids().get(0).setPrice(parsePrice(ParserUtils.getFromContent(sectionIV4, null, "Skupna"
+                        + " končna vrednost naročila:")));
                 }
             }
 
-            if (lot != null) {
-                lots.add(lot);
-            }
+            lots.add(lot);
         }
 
         return lots.isEmpty() ? null : lots;

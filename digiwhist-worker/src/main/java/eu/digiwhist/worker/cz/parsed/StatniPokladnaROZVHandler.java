@@ -17,13 +17,16 @@ public final class StatniPokladnaROZVHandler implements StatniPokladnaHandler {
     @Override
     public ParsedBudgetItem parse(final CSVRecord record) {
         return StatniPokladnaBudgetParserUtils.parseCommonBudgetItem(record)
-                .setReport(BudgetItemReportType.BALANCE_SHEET.name())
-                .setYear(parseYear(record.get(2)))
-                .setLevel3Code(record.get(8))
-                .setBody(new ParsedBody()
-                    .addBodyId(StatniPokladnaBudgetParserUtils.parseICO(record.get(getIcoColumnIndex())))
-                    .setAddress(new ParsedAddress()
-                        .addNuts(record.get(7))));
+            .setReport(BudgetItemReportType.BALANCE_SHEET.name())
+            .setYear(parseYear(record.get(2)))
+            .setBody(new ParsedBody()
+                .addBodyId(StatniPokladnaBudgetParserUtils.parseICO(record.get(getIcoColumnIndex())))
+                .setAddress(new ParsedAddress()
+                    .addNuts(record.get(7))))
+            .setLevel1Code(record.get(5))
+            .setLevel2Code(record.get(9))
+            .setLevel3Code(record.get(8))
+            .setValue(record.get(12));
     }
 
     @Override

@@ -25,12 +25,14 @@ public final class EPEDefaultHandler {
      *
      * @param doc
      *      parsed document
+     * @param publicationDate
+     *      publication date
      * @return parsed tender
      */
-    public static ParsedTender parse(final Document doc) {
+    public static ParsedTender parse(final Document doc, final String publicationDate) {
         Element context = EPEParserUtils.getDataTable(doc);
         
-        return EPEParserUtils.parsePublicationAndTitle(doc)
+        return EPEParserUtils.parsePublicationAndTitle(doc, publicationDate)
             .addBuyer(EPEParserUtils.parseBuyer(context));
     }
 }

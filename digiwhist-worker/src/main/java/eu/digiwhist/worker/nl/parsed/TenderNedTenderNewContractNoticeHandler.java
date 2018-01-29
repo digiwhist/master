@@ -19,6 +19,9 @@ import static eu.digiwhist.worker.nl.parsed.TenderNedTenderOldAndNewFormUtils
 import static eu.digiwhist.worker.nl.parsed.TenderNedTenderOldAndNewFormUtils
         .OLD_AND_NEW_SUBSECTION_IV_2_3_TITLE_SELECTOR;
 import static eu.digiwhist.worker.nl.parsed.TenderNedTenderOldAndNewFormUtils.OLD_AND_NEW_SUBSECTION_I_5_TITLE_SELECTOR;
+import java.util.ArrayList;
+import java.util.List;
+import org.jsoup.select.Elements;
 
 /**
  * Parser for TenderNed new contract notice form specific data.
@@ -46,25 +49,28 @@ final class TenderNedTenderNewContractNoticeHandler {
         TenderNedTenderOldAndNewFormUtils.parseCommonAttributes(parsedTender, form);
 
         parsedTender.getBuyers().get(0).getAddress()
-                .setUrl(TenderNedTenderOldAndNewFormUtils.parseNewBuyerUrl(form));
+            .setUrl(TenderNedTenderOldAndNewFormUtils.parseNewBuyerUrl(form));
 
         parsedTender.getBuyers().get(0)
-                .setBuyerType(TenderNedTenderOldAndNewFormUtils.parseNewTenderBuyerType(form))
-                .addMainActivity(parseBuyerMainActivity(form));
+            .setBuyerType(TenderNedTenderOldAndNewFormUtils.parseNewTenderBuyerType(form))
+            .setMainActivities(parseBuyerMainActivity(form));
 
         parsedTender
-                .setCpvs(TenderNedTenderOldAndNewFormUtils.parseNewTenderCpvs(form))
-                .setHasLots(TenderNedTenderOldAndNewFormUtils.parseIfTenderHasLots(ParserUtils.getSubsectionOfElements(
-                        JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_6_TITLE_SELECTOR, form),
-                        JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_7_TITLE_SELECTOR, form))))
-                .setBidDeadline(TenderNedTenderOldAndNewFormUtils.parseTenderBidDeadline(
-                        ParserUtils.getSubsectionOfElements(
-                                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_IV_2_2_TITLE_SELECTOR, form),
-                                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_IV_2_3_TITLE_SELECTOR, form))))
-                .setEstimatedPrice(parseTenderEstimatedPrice(form))
-                .setLots(TenderNedTenderOldAndNewFormUtils.parseNewTenderLots(form))
-                .setIsFrameworkAgreement(TenderNedTenderOldAndNewFormUtils.parseNewTenderIsFrameworkAgreement(form))
-                .addPublication(TenderNedTenderOldAndNewFormUtils.parseNewTenderPreviousPublicationInTed(form));
+            .setCpvs(TenderNedTenderOldAndNewFormUtils.parseNewTenderCpvs(form))
+            .setHasLots(TenderNedTenderOldAndNewFormUtils.parseIfTenderHasLots(ParserUtils.getSubsectionOfElements(
+                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_6_TITLE_SELECTOR, form),
+                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_7_TITLE_SELECTOR, form))))
+            .setBidDeadline(TenderNedTenderOldAndNewFormUtils.parseTenderBidDeadline(
+                ParserUtils.getSubsectionOfElements(
+                    JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_IV_2_2_TITLE_SELECTOR, form),
+                    JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_IV_2_3_TITLE_SELECTOR, form))))
+            .setEstimatedPrice(parseTenderEstimatedPrice(form))
+            .setLots(TenderNedTenderOldAndNewFormUtils.parseNewTenderLots(form))
+            .setIsFrameworkAgreement(TenderNedTenderOldAndNewFormUtils.parseNewTenderIsFrameworkAgreement(form))
+            .addPublication(TenderNedTenderOldAndNewFormUtils.parseNewTenderPreviousPublicationInTed(form))
+            .setSupplyType(TenderNedTenderOldAndNewFormUtils.parseTenderSupplyType(form))
+            .setBuyerAssignedId(TenderNedTenderOldAndNewFormUtils.parseBuyerAssignedId(form))
+            .setIsCoveredByGpa(TenderNedTenderOldAndNewFormUtils.parseIsTenderCoveredByGpa(form));
 
         return parsedTender;
     }
@@ -75,13 +81,23 @@ final class TenderNedTenderNewContractNoticeHandler {
      * @param form
      *         document to be parsed
      *
-     * @return String or Null
+     * @return non-empty list of activities or null
      */
-    private static String parseBuyerMainActivity(final Element form) {
-        final Element subsection = ParserUtils.getSubsectionOfElements(
-                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_I_5_TITLE_SELECTOR, form),
-                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_1_TITLE_SELECTOR, form));
-        return JsoupUtils.selectText("ul", subsection);
+    private static List<String> parseBuyerMainActivity(final Element form) {
+        Elements nodes = JsoupUtils.select("ul > li", ParserUtils.getSubsectionOfElements(
+            JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_I_5_TITLE_SELECTOR, form),
+            JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_1_TITLE_SELECTOR, form)));
+
+        if (nodes == null || nodes.isEmpty()) {
+            return null;
+        }
+
+        List<String> activities = new ArrayList<>();
+        nodes.forEach(n -> {
+            activities.add(n.text());
+        });
+
+        return activities;
     }
 
     /**

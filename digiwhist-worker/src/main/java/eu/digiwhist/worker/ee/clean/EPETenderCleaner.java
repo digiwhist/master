@@ -142,7 +142,7 @@ public final class EPETenderCleaner extends BaseDigiwhistTenderCleaner {
             "Hanketeade - kaitse- ja julgeolekuvaldkond"));
         mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("Riigihanke aruanne",
             "Ehitustööde kontsessiooni teade", "Ideekonkursi tulemused"));
-        mapping.put(PublicationFormType.CONTRACT_IMPLEMENTATION, Arrays.asList("Riigihanke aruande lisa"));
+        mapping.put(PublicationFormType.CONTRACT_AMENDMENT, Arrays.asList("Riigihanke aruande lisa"));
 
         /*
         Kvalifitseerimissüsteem (Võrgustiku) - Qualification system (network)
@@ -250,7 +250,6 @@ public final class EPETenderCleaner extends BaseDigiwhistTenderCleaner {
         õigus- ja kriminaalpoliitika - legal and criminal policy        
         põhiseadusliku institutsiooni teenindamine - constitutional institution services
         õigusemõistmine - administration of justice
-        Elamu- ja kommunaalmajandus - Housing and community amenities
         infotehnoloogiliste e-tervise projektidega tegelemine - information technology e-health projects addressing
          */
 

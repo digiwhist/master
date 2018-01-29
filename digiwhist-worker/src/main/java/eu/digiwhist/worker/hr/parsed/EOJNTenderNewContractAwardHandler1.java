@@ -5,8 +5,9 @@ import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import static eu.digiwhist.worker.hr.parsed.EOJNTenderOldAndNewFormUtils.CHECKBOX_TEXT_SELECTOR;
-import static eu.digiwhist.worker.hr.parsed.EOJNTenderOldAndNewFormUtils.SUBSECTION_I_5_SELECTOR;
+import static eu.digiwhist.worker.hr.parsed.EOJNTenderNewFormUtils.CHECKBOX_TEXT_SELECTOR;
+import static eu.digiwhist.worker.hr.parsed.EOJNTenderNewFormUtils.SUBSECTION_I_5_SELECTOR;
+import static eu.digiwhist.worker.hr.parsed.EOJNTenderNewFormUtils.SUBSECTION_VI_4_SELECTOR;
 
 /**
  * New contract award form parser for Croatia.
@@ -32,6 +33,11 @@ final class EOJNTenderNewContractAwardHandler1 {
      */
     static ParsedTender parse(final ParsedTender parsedTender, final Document document) {
         final Element subsectionI5 = JsoupUtils.selectFirst(SUBSECTION_I_5_SELECTOR, document);
+        final Element subsectionVI4 = JsoupUtils.selectFirst(SUBSECTION_VI_4_SELECTOR + "," +
+                "p:contains(VI.4) + p + table", document);
+
+        parsedTender
+                .setAppealBodyName(EOJNTenderNewFormUtils.parseTenderAppealBodyName(subsectionVI4));
 
         parsedTender.getBuyers().get(0)
                 .addMainActivity(JsoupUtils.selectText(CHECKBOX_TEXT_SELECTOR, subsectionI5));

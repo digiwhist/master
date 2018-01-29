@@ -14,9 +14,10 @@ import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
+import java.util.Arrays;
 
 /**
- * Parser for contract notice form specific data.
+ * Parser for contract award notice form specific data.
  *
  * @author Tomas Mrazek
  */
@@ -29,19 +30,26 @@ public final class UZPContractNoticeHandler {
     }
 
     /**
-     * @param parsedTender
-     *         parsed tender
      * @param document
      *         xml document
-     * @return parsed tender
+     * @param machineReadableUrl
+     *      machine readable URL of included publication
+     * @return list of parsed tenders
      */
-    public static ParsedTender parse(final ParsedTender parsedTender, final Document document) {
-        parsedTender
-            .addPublication(new ParsedPublication()
+    public static List<ParsedTender> parse(final Document document, final String machineReadableUrl) {
+        String publYear = JsoupUtils.selectText("bzp_rok", document);
+        String publSourceId = JsoupUtils.selectText("bzp_poz", document);
+        ParsedPublication publication = null;
+        if (publYear != null || publSourceId != null) {
+            publication = new ParsedPublication()
                 .setIsIncluded(false)
                 .setSource(PublicationSources.PL_UZP_FTP)
-                .setPublicationDate(JsoupUtils.selectText("bzp_rok", document))
-                .setSourceId(JsoupUtils.selectText("bzp_poz", document)))
+                .setPublicationDate(publYear)
+                .setSourceId(publSourceId);
+        }
+
+        return Arrays.asList(UZPTenderParserUtils.parseCommonFormData(document, machineReadableUrl)
+            .addPublication(publication)
             .setAreVariantsAccepted(UZPTenderParserUtils.isEnabled("czy_wariant", document).toString())
             //tag with same name is also in the lot section (czas_dni)
             .setEstimatedDurationInDays(JsoupUtils.selectText(":root > czas_dni", document))
@@ -63,9 +71,7 @@ public final class UZPContractNoticeHandler {
             .setLots(parseLots(document))
             .setBidsRecipient(parseBidsRecipient(document))
             .setEnvisagedCandidatesCount(JsoupUtils.selectText("liczba_wyk", document))
-            .setEligibilityCriteria(JsoupUtils.selectCombinedText("opis_war, inf_osw", document));
-
-        return parsedTender;
+            .setEligibilityCriteria(JsoupUtils.selectCombinedText("opis_war, inf_osw", document)));
     }
 
     /**
@@ -170,9 +176,11 @@ public final class UZPContractNoticeHandler {
             return null;
         }
 
+        int positionOnPage = 0;
         final List<ParsedTenderLot> lots = new ArrayList<>();
         for (Element node : lotNodes) {
             lots.add(new ParsedTenderLot()
+                .setPositionOnPage(String.valueOf(positionOnPage))
                 .setTitle(JsoupUtils.selectText("nazwa", node))
                 .setDescription(JsoupUtils.selectText("opis", node))
                 .setLotNumber(JsoupUtils.selectText("nr_czesci", node))
@@ -182,6 +190,8 @@ public final class UZPContractNoticeHandler {
                 .setEstimatedStartDate(JsoupUtils.selectText("data_roz", node))
                 .setEstimatedCompletionDate(JsoupUtils.selectText("data_zak", node))
                 .setAwardCriteria(UZPTenderParserUtils.parseAwardCriteria(node)));
+
+            positionOnPage++;
         }
 
         return lots;

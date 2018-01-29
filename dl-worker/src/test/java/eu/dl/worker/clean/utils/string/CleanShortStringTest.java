@@ -18,7 +18,7 @@ public final class CleanShortStringTest {
      * Test of null value.
      */
     @Test
-    public void nullorEmptyValue() {
+    public void nullOrEmptyValues() {
         assertNull(StringUtils.cleanShortString(null));
         assertNull(StringUtils.cleanShortString(""));
         assertNull(StringUtils.cleanShortString(" <b> "));

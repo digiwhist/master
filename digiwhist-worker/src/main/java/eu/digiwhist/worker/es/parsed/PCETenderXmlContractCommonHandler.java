@@ -50,7 +50,8 @@ public final class PCETenderXmlContractCommonHandler {
         parsedTender
                 .setBuyerAssignedId(selectText("cbc|ContractFolderID", document))
                 .addPublication(new ParsedPublication()
-                        .setSourceTenderId(selectText("cbc|UUID", document))
+                        .setSourceTenderId(selectText("cbc|ContractFolderID", document))
+                        .setSourceId(selectText("cbc|UUID", document))
                         .setIsIncluded(true)
                         .setPublicationDate(selectText("cbc|IssueDate", document))
                         .setMachineReadableUrl(tenderUrl)
@@ -113,7 +114,6 @@ public final class PCETenderXmlContractCommonHandler {
                         .setCode(selectText("cac|ProcurementProject cbc|ItemClassificationCode", document))
                         .setIsMain(Boolean.TRUE.toString()))
                 .setAddressOfImplementation(new ParsedAddress()
-                        .setCountry(selectText("cac|ProcurementProject cbc|CountrySubentity", document))
                         .addNuts(selectText("cac|ProcurementProject cbc|CountrySubentityCode", document)))
                 .setLots(parseLots(document))
                 .setFundings(parseFundings(document));

@@ -7,7 +7,6 @@ import eu.dl.dataaccess.dto.raw.RawData;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -73,12 +72,9 @@ public class TedTenderParser extends BaseDigiwhistTenderParser {
      * @return parsed tender
      */
     private ParsedTender parseCommonFormData(final Document document, final TedFormVersionType version) {
-        final ParsedTender parsedTender = new ParsedTender();
-        //coded data and translation sections have same xpath as form prior R2.0.9
-        final Element codedDataNode = TedTenderParserUtils.getCodedDataNode(document);
-
-        parsedTender
-            .setSelectionMethod(TedTenderParserUtils.parseSelectionMethod(codedDataNode))
+        final ParsedTender parsedTender = new ParsedTender()
+            .setSelectionMethod(TedTenderParserUtils.parseSelectionMethod(
+                TedTenderParserUtils.getCodedDataNode(document)))
             .setTitleEnglish(JsoupUtils.selectText("ML_TI_DOC[LG=EN] > TI_TEXT",
                 TedTenderParserUtils.getTranslationNode(document)))
             .setCountry(JsoupUtils.selectAttribute("TED_EXPORT > CODED_DATA_SECTION > NOTICE_DATA > ISO_COUNTRY",
@@ -89,13 +85,13 @@ public class TedTenderParser extends BaseDigiwhistTenderParser {
             parsedTender
                 .setTitle(JsoupUtils.selectText("TITLE_CONTRACT", TedTenderParserUtils.getOriginNode(document)));
         } else {
-            final Element originNode = TedTenderParserUtils.getOriginNode(document);
-
             parsedTender
                 //main publication
                 .addPublication(TedTenderParserR209Utils.parseMainPublication(document))
                 //previous publication concerning this procedure
-                .addPublication(TedTenderParserR209Utils.parsePreviousPublication(originNode));
+                .addPublication(TedTenderParserR209Utils.parsePreviousPublication(document));
+            
+            TedTenderParserUtils.appendNoticeReference(document, parsedTender);
         }
 
         return parsedTender;
@@ -123,8 +119,13 @@ public class TedTenderParser extends BaseDigiwhistTenderParser {
 
         switch (formType) {
             case CONTRACT_NOTICE:
+            case PRIOR_INFORMATION_NOTICE:
                 if (isPriorR209) {
-                    return TedContractNoticeHandler.parse(parsedTender, document);
+                    if (formType == TedFormType.CONTRACT_NOTICE) {
+                        return TedContractNoticeHandler.parse(parsedTender, document);
+                    } else {
+                        return TedPriorInformationNoticeHandler.parse(parsedTender, document);
+                    }
                 } else {
                     return TedContractNoticeHandlerR209.parse(parsedTender, document);
                 }

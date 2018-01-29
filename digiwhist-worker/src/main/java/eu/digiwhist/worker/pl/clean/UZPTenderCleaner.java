@@ -26,6 +26,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.SignStyle;
 import java.time.temporal.ChronoField;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -42,8 +43,12 @@ public final class UZPTenderCleaner extends BaseDigiwhistTenderCleaner {
 
     private static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance(new Locale("pl"));
 
-    private static final List<DateTimeFormatter> DATE_FORMATTER = Arrays.asList(
-            DateTimeFormatter.ofPattern("dd/MM/yyyy"), DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+    private static final List<DateTimeFormatter> DATE_FORMATTER;
+    static {
+        DATE_FORMATTER = new ArrayList<>();
+        DATE_FORMATTER.add(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+        DATE_FORMATTER.add(DateTimeFormatter.ofPattern("yyyy/MM/dd"));
+    }
 
     /**
      * This DateTimeFormatter parses following datetime strings.
@@ -189,9 +194,10 @@ public final class UZPTenderCleaner extends BaseDigiwhistTenderCleaner {
      */
     private Map<Enum, List<String>> formTypeMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
-        mapping.put(PublicationFormType.CONTRACT_NOTICE, Arrays.asList("ZP-403", "ZP-405", "ZP-408"));
-        mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("ZP-400", "ZP-401", "ZP-402", "ZP-404"));
-        mapping.put(PublicationFormType.CONTRACT_UPDATE, Arrays.asList("ZP-406", "ZP-SPR"));
+        mapping.put(PublicationFormType.CONTRACT_NOTICE, Arrays.asList("ZP-400", "ZP-401", "ZP-402", "ZP-404",
+            "ZP-407", "ZP-409", "0", "1", "2", "4", "7", "9"));
+        mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("ZP-403", "ZP-405", "ZP-408", "3", "5", "8"));
+        mapping.put(PublicationFormType.CONTRACT_UPDATE, Arrays.asList("ZP-406", "ZP-SPR", "6"));
 
         return mapping;
     }

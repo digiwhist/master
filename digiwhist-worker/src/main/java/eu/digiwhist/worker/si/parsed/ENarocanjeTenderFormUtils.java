@@ -1,5 +1,11 @@
 package eu.digiwhist.worker.si.parsed;
 
+import eu.dl.dataaccess.dto.parsed.ParsedAddress;
+import eu.dl.dataaccess.dto.parsed.ParsedBody;
+import eu.dl.worker.utils.StringUtils;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Utilities for ENarocanje.
  *
@@ -14,6 +20,8 @@ final class ENarocanjeTenderFormUtils {
 
     static final String IS_EU_FUND_TITLE =
             "Naročilo se nanaša na projekt in/ali program, ki se financira s sredstvi EU:";
+    static final String DURATION_IN_DAYS_TITLE = "Trajanje v dnevih:";
+    static final String DURATION_IN_DAYS_SUFFIX = "(od oddaje naročila)";
 
     /**
      * Decides whether input string represents "yes" or "no" in Slovenian language.
@@ -30,11 +38,7 @@ final class ENarocanjeTenderFormUtils {
             return null;
         }
 
-        String yesOrNoStringCleaned = yesOrNoString;
-
-        if (yesOrNoStringCleaned.endsWith(".")) {
-            yesOrNoStringCleaned = yesOrNoStringCleaned.substring(0, yesOrNoStringCleaned.length() - 1);
-        }
+        String yesOrNoStringCleaned = StringUtils.removeDotsAtTheEnd(yesOrNoString);
 
         if (yesOrNoStringCleaned.isEmpty()) {
             return null;
@@ -51,6 +55,42 @@ final class ENarocanjeTenderFormUtils {
                 assert false;
                 return null;
         }
+    }
+
+    /**
+     * Parses name and address of body.
+     *
+     * @param nameAndAddress
+     *          name and address in string.
+     * @param body
+     *          body to be updated, if null the new body will be created
+     * @return parsed body or null
+     */
+    static ParsedBody parseNameAndAddressBody(final String nameAndAddress, final ParsedBody body) {
+        if (nameAndAddress == null || nameAndAddress.isEmpty()) {
+            return body;
+        }
+        ParsedBody newBody = body;
+        if (newBody == null) {
+            newBody = new ParsedBody();
+        }
+
+        final List<String> separators = Arrays.asList(
+                "d.o.o.,", "D.O.O.,", "d.o.o. ,", "d. o. o.,", "d.o.o. ",
+                "d.d.,", "d.d,",
+                "s.p.,", "S.P.,", "s.p. ,",
+                ",");
+
+        String separator = separators.stream()
+            .filter(s -> nameAndAddress.contains(s))
+            .findFirst()
+            .orElse(null);
+
+        int addressStartIndex = nameAndAddress.indexOf(separator) + separator.length();
+
+        return newBody
+            .setName(nameAndAddress.substring(0, addressStartIndex))
+            .setAddress(new ParsedAddress().setRawAddress(nameAndAddress.substring(addressStartIndex)));
     }
 
 }

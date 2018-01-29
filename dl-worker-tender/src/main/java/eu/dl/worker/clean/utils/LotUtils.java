@@ -16,6 +16,8 @@ import java.util.Map;
  * @author Tomas Mrazek
  */
 public final class LotUtils {
+    private static final Integer BIDS_COUNT_MIN = 0;
+    private static final Integer BIDS_COUNT_MAX = 999;
 
     /**
      * Utility classes should not have default constructor.
@@ -35,11 +37,13 @@ public final class LotUtils {
      *         datetime formatter
      * @param lotMappings
      *         lot mappings
-     *
+     * @param country
+     *          country
      * @return cleaned lot
      */
     public static CleanTenderLot cleanLot(final ParsedTenderLot parsedLot, final List<NumberFormat> numberFormat,
-            final List<DateTimeFormatter> formatter, final Map<String, Map<Enum, List<String>>> lotMappings) {
+            final List<DateTimeFormatter> formatter, final Map<String, Map<Enum, List<String>>> lotMappings,
+            final String country) {
         if (parsedLot == null) {
             return null;
         }
@@ -55,8 +59,8 @@ public final class LotUtils {
                 .setBids(ArrayUtils.walk(parsedLot.getBids(),
                         (parsedBid) -> BidUtils.cleanBid(parsedBid, numberFormat, formatter,
                                 lotMappings.get("documentTypeMapping"), lotMappings.get("unitPriceMapping"),
-                                lotMappings.get("countryMapping"))))
-                .setBidsCount(NumberUtils.cleanInteger(parsedLot.getBidsCount(), numberFormat))
+                                lotMappings.get("countryMapping"), country)))
+                .setBidsCount(LotUtils.removeNonsensicalBidsCount(parsedLot.getBidsCount(), numberFormat))
                 .setCancellationDate(DateUtils.cleanDate(parsedLot.getCancellationDate(), formatter))
                 .setCancellationReason(StringUtils.cleanLongString(parsedLot.getCancellationReason()))
                 .setCompletionDate(DateUtils.cleanDate(parsedLot.getCompletionDate(), formatter))
@@ -72,12 +76,12 @@ public final class LotUtils {
                         NumberUtils.cleanInteger(parsedLot.getEstimatedDurationInDays(), numberFormat))
                 .setEstimatedDurationInMonths(
                         NumberUtils.cleanInteger(parsedLot.getEstimatedDurationInMonths(), numberFormat))
-                .setEstimatedPrice(PriceUtils.cleanPrice(parsedLot.getEstimatedPrice(), numberFormat))
+                .setEstimatedPrice(PriceUtils.cleanPrice(parsedLot.getEstimatedPrice(), numberFormat, country))
                 .setEstimatedStartDate(DateUtils.cleanDate(parsedLot.getEstimatedStartDate(), formatter))
                 .setForeignCompaniesBidsCount(
                         NumberUtils.cleanInteger(parsedLot.getForeignCompaniesBidsCount(), numberFormat))
                 .setFundings(ArrayUtils.walk(parsedLot.getFundings(),
-                        (parsedFunding) -> FundingUtils.cleanFunding(parsedFunding, numberFormat)))
+                        (parsedFunding) -> FundingUtils.cleanFunding(parsedFunding, numberFormat, country)))
                 .setIsAwarded(StringUtils.cleanBoolean(parsedLot.getIsAwarded()))
                 .setIsCoveredByGpa(StringUtils.cleanBoolean(parsedLot.getIsCoveredByGpa()))
                 .setIsDps(StringUtils.cleanBoolean(parsedLot.getIsDps()))
@@ -102,6 +106,38 @@ public final class LotUtils {
     }
 
     /**
+     * @param bidsCount
+     *         parsed bids count
+     * @param numberFormat
+     *         list of number formats
+     * @param min
+     *          minimal accepted value
+     * @param max
+     *          maximal accepted value
+     * @return bids count if the value is in range given by min and max, otherwise null
+     */
+    public static Integer removeNonsensicalBidsCount(final String bidsCount, final List<NumberFormat> numberFormat,
+        final int min, final int max) {
+        Integer count = NumberUtils.cleanInteger(bidsCount, numberFormat);
+        if (count != null && (count < min || count > max)) {
+            return null;
+        }
+
+        return count;
+    }
+
+    /**
+     * @param bidsCount
+     *         parsed bids count
+     * @param numberFormat
+     *         list of number formats
+     * @return bids count if the value is in range given by BIDS_COUNT_MIN and BIDS_COUNT_MAX, otherwise null
+     */
+    public static Integer removeNonsensicalBidsCount(final String bidsCount, final List<NumberFormat> numberFormat) {
+        return removeNonsensicalBidsCount(bidsCount, numberFormat, BIDS_COUNT_MIN, BIDS_COUNT_MAX);
+    }
+
+    /**
      * Cleans the given lot.
      *
      * @param parsedLot
@@ -112,11 +148,13 @@ public final class LotUtils {
      *         datetime formatter
      * @param lotMappings
      *         lot mappings
-     *
+     * @param country
+     *          country
      * @return cleaned lot
      */
     public static CleanTenderLot cleanLot(final ParsedTenderLot parsedLot, final NumberFormat numberFormat,
-            final List<DateTimeFormatter> formatter, final Map<String, Map<Enum, List<String>>> lotMappings) {
-        return cleanLot(parsedLot, Arrays.asList(numberFormat), formatter, lotMappings);
+            final List<DateTimeFormatter> formatter, final Map<String, Map<Enum, List<String>>> lotMappings,
+            final String country) {
+        return cleanLot(parsedLot, Arrays.asList(numberFormat), formatter, lotMappings, country);
     }
 }

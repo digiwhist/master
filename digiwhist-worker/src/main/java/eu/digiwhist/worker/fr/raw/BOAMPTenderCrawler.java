@@ -97,8 +97,7 @@ public final class BOAMPTenderCrawler extends BaseDigiwhistIncrementalFtpCrawler
                                     logger.error("Unable to save file {}", e);
                                     throw new RecoverableException("Unable to save file", e);
                                 }
-
-                                logger.debug("File content stored into \"{}\"", filePath);
+                                logger.info("File content stored into \"{}\"", filePath);
                             }
 
                             final Message outgoingMessage = MessageFactory.getMessage();

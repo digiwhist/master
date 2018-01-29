@@ -39,10 +39,11 @@ public final class CVPISTenderNewHandler {
      *
      * @param document document to be parsed
      * @param url url
-     *
+     * @param publicationDate
+     *      date of publishing of the tender
      * @return parsed tender
      */
-    public static ParsedTender parse(final Element document, final String url) {
+    public static ParsedTender parse(final Element document, final String url, final String publicationDate) {
         ParsedTender parsedTender = new ParsedTender()
                 .setBuyerAssignedId(parseTrUnderTr("Perkančiosios organizacijos priskirtas bylos numeris:",
                         document))
@@ -130,6 +131,7 @@ public final class CVPISTenderNewHandler {
                         .setHumanReadableUrl(url)
                         .setSourceFormType(selectText("*:containsOwn(skelbimas)", document))
                         .setDispatchDate(selectText("b:contains(Šio skelbimo išsiuntimo data) + table", document))
+                        .setPublicationDate(publicationDate)
                 )
                 .setIsDps(isDPS(document))
                 .setFinalPrice(parseFinalPrice(document))

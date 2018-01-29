@@ -7,11 +7,16 @@ import org.slf4j.LoggerFactory;
 
 import eu.dl.dataaccess.dto.parsed.BaseParsedTenderLot;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
+import eu.dl.dataaccess.dto.parsed.ParsedAwardCriterion;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Contract notice handler for E-procurement in Estonia.
@@ -34,12 +39,14 @@ public final class EPEContractNoticeHandler {
      *
      * @param doc
      *      parsed document
+     * @param publicationDate
+     *      publication date
      * @return parsed tender
      */
-    public static ParsedTender parse(final Document doc) {
+    public static ParsedTender parse(final Document doc, final String publicationDate) {
         Element context = EPEParserUtils.getDataTable(doc);
 
-        ParsedTender tender = EPEParserUtils.parseNoticeAwardCommonData(doc)
+        ParsedTender tender = EPEParserUtils.parseNoticeAwardCommonData(doc, publicationDate)
             .setDocumentsLocation(parseDocumentsLocation(context))
             .setBidsRecipient(parseBidsRecipient(context))
             .setEstimatedPrice(parseEstimatedPrice(context))
@@ -56,19 +63,36 @@ public final class EPEContractNoticeHandler {
             .setDocumentsPayable(EPEParserUtils.parseBoolean("Dokumendid on tasulised", context))
             .setBidDeadline(EPEParserUtils.tableValueByLabel("^IV\\.3\\.4\\)", context))
             .setDocumentsPrice(EPEParserUtils.parsePrice("^IV\\.3\\.3\\)", context))
-            .addEligibleBidLanguage(EPEParserUtils.tableValueByLabel("^IV\\.3\\.6\\)", context))
-            .setAwardDeadlineDuration(EPEParserUtils.tableValueByLabel("^IV\\.3\\.7\\)", context))
+            .setEligibleBidLanguages(parseEligibleLanguages(context))
+            .setAwardDeadlineDuration(EPEParserUtils.tableValueByLabel("Minimaalne aeg, mille jooksul pakkuja peab"
+                + " pakkumuse jõus hoidma", context))
             .addFunding(EPEParserUtils.parseEUFunding("^VI\\.2\\)", context))
             // dps ????
             .setIsDps(EPEParserUtils.parseBoolean("^VI\\.6\\)", context))
             .setLots(EPEParserUtils.parseLots(EPEContractNoticeHandler::parseLot,
-                JsoupUtils.selectFirst("tr:contains(B LISA:) + tr", context), null))
+                JsoupUtils.selectFirst("tr:contains(B LISA:) + tr", context), null,
+                Collections.singletonMap("criteria", EPEParserUtils.parseLotsRelatedCriteria(context))))
             .setEnvisagedMaxCandidatesCount(EPEParserUtils.tableValueByLabel("^IV\\.1\\.2\\)", context))
             .setAppealBodyName(EPEParserUtils.parseAppealBodyName("^VI\\.4\\.3\\)", context));
         
         tender = (ParsedTender) parseDuration(tender, "HANKELEPINGU VÕI DÜNAAMILISE HANKESÜSTEEMI KESTUS", context);
         
         return tender;
+    }
+
+    /**
+     * @param context
+     *      context that includes eligible languages
+     * @return non-empty list of languages or null
+     */
+    private static List<String> parseEligibleLanguages(final Element context) {
+        String languages = EPEParserUtils.tableValueByLabel("Keel(ed), milles võib esitada pakkumuse või taotluse",
+            context);
+        if (languages == null) {
+            return null;
+        }
+
+        return Arrays.asList(languages.split(", ?"));
     }
 
     /**
@@ -117,23 +141,38 @@ public final class EPEContractNoticeHandler {
     /**
      * @param node
      *      node that includes lot data
+     * @param metaData
+     *      meta data
      * @return parsed lot or null
      */
-    private static ParsedTenderLot parseLot(final Element node) {
+    private static List<ParsedTenderLot> parseLot(final Element node, final Map<String, Object> metaData) {
         if (node == null) {
             return null;
         }
 
         ParsedTenderLot lot = new ParsedTenderLot()
             // text of first row includes number, remove non-digit characters
-            .setLotNumber(node.child(0).text().replaceAll("\\D", ""))
-            .setTitle(EPEParserUtils.regexValueByLabel("NIMETUS", "NIMETUS (?<value>.+)", node))
+            .setLotNumber(JsoupUtils.selectText("tr", node).replaceAll("\\D", ""))
+            .setTitle(EPEParserUtils.regexValueByLabel("NIMETUS", "(?<value>.+)", node))
             .setDescription(EPEParserUtils.tableValueByLabel("1\\)", node))
-            .setCpvs(EPEParserUtils.parseCPVs("2\\)", node))
-            .setEstimatedPrice(EPEParserUtils.parsePrice("3\\)", node)).setFundings(null)
-            .setEligibilityCriteria(EPEParserUtils.tableValueByLabel("8\\)", node));
+            .setCpvs(EPEParserUtils.parseCPVs("^2\\)", node))
+            .setEstimatedPrice(EPEParserUtils.parsePrice("^3\\)", node))
+            .addFunding(EPEParserUtils.parseEUFunding(JsoupUtils.selectFirst("tr:matches(^6\\))", node)))
+            .setEligibilityCriteria(EPEParserUtils.tableValueByLabel("^8\\)", node));
 
-        return (ParsedTenderLot) parseDuration(lot, "4\\)", node);
+        lot = (ParsedTenderLot) parseDuration(lot, "^4\\)", node);
+
+        // append lot related award criteria
+        if (metaData != null) {
+            Map<String, List<ParsedAwardCriterion>> criteria =
+                (Map<String, List<ParsedAwardCriterion>>) metaData.get("criteria");
+
+            if (criteria != null && lot.getLotNumber() != null) {
+                lot.addAwardCriteria(criteria.get(lot.getLotNumber()));
+            }
+        }
+
+        return Arrays.asList(lot);
     }
 
      /**

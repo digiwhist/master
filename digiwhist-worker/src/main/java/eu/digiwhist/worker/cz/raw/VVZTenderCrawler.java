@@ -1,5 +1,19 @@
 package eu.digiwhist.worker.cz.raw;
 
+import com.gargoylesoftware.htmlunit.HttpMethod;
+import com.gargoylesoftware.htmlunit.WebRequest;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.util.NameValuePair;
+import eu.digiwhist.dataaccess.dto.codetables.PublicationSources;
+import eu.digiwhist.worker.raw.BaseDigiwhistIncrementalPagedSourceHttpCrawler;
+import eu.dl.core.UnrecoverableException;
+import eu.dl.worker.raw.utils.CrawlerUtils;
+import eu.dl.worker.utils.ThreadUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -7,21 +21,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
-import com.gargoylesoftware.htmlunit.HttpMethod;
-import com.gargoylesoftware.htmlunit.WebRequest;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.util.NameValuePair;
-
-import eu.digiwhist.dataaccess.dto.codetables.PublicationSources;
-import eu.digiwhist.worker.raw.BaseDigiwhistIncrementalPagedSourceHttpCrawler;
-import eu.dl.core.UnrecoverableException;
-import eu.dl.worker.raw.utils.CrawlerUtils;
 
 /**
  * This class is searching https://vestnikverejnychzakazek.cz for the delta of new items.
@@ -58,7 +57,7 @@ public final class VVZTenderCrawler extends BaseDigiwhistIncrementalPagedSourceH
     protected HtmlPage getSearchResultsStartPageForDate(final LocalDate incrementDate) {
         try {
             // don't shut the server down
-            humanize(SLEEP_LENGTH);
+            ThreadUtils.humanize(SLEEP_LENGTH);
             String url = String.format(PAGE_URL_TEMPLATE, PAGE_SIZE);
 
             WebRequest request = new WebRequest(new URL(url), HttpMethod.POST);

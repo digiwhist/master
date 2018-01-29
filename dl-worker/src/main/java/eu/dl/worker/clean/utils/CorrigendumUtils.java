@@ -30,11 +30,12 @@ public final class CorrigendumUtils {
      *         list of number formats
      * @param formatters
      *         datetime formatters
-     *
+     * @param country
+     *          country
      * @return cleaned corrigendum
      */
     public static Corrigendum cleanCorrigendum(final ParsedCorrigendum parsedCorrigendum,
-            final List<NumberFormat> numberFormat, final List<DateTimeFormatter> formatters) {
+            final List<NumberFormat> numberFormat, final List<DateTimeFormatter> formatters, final String country) {
         if (parsedCorrigendum == null) {
             return null;
         }
@@ -48,8 +49,9 @@ public final class CorrigendumUtils {
                 .setReplacementCpvs(CPVUtils.cleanCpvs(parsedCorrigendum.getReplacementCpvs()))
                 .setOriginalDate(DateUtils.cleanDateTime(parsedCorrigendum.getOriginalDate(), formatters))
                 .setReplacementDate(DateUtils.cleanDate(parsedCorrigendum.getReplacementDate(), formatters))
-                .setOriginalValue(PriceUtils.cleanPrice(parsedCorrigendum.getOriginalValue(), numberFormat))
-                .setReplacementValue(PriceUtils.cleanPrice(parsedCorrigendum.getReplacementValue(), numberFormat));
+                .setOriginalValue(PriceUtils.cleanPrice(parsedCorrigendum.getOriginalValue(), numberFormat, country))
+                .setReplacementValue(PriceUtils.cleanPrice(parsedCorrigendum.getReplacementValue(), numberFormat,
+                    country));
     }
 
     /**
@@ -61,11 +63,12 @@ public final class CorrigendumUtils {
      *         number format
      * @param formatter
      *         datetime formatter
-     *
+     * @param country
+     *          country
      * @return cleaned corrigendum
      */
     public static Corrigendum cleanCorrigendum(final ParsedCorrigendum parsedCorrigendum,
-            final NumberFormat numberFormat, final List<DateTimeFormatter> formatter) {
-        return cleanCorrigendum(parsedCorrigendum, Arrays.asList(numberFormat), formatter);
+            final NumberFormat numberFormat, final List<DateTimeFormatter> formatter, final String country) {
+        return cleanCorrigendum(parsedCorrigendum, Arrays.asList(numberFormat), formatter, country);
     }
 }

@@ -22,9 +22,7 @@ import static eu.digiwhist.worker.nl.parsed.TenderNedTenderAncientFormUtils
 import static eu.digiwhist.worker.nl.parsed.TenderNedTenderAncientFormUtils
         .ANCIENT_SUBSECTION_VI_4_1_2_CONTENT_SELECTOR;
 
-import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
-import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedCPV;
 import eu.dl.dataaccess.dto.parsed.ParsedFunding;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
@@ -36,6 +34,8 @@ import org.jsoup.nodes.Element;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Parser for TenderNed ancient contract notice form specific data.
@@ -61,50 +61,42 @@ final class TenderNedTenderAncientContractNoticeHandler {
      */
     public static ParsedTender parse(final ParsedTender parsedTender, final Element form) {
         return parsedTender
-                .addBuyer(new ParsedBody()
-                        .setName(TenderNedTenderAncientFormUtils.parseBuyerName(form))
-                        .addBodyId(new BodyIdentifier()
-                                .setId(TenderNedTenderAncientFormUtils.parseBuyerBodyIdentifierId(form)))
-                        .setAddress(new ParsedAddress()
-                                .setRawAddress(TenderNedTenderAncientFormUtils.parseBuyerRawAddress(form))
-                                .setUrl(TenderNedTenderAncientFormUtils.parseBuyerUrl(form)))
-                        .setContactName(TenderNedTenderAncientFormUtils.parseBuyerContactName(form))
-                        .setPhone(TenderNedTenderAncientFormUtils.parseBuyerPhone(form))
-                        .setEmail(TenderNedTenderAncientFormUtils.parseBuyerEmail(form)))
-                .addBuyer(TenderNedTenderAncientFormUtils.parseSecondTenderBuyer(form))
-                .setSupplyType(TenderNedTenderAncientFormUtils.parseTenderSupplyType(form))
-                .setOnBehalfOf(TenderNedTenderAncientFormUtils.parseTenderOnBehalfOf(form))
-                .setTitle(TenderNedTenderAncientFormUtils.parseTenderTitle(form))
-                .setAddressOfImplementation(new ParsedAddress()
-                        .setRawAddress(parseRawAddressOfImplementation(form))
-                        .addNuts(TenderNedTenderAncientFormUtils.parseAddressOfImplementationNuts(form)))
-                .setIsFrameworkAgreement(TenderNedTenderAncientFormUtils.parseIsTenderFrameworkAgreement(form))
-                .setDescription(TenderNedTenderAncientFormUtils.parseTenderDescription(form,
-                        ANCIENT_SUBSECTION_II_1_5_CONTENT_SELECTOR))
-                .setCpvs(TenderNedTenderAncientFormUtils.parseTenderCpvs(form,
-                        ANCIENT_SUBSECTION_II_1_6_CONTENT_SELECTOR))
-                .setIsCoveredByGpa(parseIsTenderCoveredByGpa(form))
-                .setAreVariantsAccepted(parseAreVariantsAccepted(form))
-                .setHasOptions(parseIfTenderHasOptions(form))
-                .setEstimatedDurationInMonths(parseTenderEstimatedDurationInMonths(form))
-                .setEstimatedStartDate(parseTenderEstimatedStartDate(form))
-                .setEstimatedCompletionDate(parseTenderEstimatedCompletionDate(form))
-                .setDeposits(parseTenderDeposits(form))
-                .setPersonalRequirements(parseTenderPersonalRequirements(form))
-                .setEconomicRequirements(parseTenderEconomicRequirements(form))
-                .setTechnicalRequirements(parseTenderTechnicalRequirements(form))
-                .setNationalProcedureType(TenderNedTenderAncientFormUtils.parseTenderNationalProcedureType(form))
-                .setAwardCriteria(TenderNedTenderAncientFormUtils.parseAwardCriteria(form))
-                .setIsElectronicAuction(TenderNedTenderAncientFormUtils.parseIfTenderIsElectronicAuction(form))
-                .setBuyerAssignedId(TenderNedTenderAncientFormUtils.parseTenderBuyerAssignedId(form))
-                .setEnquiryDeadline(parseTenderEnquiryDeadline(form))
-                .setEligibleBidLanguages(parseTenderEligibleBidLanguages(form))
-                .setIsDps(parseIfTenderIsDps(form))
-                .addFunding(new ParsedFunding()
-                        .setIsEuFund(parseIsEuFunded(form)))
-                .setAppealBodyName(parseTenderAppealBodyName(form))
-                .setMediationBodyName(parseTenderMediationBodyName(form))
-                .setLots(parseTenderLots(form));
+            .addBuyer(TenderNedTenderAncientFormUtils.parseFirstTenderBuyer(form))
+            .addBuyer(TenderNedTenderAncientFormUtils.parseSecondTenderBuyer(form))
+            .setSupplyType(TenderNedTenderAncientFormUtils.parseTenderSupplyType(form))
+            .setOnBehalfOf(TenderNedTenderAncientFormUtils.parseTenderOnBehalfOf(form))
+            .setTitle(TenderNedTenderAncientFormUtils.parseTenderTitle(form))
+            .setAddressOfImplementation(new ParsedAddress()
+                .setRawAddress(parseRawAddressOfImplementation(form))
+                .addNuts(TenderNedTenderAncientFormUtils.parseAddressOfImplementationNuts(form)))
+            .setIsFrameworkAgreement(TenderNedTenderAncientFormUtils.parseIsTenderFrameworkAgreement(form))
+            .setDescription(TenderNedTenderAncientFormUtils.parseTenderDescription(form,
+                ANCIENT_SUBSECTION_II_1_5_CONTENT_SELECTOR))
+            .setCpvs(TenderNedTenderAncientFormUtils.parseTenderCpvs(form, ANCIENT_SUBSECTION_II_1_6_CONTENT_SELECTOR))
+            .setIsCoveredByGpa(parseIsTenderCoveredByGpa(form))
+            .setAreVariantsAccepted(parseAreVariantsAccepted(form))
+            .setHasOptions(parseIfTenderHasOptions(form))
+            .setEstimatedDurationInMonths(parseTenderEstimatedDurationInMonths(form))
+            .setEstimatedStartDate(parseTenderEstimatedStartDate(form))
+            .setEstimatedCompletionDate(parseTenderEstimatedCompletionDate(form))
+            .setDeposits(parseTenderDeposits(form))
+            .setPersonalRequirements(parseTenderPersonalRequirements(form))
+            .setEconomicRequirements(parseTenderEconomicRequirements(form))
+            .setTechnicalRequirements(parseTenderTechnicalRequirements(form))
+            .setNationalProcedureType(TenderNedTenderAncientFormUtils.parseTenderNationalProcedureType(form))
+            .setAwardCriteria(TenderNedTenderAncientFormUtils.parseAwardCriteria(form))
+            .setIsElectronicAuction(TenderNedTenderAncientFormUtils.parseIfTenderIsElectronicAuction(form))
+            .setBuyerAssignedId(TenderNedTenderAncientFormUtils.parseTenderBuyerAssignedId(form))
+            .setEligibleBidLanguages(parseTenderEligibleBidLanguages(form))
+            .setIsDps(parseIfTenderIsDps(form))
+            .addFunding(new ParsedFunding().setIsEuFund(parseIsEuFunded(form)))
+            .setAppealBodyName(parseTenderAppealBodyName(form))
+            .setMediationBodyName(parseTenderMediationBodyName(form))
+            .setLots(parseTenderLots(form))
+            .setSelectionMethod(TenderNedTenderAncientFormUtils.parseSelectionMethod(form))
+            .setHasLots(BooleanUtils.toStringTrueFalse(TenderNedTenderFormUtils.meansYes(
+                ParserUtils.getFromContent(form, "h4:has(span:containsOwn(II.1.8)) + p", 0))))
+            .setBidDeadline(parseTenderBidDeadline(form));
     }
 
     /**
@@ -249,22 +241,21 @@ final class TenderNedTenderAncientContractNoticeHandler {
     }
 
     /**
-     * Parse tender enquiry deadline value from document.
+     * Parse tender bid deadline value from document.
      *
      * @param form
      *         document to be parsed
      *
      * @return String or Null
      */
-    private static String parseTenderEnquiryDeadline(final Element form) {
-        String enquiryDeadline = ParserUtils.getFromContent(form, ANCIENT_SUBSECTION_IV_3_4_CONTENT_SELECTOR, 0);
-        if (enquiryDeadline == null) {
+    private static String parseTenderBidDeadline(final Element form) {
+        String deadline = ParserUtils.getFromContent(form, ANCIENT_SUBSECTION_IV_3_4_CONTENT_SELECTOR, 0);
+        if (deadline == null) {
             return null;
         }
+
         // the deadline has format "20/12/2012 11:00" or "20/12/2012"
-        return enquiryDeadline.contains(" ")
-                ? enquiryDeadline.substring(0, enquiryDeadline.indexOf(' ')).trim()
-                : enquiryDeadline;
+        return deadline.split(" ")[0];
     }
 
     /**
@@ -372,12 +363,13 @@ final class TenderNedTenderAncientContractNoticeHandler {
                     }
                 }
             } else {
-                lot.setLotNumber(lotFormTitle.substring(
-                        lotNumberInLotFormTitleText.length(), lotFormTitle.indexOf(':')).trim());
-                int secondColonIndex = lotFormTitle.indexOf(':', lotFormTitle.indexOf(':') + 1);
-                if (secondColonIndex != -1) {
-                    lot.setTitle(lotFormTitle.substring(secondColonIndex).trim()); // NEBUDE NA ZACATKU I ":"???
-                }
+                int firstColonIndex = lotFormTitle.indexOf(':');
+                int secondColonIndex = lotFormTitle.indexOf(':', firstColonIndex + 1);
+
+                lot.setLotNumber(lotFormTitle.substring(lotNumberInLotFormTitleText.length(), firstColonIndex).trim())
+                    .setTitle(lotFormTitle.substring((secondColonIndex != -1 ? secondColonIndex : firstColonIndex) + 1)
+                        .trim());
+                
             }
             lotElement = lotElement.nextElementSibling();
             // subsection 1
@@ -414,6 +406,25 @@ final class TenderNedTenderAncientContractNoticeHandler {
                         }
                     }
                 }
+                lotElement = lotElement.nextElementSibling();
+            }
+
+            // subsection 3
+            if (lotElement.text().startsWith("3")) {
+                lotElement = lotElement.nextElementSibling();
+                lotElement = lotElement.nextElementSibling();
+            }
+
+            // subsection 4
+            if (lotElement.text().startsWith("4")) {
+                lotElement = lotElement.nextElementSibling();
+
+                Matcher m = Pattern.compile("Aanvang\\(dd/mm/jjjj\\): (?<start>\\d{2}/\\d{2}/\\d{4})"
+                    + " Voltooiing\\(dd/mm/jjjj\\): (?<completion>\\d{2}/\\d{2}/\\d{4})").matcher(lotElement.text());
+                
+                if (m.find()) {
+                    lot.setEstimatedStartDate(m.group("start")).setEstimatedCompletionDate(m.group("completion"));
+                }
             }
 
             lots.add(lot);
@@ -421,10 +432,10 @@ final class TenderNedTenderAncientContractNoticeHandler {
             // move to the first element of next lot
             do {
                 lotElement = lotElement.nextElementSibling();
-            } while (!lotElement.ownText().contains(lotNumberInLotFormTitleText)
+            } while (lotElement != null && !lotElement.ownText().contains(lotNumberInLotFormTitleText)
                     && !lotElement.className().equals(sectionFooterClassName));
 
-            if (lotElement.className().equals(sectionFooterClassName)) {
+            if (lotElement == null || lotElement.className().equals(sectionFooterClassName)) {
                 break;
             }
         } while (true);

@@ -76,7 +76,7 @@ public final class BVDEtalonDigestsWorker extends BaseWorker {
         Integer startId = Integer.valueOf(message.getValue("startId"));
         Integer endId = Integer.valueOf(message.getValue("endId"));
         
-        logger.error("Process {} bodies with id > {}", startId);
+        logger.error("Process bodies with id >= {}", startId);
         Integer actualId = startId;
         
         do {

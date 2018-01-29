@@ -1,5 +1,9 @@
 package eu.digiwhist.dataaccess.dao.mongo;
 
+import java.util.List;
+
+import org.apache.commons.lang3.tuple.Pair;
+
 import eu.digiwhist.dataaccess.dao.CleanBudgetItemDAO;
 import eu.digiwhist.dataaccess.dao.DAOFactory;
 import eu.digiwhist.dataaccess.dao.ParsedBudgetItemDAO;
@@ -11,7 +15,6 @@ import eu.digiwhist.dataaccess.dao.RawPublicOfficialDAO;
 import eu.dl.dataaccess.dao.CleanTenderDAO;
 import eu.dl.dataaccess.dao.CrawlerAuditDAO;
 import eu.dl.dataaccess.dao.EtalonBodyDAO;
-import eu.dl.dataaccess.dao.IndicatorDAO;
 import eu.dl.dataaccess.dao.ManualMatchDAO;
 import eu.dl.dataaccess.dao.MasterBodyDAO;
 import eu.dl.dataaccess.dao.MasterTenderDAO;
@@ -22,9 +25,6 @@ import eu.dl.dataaccess.dao.RawDataDAO;
 import eu.dl.dataaccess.dao.TransactionUtils;
 import eu.dl.dataaccess.dao.mongo.MongoCrawlerAuditDAO;
 import eu.dl.dataaccess.dao.mongo.MongoTransactionUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
-import java.util.List;
 
 /**
  * DAO factory implementation for MongoDB database.
@@ -150,11 +150,6 @@ public class MongoDAOFactory extends DAOFactory {
 
     @Override
     public final EtalonBodyDAO getBVDEtalonBodyDAO() {
-        throw new UnsupportedOperationException("Operation not supported");
-    }
-
-    @Override
-    public final IndicatorDAO getIndicatorDAO(final String workerName, final String workerVersion) {
         throw new UnsupportedOperationException("Operation not supported");
     }
 }

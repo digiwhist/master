@@ -45,7 +45,7 @@ public final class TenderSizeWorker extends BaseWorker {
 
         masterBodyDao = DAOFactory.getDAOFactory().getMasterBodyDAO(getName(), VERSION);
 
-        populateUtils = new PopulateUtils(masterBodyDao, null);
+        populateUtils = new PopulateUtils(masterBodyDao);
     }
 
     @Override
@@ -77,21 +77,22 @@ public final class TenderSizeWorker extends BaseWorker {
         final MasterTender tender = masterDao.getById(id);
 
         if (tender != null) {
-            MasterTender populatedTender = populateUtils.populateBodies(Arrays.asList(tender)).get(0);
-            if (populatedTender == null || populatedTender.getSize() != null) {
+            populateUtils.populateBodies(Arrays.asList(tender));
+            if (tender.getSize() != null) {
                 // do not overwrite tender size
                 return;
             }
 
             // calculate new tender size
-            TenderSize tenderSize = TenderSizeUtils.calculate(populatedTender);
+            TenderSize tenderSize = TenderSizeUtils.calculate(tender);
             if (tenderSize != null) {
                 // tender size calculated, save the updated tender
                 tender.setSize(tenderSize);
+                populateUtils.depopulateBodies(Arrays.asList(tender));
                 masterDao.save(tender);
             }
         }
-        
+
         transactionUtils.commit();
     }
 

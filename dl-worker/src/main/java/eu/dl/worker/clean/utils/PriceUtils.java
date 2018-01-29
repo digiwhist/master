@@ -1,5 +1,6 @@
 package eu.dl.worker.clean.utils;
 
+import eu.dl.core.config.Config;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.NumberFormat;
@@ -16,6 +17,9 @@ import eu.dl.dataaccess.dto.generic.Price;
 import eu.dl.dataaccess.dto.generic.UnitPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedUnitPrice;
+import eu.dl.utils.currency.BasicCurrencyService;
+import eu.dl.utils.currency.UnconvertableException;
+import org.bouncycastle.util.Strings;
 
 
 /**
@@ -26,6 +30,10 @@ import eu.dl.dataaccess.dto.parsed.ParsedUnitPrice;
 public final class PriceUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(PriceUtils.class.getName());
+
+    private static final BigDecimal PRICE_MIN = BigDecimal.valueOf(100);
+
+    private static final BigDecimal PRICE_MAX = BigDecimal.valueOf(1200000000);
 
     /**
      * Utility classes should not have default constructor.
@@ -41,10 +49,12 @@ public final class PriceUtils {
      *          parsed price
      * @param numberFormat
      *          list of number formats
-     *
+     * @param country
+     *          ISO code of country
      * @return cleaned price
      */
-    public static Price cleanPrice(final ParsedPrice parsedPrice, final List<NumberFormat> numberFormat) {
+    public static Price cleanPrice(final ParsedPrice parsedPrice, final List<NumberFormat> numberFormat,
+        final String country) {
         if (parsedPrice == null) {
             return null;
         }
@@ -62,13 +72,78 @@ public final class PriceUtils {
 
         updateNetAmounts(price);
 
+        Currency currency = price.getCurrency();
+        if (currency == null) {
+            String defaultCurrency = Config.getInstance().getParam("eu.digiwhist.worker."
+                + Strings.toLowerCase(country) + ".currency");
+            
+            if (defaultCurrency != null) {
+                currency = Currency.getInstance(defaultCurrency);
+            }
+        }
+
         // if there is a currency = EUR and value in netAmount available, we can set the netAmountInEur
-        if (price.getCurrency() != null
-                && price.getCurrency().getCurrencyCode().equals("EUR")
-                &&  price.getNetAmount() != null) {
+        if (price.getCurrency() != null && price.getCurrency().getCurrencyCode().equals("EUR")
+                && price.getNetAmount() != null) {
             price.setNetAmountEur(price.getNetAmount());
         }
+        
+        price.setAmountWithVat(removeNonsensicalAmount(price.getAmountWithVat(), currency));
+        price.setMaxAmountWithVat(removeNonsensicalAmount(price.getMaxAmountWithVat(), currency));
+        price.setMinAmountWithVat(removeNonsensicalAmount(price.getMinAmountWithVat(), currency));
+        price.setNetAmount(removeNonsensicalAmount(price.getNetAmount(), currency));
+        price.setMaxNetAmount(removeNonsensicalAmount(price.getMaxNetAmount(), currency));
+        price.setMinNetAmount(removeNonsensicalAmount(price.getMinNetAmount(), currency));
+
         return price;
+    }
+
+    /**
+     * @param amount
+     *      amount
+     * @param currency
+     *      currency
+     * @param min
+     *      minimal acepted value
+     * @param max
+     *      maximal accepted value
+     * @return amount or null if the amount is out of range given by min and max
+     */
+    public static BigDecimal removeNonsensicalAmount(final BigDecimal amount, final Currency currency,
+        final BigDecimal min, final BigDecimal max) {
+        if (currency == null) {
+            return amount;
+        }
+        
+        BigDecimal amountEUR = null;
+        if (currency.getCurrencyCode().equals("EUR")) {
+            amountEUR = amount;
+        } else {
+            try {
+                BasicCurrencyService curr = new BasicCurrencyService();
+                amountEUR = curr.convert(currency, Currency.getInstance("EUR"), amount);
+            } catch (final UnconvertableException ex) {
+                logger.warn("Unable to convert amount to EUR because of", ex);
+            }
+        }
+
+        if (amountEUR != null
+            && ((min != null && amountEUR.compareTo(min) < 0) || (max != null && amountEUR.compareTo(max) > 0))) {
+            return null;
+        }
+
+        return amount;
+    }
+
+    /**
+     * @param amount
+     *      amount
+     * @param currency
+     *      currency
+     * @return amount or null if the amount is out of range given by PriceUtils#PRICE_MIN and PriceUtils#PRICE_MAX
+     */
+    public static BigDecimal removeNonsensicalAmount(final BigDecimal amount, final Currency currency) {
+        return removeNonsensicalAmount(amount, currency, PRICE_MIN, PRICE_MAX);
     }
 
     /**
@@ -78,11 +153,13 @@ public final class PriceUtils {
      *          parsed price
      * @param numberFormat
      *          number format
-     *
+     * @param country
+     *          ISO code of country
      * @return cleaned price
      */
-    public static Price cleanPrice(final ParsedPrice parsedPrice, final NumberFormat numberFormat) {
-        return cleanPrice(parsedPrice, Arrays.asList(numberFormat));
+    public static Price cleanPrice(final ParsedPrice parsedPrice, final NumberFormat numberFormat,
+        final String country) {
+        return cleanPrice(parsedPrice, Arrays.asList(numberFormat), country);
     }
 
     /**

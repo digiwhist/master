@@ -1,7 +1,6 @@
 package eu.digiwhist.worker.master;
 
 import eu.digiwhist.dataaccess.dao.DAOFactory;
-import eu.dl.dataaccess.dao.IndicatorDAO;
 import eu.dl.dataaccess.dao.MasterDAO;
 import eu.dl.dataaccess.dao.MatchedDAO;
 import eu.dl.dataaccess.dao.TransactionUtils;
@@ -21,11 +20,6 @@ public abstract class BaseDigiwhistBodyMaster extends BaseBodyMaster<MatchedBody
     @Override
     protected final MasterDAO getMasterDAO() {
         return DAOFactory.getDAOFactory().getMasterBodyDAO(getName(), getVersion());
-    }
-
-    @Override
-    protected final IndicatorDAO getIndicatorDAO() {
-        return DAOFactory.getDAOFactory().getIndicatorDAO(getName(), getVersion());
     }
 
     @Override

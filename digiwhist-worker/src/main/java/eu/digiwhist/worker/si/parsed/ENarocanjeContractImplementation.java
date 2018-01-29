@@ -3,6 +3,7 @@ package eu.digiwhist.worker.si.parsed;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.parsed.utils.ParserUtils;
+import eu.dl.worker.utils.StringUtils;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -24,19 +25,19 @@ final class ENarocanjeContractImplementation extends BaseENarocanjeFormInTableHa
     private ENarocanjeContractImplementation() {}
 
     /**
-     * Parses Form specific attributes and updates the passed tender.
+     * Parses form specific attributes and updates the passed tender.
      *
      * @param tender
      *         tender to be updated with parsed data
      * @param form
      *         parsed document for the source HTML page (parsed form)
      *
-     * @return updated tender object with data parsed from Form
+     * @return updated tender object with data parsed from form
      */
     public static ParsedTender parse(final ParsedTender tender, final Element form) {
-        parseCommonAttributes(tender, form);
+        parseCommonFormInTableAttributes(tender, form);
 
-        final Element sectionIII13 = getSectionWithSeparatedNodes("III.1.3", form);
+        final Element sectionIII13 = ENarocanjeTenderFormInTableUtils.getSectionWithSeparatedNodes("III.1.3", form);
         final Element preamble = JsoupUtils.selectFirst(
                 "div.tab-content > table > tbody > tr:contains(Vrsta postopka:)", form);
 
@@ -48,10 +49,14 @@ final class ENarocanjeContractImplementation extends BaseENarocanjeFormInTableHa
             logger.warn("Neither estimated price nor final price is in publication");
         }
 
+        String procedureType = StringUtils.removeDotsAtTheEnd(ParserUtils.getFromContent(preamble, null,
+            " Vrsta postopka:"));
+
         tender
                 .setEstimatedPrice(parsePrice(ParserUtils.getFromContent(sectionIII13, null, estimatedPriceTitle)))
                 .setFinalPrice(parsePrice(ParserUtils.getFromContent(sectionIII13, null, finalPriceTitle)))
-                .setNationalProcedureType(ParserUtils.getFromContent(preamble, null, " Vrsta postopka:"))
+                .setNationalProcedureType(procedureType)
+                .setProcedureType(procedureType)
                 .setLots(parseLots(form));
 
         return tender;
@@ -66,14 +71,16 @@ final class ENarocanjeContractImplementation extends BaseENarocanjeFormInTableHa
      * @return list of all parsed lots or null if no lots specified
      */
     private static List<ParsedTenderLot> parseLots(final Element form) {
-        final Elements lotTitleElements = getSections("ODDELEK III: PODATKI O ODDANEM SKLOPU OZ. NAROČILU", form);
+        final Elements lotTitleElements = ENarocanjeTenderFormInTableUtils.getSections(
+                "ODDELEK III: PODATKI O ODDANEM SKLOPU OZ. NAROČILU", form);
         if (lotTitleElements.isEmpty()) {
             return null;
         }
 
         // get elements representing lots
         final List<Element> lotElements = new ArrayList<>();
-        final Element sectionIVElement = getSection("ODDELEK IV: PODATKI O OBJAVI", form);
+        final Element sectionIVElement = ENarocanjeTenderFormInTableUtils.getSection("ODDELEK IV: PODATKI O OBJAVI",
+                form);
         for (int i = 0; i < lotTitleElements.size() - 1; ++i) {
             lotElements.add(ParserUtils.getSubsectionOfElements(lotTitleElements.get(i), lotTitleElements.get(i + 1)));
         }

@@ -23,6 +23,9 @@ import static eu.digiwhist.worker.nl.parsed.TenderNedTenderOldAndNewFormUtils
         .OLD_AND_NEW_SUBSECTION_VI_2_TITLE_SELECTOR;
 import static eu.digiwhist.worker.nl.parsed.TenderNedTenderOldAndNewFormUtils
         .OLD_AND_NEW_SECTION_V_FIRST_ELEMENT_OF_FIRST_LOT_SELECTOR;
+import static eu.digiwhist.worker.nl.parsed.TenderNedTenderOldAndNewFormUtils.OLD_AND_NEW_SUBSECTION_I_3_TITLE_SELECTOR;
+import static eu.digiwhist.worker.nl.parsed.TenderNedTenderOldAndNewFormUtils.OLD_AND_NEW_SUBSECTION_I_4_TITLE_SELECTOR;
+import org.jsoup.select.Elements;
 
 /**
  * Parser for TenderNed old contract award form specific data.
@@ -50,27 +53,55 @@ final class TenderNedTenderOldContractAwardHandler {
         TenderNedTenderOldAndNewFormUtils.parseCommonAttributes(parsedTender, form);
 
         parsedTender.getBuyers().get(0).getAddress()
-                .setUrl(TenderNedTenderOldAndNewFormUtils.parseOldBuyerUrl(form));
+            .setUrl(TenderNedTenderOldAndNewFormUtils.parseOldBuyerUrl(form));
 
         parsedTender.getBuyers().get(0)
-                .setBuyerType(TenderNedTenderOldAndNewFormUtils.parseOldTenderBuyerType(form));
+            .setBuyerType(TenderNedTenderOldAndNewFormUtils.parseOldTenderBuyerType(form))
+            .setMainActivities(parseBuyerMainActivity(form));
 
         parsedTender
-                .setDocumentsLocation(new ParsedAddress()
-                        .setUrl(TenderNedTenderOldAndNewFormUtils.parseOldTenderDocumentsUrl(form)))
-                .setAddressOfImplementation(TenderNedTenderOldAndNewFormUtils.parseOldTenderAddressOfImplementation(
-                        form))
-                .setIsFrameworkAgreement(TenderNedTenderOldAndNewFormUtils.parseOldTenderIsFrameworkAgreement(form))
-                .setCpvs(TenderNedTenderOldAndNewFormUtils.parseOldTenderCpvs(ParserUtils.getSubsectionOfElements(
-                        JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_5_TITLE_SELECTOR, form),
-                        JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_6_TITLE_SELECTOR, form))))
-                .addFunding(TenderNedTenderOldAndNewFormUtils.parseTenderFunding(ParserUtils.getSubsectionOfElements(
-                        JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_VI_1_TITLE_SELECTOR, form),
-                        JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_VI_2_TITLE_SELECTOR, form))))
-                .addPublications(TenderNedTenderOldAndNewFormUtils.parseOldTenderPreviousPublicationsInTed(form))
-                .setLots(parseTenderLots(form));
+            .setDocumentsLocation(new ParsedAddress()
+                .setUrl(TenderNedTenderOldAndNewFormUtils.parseOldTenderDocumentsUrl(form)))
+            .setAddressOfImplementation(TenderNedTenderOldAndNewFormUtils.parseOldTenderAddressOfImplementation(form))
+            .setIsFrameworkAgreement(TenderNedTenderOldAndNewFormUtils.parseOldTenderIsFrameworkAgreement(form))
+            .setCpvs(TenderNedTenderOldAndNewFormUtils.parseOldTenderCpvs(ParserUtils.getSubsectionOfElements(
+                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_5_TITLE_SELECTOR, form),
+                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_6_TITLE_SELECTOR, form))))
+            .addFunding(TenderNedTenderOldAndNewFormUtils.parseTenderFunding(ParserUtils.getSubsectionOfElements(
+                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_VI_1_TITLE_SELECTOR, form),
+                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_VI_2_TITLE_SELECTOR, form))))
+            .addPublications(TenderNedTenderOldAndNewFormUtils.parseOldTenderPreviousPublicationsInTed(form))
+            .setLots(parseTenderLots(form))
+            .setIsCoveredByGpa(TenderNedTenderOldAndNewFormUtils.parseIsTenderCoveredByGpa(form))
+            .setSupplyType(TenderNedTenderOldAndNewFormUtils.parseTenderSupplyType(form))
+            .setBuyerAssignedId(TenderNedTenderOldAndNewFormUtils.parseBuyerAssignedId(form));
 
         return parsedTender;
+    }
+
+    /**
+     * Parse buyer main activity value from document.
+     *
+     * @param form
+     *         document to be parsed
+     *
+     * @return non-empty list of activities or null
+     */
+    private static List<String> parseBuyerMainActivity(final Element form) {
+        Elements nodes = JsoupUtils.select("ul > li", ParserUtils.getSubsectionOfElements(
+            JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_I_3_TITLE_SELECTOR, form),
+            JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_I_4_TITLE_SELECTOR, form)));
+
+        if (nodes == null || nodes.isEmpty()) {
+            return null;
+        }
+
+        List<String> activities = new ArrayList<>();
+        nodes.forEach(n -> {
+            activities.add(n.text());
+        });
+
+        return activities;
     }
 
     /**
@@ -97,14 +128,15 @@ final class TenderNedTenderOldContractAwardHandler {
             ParsedTenderLot lot = new ParsedTenderLot();
             if (!lotElement.nodeName().equals("h4")) {
                 String lotFormTitle = lotElement.text();
+                int colonIndex = lotFormTitle.indexOf(':');
 
-                assert lotFormTitle.startsWith(lotNumberText);
-                final int colonIndex = lotFormTitle.indexOf(':');
-                assert colonIndex != -1;
-                final String lotNumber = lotFormTitle.substring(lotNumberText.length(), colonIndex).trim();
-                lot.setLotNumber(lotNumber);
+                assert lotFormTitle.startsWith(lotNumberText) && colonIndex != -1;
 
-                lotElement = lotElement.nextElementSibling().nextElementSibling();
+                lot
+                    .setTitle(lotFormTitle.substring(colonIndex + 1).trim())
+                    .setLotNumber(lotFormTitle.substring(lotNumberText.length(), colonIndex).trim());
+
+                lotElement = lotElement.nextElementSibling();
             }
             // subsection 1
             if (lotElement.text().startsWith("V.1")) {
@@ -116,29 +148,32 @@ final class TenderNedTenderOldContractAwardHandler {
             }
             // subsection 2
             if (lotElement.text().startsWith("V.2")) {
-                lotElement = lotElement.nextElementSibling().nextElementSibling().nextElementSibling();
+                lotElement = lotElement.nextElementSibling();
+                assert lotElement.text().contains("Aantal ontvangen inschrijvingen:");
+                lot.setBidsCount(lotElement.text().replace("Aantal ontvangen inschrijvingen:", "").trim());
+
+
+                lotElement = lotElement.nextElementSibling();
+                assert lotElement.text().contains("Aantal ontvangen inschrijvingen:");
+                lot.setElectronicBidsCount(lotElement.text().replace("Aantal ontvangen inschrijvingen:", "").trim());
+                
+                lotElement = lotElement.nextElementSibling();
             }
             // subsection 3
             if (lotElement.text().startsWith("V.3")) {
                 lotElement = lotElement.nextElementSibling();
                 assert lotElement.nodeName().equals("dl");
                 lot.addBid(new ParsedBid()
-                        .setIsWinning(Boolean.TRUE.toString())
-                        .addBidder(new ParsedBody()
-                                .setName(ParserUtils.getFromContent(lotElement,
-                                        "dt:containsOwn(Officiële benaming:) + dd", 0))
-                                .setAddress(new ParsedAddress()
-                                        .setStreet(ParserUtils.getFromContent(lotElement,
-                                                "dt:containsOwn(Postadres:) + dd", 0))
-                                        .setCity(ParserUtils.getFromContent(lotElement,
-                                                "dt:containsOwn(Plaats:) + dd", 0))
-                                        .setPostcode(ParserUtils.getFromContent(lotElement,
-                                                "dt:containsOwn(Postcode:) + dd", 0))
-                                        .setCountry(ParserUtils.getFromContent(lotElement,
-                                                "dt:containsOwn(Land:) + dd", 0))
-                                        .setUrl(ParserUtils.getFromContent(lotElement,
-                                                "dt:containsOwn(Internetadres:) + dd", 0)))
-                                .setEmail(ParserUtils.getFromContent(lotElement, "dt:containsOwn(E-mail:) + dd", 0))));
+                    .setIsWinning(Boolean.TRUE.toString())
+                    .addBidder(new ParsedBody()
+                        .setName(ParserUtils.getFromContent(lotElement, "dt:containsOwn(Officiële benaming:) + dd", 0))
+                        .setAddress(new ParsedAddress()
+                            .setStreet(ParserUtils.getFromContent(lotElement, "dt:containsOwn(Postadres:) + dd", 0))
+                            .setCity(ParserUtils.getFromContent(lotElement, "dt:containsOwn(Plaats:) + dd", 0))
+                            .setPostcode(ParserUtils.getFromContent(lotElement, "dt:containsOwn(Postcode:) + dd", 0))
+                            .setCountry(ParserUtils.getFromContent(lotElement, "dt:containsOwn(Land:) + dd", 0))
+                            .setUrl(ParserUtils.getFromContent(lotElement, "dt:containsOwn(Internetadres:) + dd", 0)))
+                        .setEmail(ParserUtils.getFromContent(lotElement, "dt:containsOwn(E-mail:) + dd", 0))));
                 lotElement = lotElement.nextElementSibling();
             }
             // subsection 4
@@ -149,10 +184,10 @@ final class TenderNedTenderOldContractAwardHandler {
                     lotElement = lotElement.nextElementSibling();
                     lot.setEstimatedPrice(parsePrice(lotElement.text()));
                     lotElement = lotElement.nextElementSibling();
+                    
                     assert lotElement.text().contains("Totale definitieve waarde van de opdracht");
                     lotElement = lotElement.nextElementSibling();
-                    lot.getBids().get(0)
-                            .setPrice(parsePrice(lotElement.text()));
+                    lot.getBids().get(0).setPrice(parsePrice(lotElement.text()));
                 }
                 lotElement = lotElement.nextElementSibling();
             }
@@ -160,12 +195,12 @@ final class TenderNedTenderOldContractAwardHandler {
             lots.add(lot);
 
             // move to the first element of next lot or to the end element of lots
-            while (!lotElement.text().contains("Opdracht nr")
+            while (lotElement != null && !lotElement.text().contains("Opdracht nr")
                     && !lotElement.className().equals(sectionFooterClassName)) {
                 lotElement = lotElement.nextElementSibling();
             }
 
-            if (lotElement.className().equals(sectionFooterClassName)) {
+            if (lotElement == null || lotElement.className().equals(sectionFooterClassName)) {
                 break;
             }
         } while (true);

@@ -12,6 +12,7 @@ import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.dataaccess.dto.raw.RawData;
+import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -42,61 +43,85 @@ public class GovUKTenderParser extends BaseDigiwhistTenderParser {
 
         for (Element rawTender : rawTenders) {
             final String sourceId = selectText("Notice Id", rawTender);
-            parsedTenders.add(new ParsedTender()
-                    .addPublication(new ParsedPublication()
-                            .setSource(PublicationSources.UK_GOV)
-                            .setIsIncluded(true)
-                            .setSourceId(sourceId)
-                            .setPublicationDate(selectText("PublishedDate", rawTender))
-                            .setVersion(selectText("VersionNumber", rawTender))
-                            .setLastUpdate(selectText("LastNotifiableUpdate", rawTender))
-                            .setHumanReadableUrl(rawData.getSourceUrl().toString())
-                            .setSourceFormType(selectText("status", rawTender))
-                            .setBuyerAssignedId(selectText("Identifier", rawTender)))
-                    .addPublication(new ParsedPublication()
-                            .setSource(PublicationSources.UK_GOV)
-                            .setIsIncluded(false)
-                            .setMachineReadableUrl(PublicationSources.UK_GOV + "Published/Notice/OCDS/" + sourceId))
-                    .addPublication(new ParsedPublication()
-                            .setSource(PublicationSources.UK_GOV)
-                            .setIsIncluded(false)
-                            .setMachineReadableUrl(PublicationSources.UK_GOV + "Published/Notice/" + sourceId))
-                    .addPublication(new ParsedPublication()
-                            .setSource(PublicationSources.UK_TL)
-                            .setIsIncluded(false)
-                            .setHumanReadableUrl(PublicationSources.UK_TL + sourceId))
-                    .addBuyer(new ParsedBody()
-                            .setName(parseBuyerName(rawTender))
-                            .setAddress(new ParsedAddress()
-                                    .setStreet(selectText("ContactDetails Address1", rawTender) + ", " +
-                                            selectText("ContactDetails Address2", rawTender))
-                                    .setCity(selectText("ContactDetails Town", rawTender))
-                                    .setPostcode(selectText("ContactDetails Postcode", rawTender))
-                                    .setCountry(selectText("ContactDetails Country", rawTender))
-                                    .setUrl(selectText("ContactDetails WebAddress", rawTender)))
-                            .setPhone(selectText("ContactDetails Phone", rawTender))
-                            .setEmail(selectText("ContactDetails Email", rawTender)))
-                    .setTitle(selectText("Title", rawTender))
-                    .setProcedureType(selectText("ProcedureType", rawTender))
-                    .setSupplyType(selectText("OjeuContractType", rawTender))
-                    .setIsFrameworkAgreement(selectText("IsFrameworkAgreement", rawTender))
-                    .setAddressOfImplementation(new ParsedAddress()
-                            .setPostcode(setAOIPostcode(rawTender)))
-                    .setDescription(selectText("Description", rawTender))
-                    .setCpvs(parseCPVs(rawTender))
-                    .setFinalPrice(new ParsedPrice()
-                            .setMinNetAmount(selectText("ValueLow", rawTender))
-                            .setMaxNetAmount(selectText("ValueHigh", rawTender)))
-                    .setLots(parseLots(rawTender))
-                    .setEstimatedStartDate(selectText("Start", rawTender))
-                    .setEstimatedCompletionDate(selectText("End", rawTender))
-                    .setBidDeadline(selectText("DeadlineDate", rawTender))
-                    .setNationalProcedureType(selectText("AwardDetail AwardedProcedureType", rawTender))
+            String procedureType = selectText("ProcedureType", rawTender);
+            String nationalProcedureType = selectText("AwardDetail AwardedProcedureType", rawTender);
 
-            );
+            parsedTenders.add(new ParsedTender()
+                .addPublication(new ParsedPublication()
+                    .setSource(PublicationSources.UK_GOV)
+                    .setIsIncluded(true)
+                    .setSourceId(sourceId)
+                    .setPublicationDate(selectText("PublishedDate", rawTender))
+                    .setVersion(selectText("VersionNumber", rawTender))
+                    .setLastUpdate(selectText("LastNotifiableUpdate", rawTender))
+                    .setHumanReadableUrl(rawData.getSourceUrl().toString())
+                    .setSourceFormType(selectText("status", rawTender))
+                    .setBuyerAssignedId(selectText("Identifier", rawTender)))
+                .addPublication(new ParsedPublication()
+                    .setSource(PublicationSources.UK_GOV)
+                    .setIsIncluded(false)
+                    .setMachineReadableUrl(PublicationSources.UK_GOV + "Published/Notice/OCDS/" + sourceId))
+                .addPublication(new ParsedPublication()
+                    .setSource(PublicationSources.UK_GOV)
+                    .setIsIncluded(false)
+                    .setMachineReadableUrl(PublicationSources.UK_GOV + "Published/Notice/" + sourceId))
+                .addPublication(new ParsedPublication()
+                    .setSource(PublicationSources.UK_TL)
+                    .setIsIncluded(false)
+                    .setHumanReadableUrl(PublicationSources.UK_TL + sourceId))
+                .addBuyer(new ParsedBody()
+                    .setName(selectText("OrganisationName", rawTender))
+                    .setAddress(new ParsedAddress()
+                        .setStreet(selectText("ContactDetails Address1", rawTender) + ", " +
+                            selectText("ContactDetails Address2", rawTender))
+                        .setCity(selectText("ContactDetails Town", rawTender))
+                        .setPostcode(selectText("ContactDetails Postcode", rawTender))
+                        .setCountry(selectText("ContactDetails Country", rawTender))
+                        .setUrl(selectText("ContactDetails WebAddress", rawTender)))
+                    .setPhone(selectText("ContactDetails Phone", rawTender))
+                    .setEmail(selectText("ContactDetails Email", rawTender))
+                    .setContactName(selectText("ContactDetails Name", rawTender)))
+                .setTitle(selectText("Title", rawTender))
+                .setProcedureType(procedureType != null ? procedureType : nationalProcedureType)
+                .setNationalProcedureType(nationalProcedureType)
+                .setSupplyType(selectText("OjeuContractType", rawTender))
+                .setIsFrameworkAgreement(selectText("IsFrameworkAgreement", rawTender))
+                .setAddressOfImplementation(new ParsedAddress()
+                    .setPostcode(setAOIPostcode(rawTender)))
+                .setDescription(selectText("Description", rawTender))
+                .setCpvs(parseCPVs(rawTender))
+                .setEstimatedPrice(parseEstimatedPrice(rawTender))
+                .setLots(parseLots(rawTender))
+                .setEstimatedStartDate(selectText("Start", rawTender))
+                .setEstimatedCompletionDate(selectText("End", rawTender))
+                .setBidDeadline(selectText("DeadlineDate", rawTender)));
         }
 
         return parsedTenders;
+    }
+
+    /**
+     * @param rawTender
+     *      element to parse from
+     * @return estimated price or null
+     */
+    private ParsedPrice parseEstimatedPrice(final Element rawTender) {
+        String low = selectText("ValueLow", rawTender);
+        String high = selectText("ValueHigh", rawTender);
+
+        if (low == null && high == null) {
+            return null;
+        } else {
+            if (high == null) {
+                return new ParsedPrice().setNetAmount(low);
+            } else if (low == null || low.equals(high)) {
+                return new ParsedPrice().setNetAmount(high);
+            } else {
+                return new ParsedPrice()
+                    .setMinNetAmount(low)
+                    .setMaxNetAmount(high);
+            }
+        }
     }
 
     /**
@@ -115,23 +140,6 @@ public class GovUKTenderParser extends BaseDigiwhistTenderParser {
     }
 
     /**
-     * Parse buyer name.
-     *
-     * @param rawTender element to parse from
-     *
-     * @return String
-     */
-    private String parseBuyerName(final Element rawTender) {
-        String buyerName = selectText("ContactDetails Name", rawTender);
-
-        if (buyerName == null) {
-            buyerName = selectText("OrganisationName", rawTender);
-        }
-
-        return buyerName;
-    }
-
-    /**
      * Parse Lots for tender.
      *
      * @param rawTender tender to parse from
@@ -139,23 +147,26 @@ public class GovUKTenderParser extends BaseDigiwhistTenderParser {
      * @return list of parsed lots.
      */
     private List<ParsedTenderLot> parseLots(final Element rawTender) {
+        Element awardNode = JsoupUtils.selectFirst("AwardDetail", rawTender);
+        ParsedBid bid = null;
+        if (awardNode != null) {
+            bid = new ParsedBid()
+                .addBidder(new ParsedBody()
+                    .setName(selectText("SupplierName", awardNode))
+                    .setAddress(new ParsedAddress().setRawAddress(selectText("SupplierAddress", awardNode)))
+                    .setContactName(selectText("Contact", awardNode))
+                    .addBodyId(parseUnknownId("DunsNumber", awardNode))
+                    .setIsSme(selectText("AwardedToSME", awardNode)))
+                .setPrice(new ParsedPrice().setNetAmount(selectText("Value", awardNode)))
+                .setIsWinning(String.valueOf(true));
+        }
+        
         return Arrays.asList(new ParsedTenderLot()
-                .addBid(new ParsedBid()
-                        .addBidder(new ParsedBody()
-                                .setName(selectText("AwardDetail SupplierName", rawTender))
-                                .setAddress(new ParsedAddress()
-                                        .setRawAddress(selectText("AwardDetail SupplierAddress", rawTender)))
-                                .setContactName(selectText("AwardDetail Contact", rawTender))
-                                .addBodyId(parseUnknownId("AwardDetail DunsNumber", rawTender))
-                                .setIsSme(selectText("AwardDetail AwardedToSME", rawTender)))
-                        .setPrice(new ParsedPrice()
-                                .setNetAmount(selectText("AwardDetail Value", rawTender)))
-                        .setIsWinning(String.valueOf(true)))
-                .setStatus(selectText("Status", rawTender))
-                .setEstimatedStartDate(selectText("AwardDetail Startdate", rawTender))
-                .setEstimatedCompletionDate(selectText("AwardDetail EndDate", rawTender))
-                .setStatus(selectText("Status", rawTender))
-                .setAwardDecisionDate(selectText("AwardDetail AwardedDate", rawTender)));
+            .addBid(bid)
+            .setStatus(selectText("Status", rawTender))
+            .setEstimatedStartDate(selectText("StartDate", awardNode))
+            .setEstimatedCompletionDate(selectText("EndDate", awardNode))
+            .setAwardDecisionDate(selectText("AwardedDate", awardNode)));
     }
 
     /**
@@ -183,19 +194,16 @@ public class GovUKTenderParser extends BaseDigiwhistTenderParser {
      * @return list of parsed CPVs
      */
     private List<ParsedCPV> parseCPVs(final Element rawTender) {
-        List<ParsedCPV> parsedCPVs = new ArrayList<>();
+        List<ParsedCPV> cpvs = new ArrayList<>();
 
-        List<Element> parsedCpvElements = select("CpvCodes string", rawTender);
-        for (Element parsedCpvElement : parsedCpvElements) {
-            parsedCPVs.add(new ParsedCPV()
-                    .setCode(parsedCpvElement.text())
-                    .setIsMain(String.valueOf(false)));
-        }
-        parsedCPVs.add(new ParsedCPV()
-                .setCode(selectText("CpvCodes CpvCode Code", rawTender))
-                .setIsMain(String.valueOf(true)));
+        List<Element> nodes = select("CpvCodes string, CpvCodes CpvCode Code", rawTender);
+        nodes.forEach(n -> {
+            cpvs.add(new ParsedCPV()
+                .setCode(n.text())
+                .setIsMain(Boolean.FALSE.toString()));
+        });
 
-        return parsedCPVs.isEmpty() ? null : parsedCPVs;
+        return cpvs.isEmpty() ? null : cpvs;
     }
 
     @Override

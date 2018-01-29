@@ -10,11 +10,13 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import eu.dl.dataaccess.dto.parsed.ParsedBid;
+import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedPayment;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
+import java.util.Arrays;
 
 /**
  * Contract anex handler for E-procurement in Estonia.
@@ -35,21 +37,46 @@ public final class EPEContractAnexHandler {
      *
      * @param doc
      *      parsed document
+     * @param publicationDate
+     *      publication date
      * @return parsed tender
      */
-    public static ParsedTender parse(final Document doc) {
+    public static ParsedTender parse(final Document doc, final String publicationDate) {
         Element context = EPEParserUtils.getDataTable(doc);
+
+        ParsedTender tender = EPEParserUtils.parsePublicationAndTitle(doc, publicationDate)
+            .setModificationReason(EPEParserUtils.tableValueByLabel("Hankelepingu oluliste tingimuste muudatused ja"
+                + " nende põhjendused", context));
+
+
+        List<Element> lotNodes = EPEParserUtils.parseRepeatedParts(
+            JsoupUtils.selectFirst("tr:contains(E LISA)", context), null, "E LISA");
+        
+        if (lotNodes != null) {
+            lotNodes.forEach(n -> tender.addLot(parseLot(n)));
+        }
+        
+        return tender;
+    }
+
+    /**
+     * Parses lot.
+     *
+     * @param context
+     *      node with lot data
+     * @return lot
+     */
+    private static ParsedTenderLot parseLot(final Element context) {
         Element partE = EPEParserUtils.parseFormPart("E LISA", context);
         Element partF = EPEParserUtils.parseFormPart("F LISA", context);
 
-        return EPEParserUtils.parsePublicationAndTitle(doc)
-            .addLot(new ParsedTenderLot()
-            .setLotNumber(EPEParserUtils.regexValueByLabel("LEPING", "(?<value>\\d)", partE))
-            .setTitle(EPEParserUtils.regexValueByLabel("Nimetus", "Nimetus (?<value>.+)", partE))
+        return new ParsedTenderLot()
+            .setLotNumber(EPEParserUtils.regexValueByLabel("LEPING", "(?<value>\\d+)", partE))
+            .setTitle(EPEParserUtils.regexValueByLabel("Nimetus", "(?<value>.+)", partE))
             .setEstimatedPrice(parseInlinePrice("Raamlepingu esialgne eeldatav maksumus", partE))
             .addBid(parseBid(partE, partF))
             .setEstimatedStartDate(EPEParserUtils.parseDateTime("Alguskuupäev", partE))
-            .setCompletionDate(EPEParserUtils.parseDateTime("Lõppkuupäev", partE)));
+            .setCompletionDate(EPEParserUtils.parseDateTime("Lõppkuupäev", partE));
     }
 
     /**
@@ -66,10 +93,10 @@ public final class EPEContractAnexHandler {
 
         List<ParsedPayment> payments = null;
         if (paymentsNodes != null) {
+            // TODO
+            // Kirjeldus - lot description ???
             payments = paymentsNodes.stream()
-                .map(n -> { 
-                        return new ParsedPayment().setPrice(parseInlinePrice("Maksumus", n)); 
-                    })
+                .map(n -> { return new ParsedPayment().setPrice(parseInlinePrice("Maksumus", n)); })
                 .collect(Collectors.toList());
         } else {
             ParsedPrice price = parseInlinePrice("Lepingu täitmise tegelik maksumus", partE);
@@ -78,19 +105,33 @@ public final class EPEContractAnexHandler {
             }
         }
 
-        // TODO
-        // Jrk.nr. - lot number ???
-        // Kirjeldus - lot description ???
-
         return new ParsedBid()
             .setIsWinning(Boolean.TRUE.toString())
             .setPrice(parseInlinePrice("Lepingu maksumus sõlmimise hetkel", partE))
             .setPayments(payments)
             .setSubcontractedProportion(EPEParserUtils.regexValueByLabel("Hankelepinguga kaasneva allhanke osakaal",
-                "(?<value>[\\d\\.,])", partF))
-            .setSubcontractors(Collections.singletonList(EPEParserUtils.parseBody("KASUTATUD ALLHANKIJA NIMI JA"
-                + " AADRESS, KELLEGA HANKELEPING SÕLMITI", partF)))
+                "(?<value>[\\d\\.,]+)", partF))
+            .setSubcontractors(parseSubcontractors(partF))
             .setSubcontractedValue(EPEParserUtils.parsePrice("Andmed allhankelepingu maksumuse kohta", partF));
+    }
+
+    /**
+     * @param context
+     *      context that includes subcontractors data
+     * @return non-empty list of subcontractors or null
+     */
+    private static List<ParsedBody> parseSubcontractors(final Element context) {
+        String data = EPEParserUtils.tableValueByLabel("KASUTATUD ALLHANKIJA NIMI JA AADRESS, KELLEGA HANKELEPING"
+            + " SÕLMITI", context);
+
+        if (data == null) {
+            return null;
+        }
+
+        List<ParsedBody> subcontractors = Arrays.asList(data.split("\n")).stream()
+            .map(EPEParserUtils::parseBody).collect(Collectors.toList());
+
+        return subcontractors.isEmpty() ? null : subcontractors;
     }
 
     /**
@@ -108,7 +149,7 @@ public final class EPEContractAnexHandler {
             return null;
         }
 
-        Matcher m = Pattern.compile(".+(?<amount>[\\d,]+) Rahaühik: (?<currency>[^ ]+)").matcher(node.text());
+        Matcher m = Pattern.compile(".+: (?<amount>[\\d,]+) Rahaühik: (?<currency>[^ ]+)").matcher(node.text());
         if (m.find()) {
             return new ParsedPrice()
                 .setNetAmount(m.group("amount"))

@@ -34,7 +34,7 @@ public class JdbcRawDataDAO extends GenericJdbcDAO<RawData> implements RawDataDA
             PreparedStatement statement = connection.prepareStatement(
                     "SELECT *" +
                             " FROM " + getTableWithSchema() +
-                            " WHERE modifiedby = ? AND modifiedbyversion = ? AND data->>'sourceUrl' = ?");
+                            " WHERE createdby = ? AND createdbyversion = ? AND data->>'sourceUrl' = ?");
 
             statement.setString(1, name);
             statement.setString(2, version);

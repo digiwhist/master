@@ -7,6 +7,7 @@ import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
+import eu.dl.worker.utils.StringUtils;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -46,7 +47,7 @@ final class BOAMPTenderOldContractAwardHandler {
 
         parsedTender.getPublications().get(0)
                 // the string can be "Date d'envoi du présent avis : 14 mars 2012."
-                .setDispatchDate(BOAMPTenderParserUtils.removeDotsAtTheEnd(JsoupUtils.selectText(
+                .setDispatchDate(StringUtils.removeDotsAtTheEnd(JsoupUtils.selectText(
                         "DONNEES > PROCEDURES > DATE_ENVOI", publicationElement)));
     }
 
@@ -345,7 +346,7 @@ final class BOAMPTenderOldContractAwardHandler {
                         .setPrice(new ParsedPrice()
                                 .setNetAmount(priceString.substring(0, matcher.start(1)))
                                 .setCurrency(currency.contains("EUR")
-                                        ? "EUR" : BOAMPTenderParserUtils.removeDotsAtTheEnd(currency)));
+                                        ? "EUR" : StringUtils.removeDotsAtTheEnd(currency)));
             }
         }
         return resultedLot;

@@ -14,6 +14,7 @@ import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.dataaccess.dto.raw.RawData;
+import eu.dl.worker.utils.StringUtils;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -86,7 +87,7 @@ final class BOAMPTenderNewHandler {
                 .setEstimatedDurationInYears(JsoupUtils.selectText("DONNEES > OBJET > DELEGATION > DUREE_AN", document))
                 .setEstimatedDurationInMonths(JsoupUtils.selectText("DONNEES > OBJET > DELEGATION > DUREE_MOIS",
                         document))
-                .setEstimatedStartDate(BOAMPTenderParserUtils.removeDotsAtTheEnd(JsoupUtils.selectText(
+                .setEstimatedStartDate(StringUtils.removeDotsAtTheEnd(JsoupUtils.selectText(
                         "DONNEES > OBJET > DATE_LANCEMENT", document)))
                 .addCorrigendum(parseEstimatedStartDateCorrigendum(document))
                 .setHasLots(JsoupUtils.exists("DONNEES > OBJET > DIV_EN_LOTS > OUI", document).toString())
@@ -160,7 +161,7 @@ final class BOAMPTenderNewHandler {
             for (Element relatedPublicationElement : relatedPublicationElements) {
                 publications.add(new ParsedPublication()
                         .setIsIncluded(false)
-                        .setDispatchDate(BOAMPTenderParserUtils.removeDotsAtTheEnd(JsoupUtils.selectText(
+                        .setDispatchDate(StringUtils.removeDotsAtTheEnd(JsoupUtils.selectText(
                                 "REFERENCE > DATE_ENVOI", relatedPublicationElement)))
                         .setPublicationDate(JsoupUtils.selectText(
                                 "REFERENCE_PUBLICATION > PUBLICATION_PAPIER > DATE_PUBLICATION",

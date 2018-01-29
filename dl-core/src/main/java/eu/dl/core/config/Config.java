@@ -23,7 +23,7 @@ import org.slf4j.LoggerFactory;
  */
 public enum Config {
     /**
-     * Instacne holder.
+     * Instance holder.
      */
     INSTANCE;
 

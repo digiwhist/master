@@ -19,7 +19,7 @@ import java.util.List;
  * @author Marek Mikes
  */
 public class EOJNTenderParser extends BaseDigiwhistTenderParser {
-    private static final String VERSION = "1";
+    private static final String VERSION = "2";
 
     @Override
     public final List<ParsedTender> parse(final RawData rawTender) {
@@ -35,8 +35,6 @@ public class EOJNTenderParser extends BaseDigiwhistTenderParser {
         final Document document = Jsoup.parse(rawTender.getSourceData());
 
         switch (EOJNTenderFormUtils.getFormAge(document)) {
-            case ANCIENT:
-                return Arrays.asList(EOJNTenderAncientHandler.parse(document, rawTender.getSourceUrl().toString()));
             case OLD:
                 return Arrays.asList(EOJNTenderOldHandler.parse(document, rawTender.getSourceUrl().toString()));
             case NEW:

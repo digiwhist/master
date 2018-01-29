@@ -1,25 +1,21 @@
 package eu.dl.worker.indicator.plugin;
 
-import static eu.dl.core.ThrowableAssertion.assertThrown;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import eu.dl.core.config.Config;
+import eu.dl.dataaccess.dto.codetables.PublicationFormType;
+import eu.dl.dataaccess.dto.generic.Publication;
+import eu.dl.dataaccess.dto.indicator.IndicatorStatus;
+import eu.dl.dataaccess.dto.master.MasterTender;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 
-import org.junit.Before;
-import org.junit.Test;
-
-import eu.dl.core.config.Config;
-import eu.dl.core.config.MisconfigurationException;
-import eu.dl.dataaccess.dto.codetables.PublicationFormType;
-import eu.dl.dataaccess.dto.generic.Publication;
-import eu.dl.dataaccess.dto.indicator.TenderIndicatorType;
-import eu.dl.dataaccess.dto.master.MasterTender;
+import static org.junit.Assert.assertEquals;
 
 /**
- * Test of electronic auction indicator plugin.
+ * Test of length of advertisement period indicator plugin.
  *
  * @author Jakub Krafka
  */
@@ -34,7 +30,7 @@ public final class AdvertisementPeriodIndicatorPluginTest {
                             .setPublicationDate(LocalDate.MAX)));
 
     private final MasterTender tender2 = new MasterTender()
-            .setCountry("CZ")
+            .setCountry("BE")
             .setPublications(Arrays.asList(
                     new Publication().setFormType(PublicationFormType.CONTRACT_NOTICE),
                     new Publication().setFormType(PublicationFormType.CONTRACT_NOTICE)
@@ -48,14 +44,14 @@ public final class AdvertisementPeriodIndicatorPluginTest {
                             .setPublicationDate(LocalDate.MAX)));
 
     private final MasterTender tender4 = new MasterTender()
-            .setCountry("CZ")
+            .setCountry("BE")
             .setPublications(Arrays.asList(
                     new Publication().setFormType(PublicationFormType.CONTRACT_NOTICE),
                     new Publication().setFormType(PublicationFormType.CONTRACT_NOTICE)
                             .setPublicationDate(LocalDate.MAX)));
 
     private final MasterTender tender5 = new MasterTender()
-            .setCountry("CZ")
+            .setCountry("BE")
             .setBidDeadline(LocalDateTime.now())
             .setPublications(Arrays.asList(
                     new Publication().setFormType(PublicationFormType.CONTRACT_NOTICE)
@@ -76,7 +72,7 @@ public final class AdvertisementPeriodIndicatorPluginTest {
             .setBidDeadline(LocalDateTime.now().minusDays(100))
             .setPublications(Arrays.asList(
                     new Publication().setFormType(PublicationFormType.CONTRACT_NOTICE),
-                    new Publication().setFormType(PublicationFormType.CONTRACT_NOTICE)
+                    new Publication().setFormType(PublicationFormType.CONTRACT_AWARD)
                             .setPublicationDate(LocalDate.now())));
 
     private final AdvertisementPeriodIndicatorPlugin plugin = new AdvertisementPeriodIndicatorPlugin();
@@ -90,41 +86,32 @@ public final class AdvertisementPeriodIndicatorPluginTest {
     }
 
     /**
-     * Test of correct tender address.
+     * Test of insufficient indicators.
      */
     @Test
-    public void noIndicatorTest() {
-        assertNull(plugin.evaulate(null));
-        assertNull(plugin.evaulate(nullTender));
-        assertNull(plugin.evaulate(tender1));
-        assertNull(plugin.evaulate(tender3));
-        assertNull(plugin.evaulate(tender6));
-        assertThrown(() -> plugin.evaulate(tender7)).isInstanceOf(
-                MisconfigurationException.class);
-
+    public void insufficientIndicatorTest() {
+        assertEquals(plugin.evaluate(null).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
+        assertEquals(plugin.evaluate(nullTender).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
+        assertEquals(plugin.evaluate(tender1).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
+        assertEquals(plugin.evaluate(tender6).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
+        assertEquals(plugin.evaluate(tender7).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
     }
 
     /**
-     * Test of positive result.
+     * Test of calculated indicators.
      */
     @Test
-    public void okTest() {
-        assertEquals(plugin.evaulate(tender2).getType(),
-                TenderIndicatorType.CORRUPTION_ADVERTISEMENT_PERIOD.name());
+    public void calculatedIndicatorTest() {
+        assertEquals(plugin.evaluate(tender2).getStatus(), IndicatorStatus.CALCULATED);
+        assertEquals(plugin.evaluate(tender2).getValue(), new Double(0d));
 
-        assertEquals(plugin.evaulate(tender4).getType(),
-                TenderIndicatorType.CORRUPTION_ADVERTISEMENT_PERIOD.name());
+        assertEquals(plugin.evaluate(tender3).getStatus(), IndicatorStatus.CALCULATED);
+        assertEquals(plugin.evaluate(tender3).getValue(), new Double(100d));
 
-        assertEquals(plugin.evaulate(tender5).getType(),
-                TenderIndicatorType.CORRUPTION_ADVERTISEMENT_PERIOD.name());
-    }
+        assertEquals(plugin.evaluate(tender4).getStatus(), IndicatorStatus.CALCULATED);
+        assertEquals(plugin.evaluate(tender4).getValue(), new Double(0d));
 
-    /**
-     * Test of correct plugin type.
-     */
-    @Test
-    public void getTypeTest() {
-        assertEquals(plugin.getType(),
-                TenderIndicatorType.CORRUPTION_ADVERTISEMENT_PERIOD.name());
+        assertEquals(plugin.evaluate(tender5).getStatus(), IndicatorStatus.CALCULATED);
+        assertEquals(plugin.evaluate(tender5).getValue(), new Double(100d));
     }
 }

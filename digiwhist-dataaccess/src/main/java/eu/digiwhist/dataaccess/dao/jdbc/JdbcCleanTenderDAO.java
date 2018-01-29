@@ -34,7 +34,7 @@ public class JdbcCleanTenderDAO extends GenericJdbcDAO<CleanTender> implements C
             PreparedStatement statement = connection.prepareStatement(
                     "SELECT p->>'sourceId' AS sourceId " +
                             "FROM " + getTableWithSchema() + " r, jsonb_array_elements(r.data->'publications') as p " +
-                            "WHERE (modifiedBy = ? AND modifiedByVersion = ? AND p->>'isIncluded' = 'true')");
+                            "WHERE (createdBy = ? AND createdByVersion = ? AND p->>'isIncluded' = 'true')");
 
             statement.setString(1, workerName);
             statement.setString(2, workerVersion);

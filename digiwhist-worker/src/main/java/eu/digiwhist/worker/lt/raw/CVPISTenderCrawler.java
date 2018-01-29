@@ -10,6 +10,7 @@ import java.util.List;
 
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import com.gargoylesoftware.htmlunit.html.HtmlSpan;
 
 import eu.digiwhist.worker.raw.BaseDigiwhistIncrementalPagedSourceHttpCrawler;
 import eu.dl.core.UnrecoverableException;
@@ -89,9 +90,14 @@ public final class CVPISTenderCrawler extends BaseDigiwhistIncrementalPagedSourc
                 }
                 metaData.put("tenderId", tenderId);
 
+                HtmlSpan dateSpan = ((HtmlSpan) tenderDetailPageLink.getEnclosingElement("div")
+                    .getFirstByXPath("./div[contains(.,'Paskelbtas:')]/span"));                
+                metaData.put("publicationDate",
+                    dateSpan != null ? dateSpan.asText() : actualDate.format(DATE_FORMATTER));
+
                 // send form links to queue
                 final List<HtmlAnchor> formLinks = (List<HtmlAnchor>) tenderDetailPage.getByXPath(
-                        "//div/div[@class='doc-links']/a[contains(@href,'task=viewnotice')]");
+                    "//div/div[@class='doc-links']/a[contains(@href,'task=viewnotice')]");
                 for (HtmlAnchor formLink : formLinks) {
                     createAndPublishMessage(formLink.getHrefAttribute(), metaData);
                 }

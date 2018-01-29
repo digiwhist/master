@@ -2,6 +2,7 @@ package eu.dl.worker.utils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.text.NumberFormat;
 import java.util.Arrays;
@@ -13,6 +14,7 @@ import eu.dl.worker.clean.utils.NumberUtils;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -98,5 +100,49 @@ public final class ArrayUtilsTest {
         assertEquals(2, entries.size());
         assertEquals(2f, entries.get(0).getValue(), 0);
         assertEquals(2f, entries.get(1).getValue(), 0);
+    }
+
+    /**
+     * Test for {@link ArrayUtils#intersection(java.util.List, java.util.List, java.util.function.BiPredicate)}.
+     */
+    @Test
+    public void intersectionTest() {
+        List<String> intersection = ArrayUtils.intersection(null, null, Objects::equals);
+        assertEquals(0, intersection.size());
+
+        List<String> a = Arrays.asList("a", "b", "c", "d");
+        List<String> b = Arrays.asList("a", "d");
+
+        intersection = ArrayUtils.intersection(a, b, Objects::equals);
+        assertEquals(2, intersection.size());
+        assertEquals("a", intersection.get(0));
+        assertEquals("d", intersection.get(1));
+
+
+        intersection = ArrayUtils.intersection(a, null, Objects::equals);
+        assertTrue(intersection.isEmpty());
+    }
+
+    /**
+     * Test for {@link ArrayUtils#union(java.util.List, java.util.List, java.util.function.BiPredicate)}.
+     */
+    @Test
+    public void unionTest() {
+        List<String> union = ArrayUtils.union(null, null, Objects::equals);
+        assertEquals(0, union.size());
+
+        List<String> a = Arrays.asList("a", "b");
+        List<String> b = Arrays.asList("a", "c", "d");
+
+        union = ArrayUtils.union(a, b, Objects::equals);
+        assertEquals(4, union.size());
+        assertEquals("a", union.get(0));
+        assertEquals("b", union.get(1));
+        assertEquals("c", union.get(2));
+        assertEquals("d", union.get(3));
+
+
+        union = ArrayUtils.union(a, null, Objects::equals);
+        assertEquals(a, union);
     }
 }

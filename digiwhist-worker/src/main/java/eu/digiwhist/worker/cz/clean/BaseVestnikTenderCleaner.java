@@ -52,6 +52,11 @@ public abstract class BaseVestnikTenderCleaner extends BaseDigiwhistTenderCleane
 
     @Override
     protected final void registerSpecificPlugins() {
+
+            final Map<String, Map<Enum, List<String>>> lotMapping = new HashMap<>();
+            lotMapping.put("selectionMethodMapping", getSelectionMethodMapping());
+
+
         pluginRegistry.registerPlugin("integerPlugin", new IntegerPlugin(numberFormat))
                 .registerPlugin("supplyType", new TenderSupplyTypePlugin(getSupplyTypeMapping()))
                 .registerPlugin("procedureType", new VestnikTenderProcedureTypePlugin(getProcedureTypeMapping()))
@@ -63,9 +68,7 @@ public abstract class BaseVestnikTenderCleaner extends BaseDigiwhistTenderCleane
                 //document type isn't provided -> mapping = null
                 //status isn't provided -> mapping = null
                 //price unit isn't provided -> mapping = null
-                .registerPlugin("lots",
-                        new VestnikLotPlugin(numberFormat, getDateFormatters(), null, getSelectionMethodMapping(), null,
-                                null))
+                .registerPlugin("lots", new VestnikLotPlugin(numberFormat, getDateFormatters(), lotMapping))
                 //document type isn't provided -> mapping = null
                 .registerPlugin("documents", new DocumentPlugin(numberFormat, getDateFormatters(), null))
                 .registerPlugin("npwpReasons", new VestnikNpwpReasonPlugin(getNpwpReasonMapping()))

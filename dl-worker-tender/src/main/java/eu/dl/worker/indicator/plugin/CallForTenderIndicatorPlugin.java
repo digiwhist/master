@@ -3,19 +3,19 @@ package eu.dl.worker.indicator.plugin;
 import eu.dl.core.config.Config;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.generic.Publication;
-import eu.dl.dataaccess.dto.indicator.BasicEntityRelatedIndicator;
 import eu.dl.dataaccess.dto.indicator.Indicator;
 import eu.dl.dataaccess.dto.master.MasterTender;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import static eu.dl.dataaccess.dto.indicator.TenderIndicatorType.CORRUPTION_PRIOR_INFORMATION_NOTICE;
+import static eu.dl.dataaccess.dto.indicator.TenderIndicatorType.INTEGRITY_CALL_FOR_TENDER_PUBLICATION;
 
 /**
- * This plugin calculates prior information notice indicator.
+ * This plugin calculates call for tenders publication indicator.
  */
-public class CallForTenderIndicatorPlugin implements IndicatorPlugin<MasterTender> {
+public class CallForTenderIndicatorPlugin extends BaseIndicatorPlugin implements IndicatorPlugin<MasterTender> {
 
     /**
      * Application config instance.
@@ -23,42 +23,52 @@ public class CallForTenderIndicatorPlugin implements IndicatorPlugin<MasterTende
     private static final Config config = Config.getInstance();
 
     @Override
-    public final Indicator evaulate(final MasterTender tender) {
-        if (tender == null || tender.getCountry() == null) {
-            return null;
+    public final Indicator evaluate(final MasterTender tender) {
+        if (tender == null || (tender.getCountry() == null && tender.getPublications() == null)) {
+            return insufficient();
         }
 
         Set<String> countries = config.getParamValueAsList("indicator.priorInformationNotice.redFlag",
                 ",", HashSet.class);
 
-        if (countries.contains(tender.getCountry())) {
-            Boolean publicationFound = false;
-
-            if (tender.getPublications() != null && !tender.getPublications().isEmpty()) {
-                for (Publication publication: tender.getPublications()) {
-                    if (publication.getFormType() == PublicationFormType.CONTRACT_NOTICE
-                            || publication.getFormType() == PublicationFormType.PRIOR_INFORMATION_NOTICE) {
-                        publicationFound = true;
-                        break;
-                    }
-                }
-            }
-
-            if (!publicationFound) {
-                Indicator indicator = new BasicEntityRelatedIndicator();
-                indicator.setType(getType());
-                return indicator;
-            } else {
-                return null;
-            }
+        if ((tender.getCountry() != null && tender.getPublications() == null)) {
+            return countries.contains(tender.getCountry())
+                    ? calculated(0d)
+                    : calculated(100d);
+        } else if (tender.getCountry() == null && tender.getPublications() != null) {
+            return hasPriorInformationNoticeOrContractNotice(tender.getPublications())
+                    ? calculated(100d)
+                    : insufficient();
         } else {
-            return null;
+            // country and publications are set
+
+            if (countries.contains(tender.getCountry())) {
+                return hasPriorInformationNoticeOrContractNotice(tender.getPublications())
+                        ? calculated(100d)
+                        : calculated(0d);
+            } else {
+                return calculated(100d);
+            }
         }
     }
 
     @Override
     public final String getType() {
-        return CORRUPTION_PRIOR_INFORMATION_NOTICE.name();
+        return INTEGRITY_CALL_FOR_TENDER_PUBLICATION.name();
     }
 
+    /**
+     * Decides whether {@code publications} contains prior information notice or contract notice.
+     *
+     * @param publications
+     *      list of publications
+     * @return true if list of publications contains prior information notice or contract notice; otherwise false
+     */
+    private static boolean hasPriorInformationNoticeOrContractNotice(final List<Publication> publications) {
+        return publications != null
+                && publications
+                .stream()
+                .anyMatch(p -> p.getFormType() == PublicationFormType.CONTRACT_NOTICE
+                        || p.getFormType() == PublicationFormType.PRIOR_INFORMATION_NOTICE);
+    }
 }

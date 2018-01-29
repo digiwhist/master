@@ -1,7 +1,6 @@
 package eu.digiwhist.worker.nl.parsed;
 
 import eu.dl.core.UnrecoverableException;
-import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedBid;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
@@ -24,9 +23,9 @@ import static eu.digiwhist.worker.nl.parsed.TenderNedTenderAncientFormUtils.ANCI
 import static eu.digiwhist.worker.nl.parsed.TenderNedTenderAncientFormUtils.ANCIENT_SUBSECTION_II_1_4_CONTENT_SELECTOR;
 import static eu.digiwhist.worker.nl.parsed.TenderNedTenderAncientFormUtils.ANCIENT_SUBSECTION_II_1_5_CONTENT_SELECTOR;
 import static eu.digiwhist.worker.nl.parsed.TenderNedTenderAncientFormUtils.ANCIENT_SUBSECTION_II_1_6_CONTENT_SELECTOR;
+import static eu.digiwhist.worker.nl.parsed.TenderNedTenderAncientFormUtils.ANCIENT_SUBSECTION_VI_1_CONTENT_SELECTOR;
 import static eu.digiwhist.worker.nl.parsed.TenderNedTenderAncientFormUtils
         .ANCIENT_SUBSECTION_V_FIRST_ELEMENT_OF_FIRST_LOT_SELECTOR;
-import static eu.digiwhist.worker.nl.parsed.TenderNedTenderAncientFormUtils.ANCIENT_SUBSECTION_VI_1_CONTENT_SELECTOR;
 import static eu.digiwhist.worker.nl.parsed.TenderNedTenderAncientFormUtils
         .ANCIENT_SUBSECTION_VI_3_1_1_CONTENT_SELECTOR;
 import static eu.digiwhist.worker.nl.parsed.TenderNedTenderAncientFormUtils
@@ -58,38 +57,28 @@ final class TenderNedTenderAncientContractAwardHandler {
      */
     public static ParsedTender parse(final ParsedTender parsedTender, final Element form) {
         return parsedTender
-                .addBuyer(new ParsedBody()
-                        .setName(TenderNedTenderAncientFormUtils.parseBuyerName(form))
-                        .addBodyId(new BodyIdentifier()
-                                .setId(TenderNedTenderAncientFormUtils.parseBuyerBodyIdentifierId(form)))
-                        .setAddress(new ParsedAddress()
-                                .setRawAddress(TenderNedTenderAncientFormUtils.parseBuyerRawAddress(form))
-                                .setUrl(TenderNedTenderAncientFormUtils.parseBuyerUrl(form)))
-                        .setContactName(TenderNedTenderAncientFormUtils.parseBuyerContactName(form))
-                        .setPhone(TenderNedTenderAncientFormUtils.parseBuyerPhone(form))
-                        .setEmail(TenderNedTenderAncientFormUtils.parseBuyerEmail(form)))
-                .addBuyer(TenderNedTenderAncientFormUtils.parseSecondTenderBuyer(form))
-                .setSupplyType(TenderNedTenderAncientFormUtils.parseTenderSupplyType(form))
-                .setOnBehalfOf(TenderNedTenderAncientFormUtils.parseTenderOnBehalfOf(form))
-                .setTitle(TenderNedTenderAncientFormUtils.parseTenderTitle(form))
-                .setAddressOfImplementation(new ParsedAddress()
-                        .setRawAddress(parseRawAddressOfImplementation(form))
-                        .addNuts(TenderNedTenderAncientFormUtils.parseAddressOfImplementationNuts(form)))
-                .setIsFrameworkAgreement(TenderNedTenderAncientFormUtils.parseIsTenderFrameworkAgreement(form))
-                .setDescription(TenderNedTenderAncientFormUtils.parseTenderDescription(form,
-                        ANCIENT_SUBSECTION_II_1_4_CONTENT_SELECTOR))
-                .setCpvs(TenderNedTenderAncientFormUtils.parseTenderCpvs(form,
-                        ANCIENT_SUBSECTION_II_1_5_CONTENT_SELECTOR))
-                .setIsCoveredByGpa(parseIsTenderCoveredByGpa(form))
-                .setNationalProcedureType(TenderNedTenderAncientFormUtils.parseTenderNationalProcedureType(form))
-                .setAwardCriteria(TenderNedTenderAncientFormUtils.parseAwardCriteria(form))
-                .setIsElectronicAuction(TenderNedTenderAncientFormUtils.parseIfTenderIsElectronicAuction(form))
-                .setBuyerAssignedId(TenderNedTenderAncientFormUtils.parseTenderBuyerAssignedId(form))
-                .addFunding(new ParsedFunding()
-                        .setIsEuFund(parseIsEuFunded(form)))
-                .setAppealBodyName(parseTenderAppealBodyName(form))
-                .setMediationBodyName(parseTenderMediationBodyName(form))
-                .setLots(parseTenderLots(form));
+            .addBuyer(TenderNedTenderAncientFormUtils.parseFirstTenderBuyer(form))
+            .addBuyer(TenderNedTenderAncientFormUtils.parseSecondTenderBuyer(form))
+            .setSupplyType(TenderNedTenderAncientFormUtils.parseTenderSupplyType(form))
+            .setOnBehalfOf(TenderNedTenderAncientFormUtils.parseTenderOnBehalfOf(form))
+            .setTitle(TenderNedTenderAncientFormUtils.parseTenderTitle(form))
+            .setAddressOfImplementation(new ParsedAddress()
+                .setRawAddress(parseRawAddressOfImplementation(form))
+                .addNuts(TenderNedTenderAncientFormUtils.parseAddressOfImplementationNuts(form)))
+            .setIsFrameworkAgreement(TenderNedTenderAncientFormUtils.parseIsTenderFrameworkAgreement(form))
+            .setDescription(TenderNedTenderAncientFormUtils.parseTenderDescription(form,
+                ANCIENT_SUBSECTION_II_1_4_CONTENT_SELECTOR))
+            .setCpvs(TenderNedTenderAncientFormUtils.parseTenderCpvs(form, ANCIENT_SUBSECTION_II_1_5_CONTENT_SELECTOR))
+            .setIsCoveredByGpa(parseIsTenderCoveredByGpa(form))
+            .setNationalProcedureType(TenderNedTenderAncientFormUtils.parseTenderNationalProcedureType(form))
+            .setAwardCriteria(TenderNedTenderAncientFormUtils.parseAwardCriteria(form))
+            .setIsElectronicAuction(TenderNedTenderAncientFormUtils.parseIfTenderIsElectronicAuction(form))
+            .setBuyerAssignedId(TenderNedTenderAncientFormUtils.parseTenderBuyerAssignedId(form))
+            .addFunding(new ParsedFunding().setIsEuFund(parseIsEuFunded(form)))
+            .setAppealBodyName(parseTenderAppealBodyName(form))
+            .setMediationBodyName(parseTenderMediationBodyName(form))
+            .setLots(parseTenderLots(form))
+            .setSelectionMethod(TenderNedTenderAncientFormUtils.parseSelectionMethod(form));
     }
 
     /**
@@ -221,20 +210,25 @@ final class TenderNedTenderAncientContractAwardHandler {
                 lotElement = lotElement.nextElementSibling();
                 String[] subsection3Rows = lotElement.html().split("<br>");
                 lot.addBid(new ParsedBid()
-                        .setIsWinning(Boolean.TRUE.toString())
-                        .addBidder(new ParsedBody()
-                                .setName(subsection3Rows[0].trim())));
+                    .setIsWinning(Boolean.TRUE.toString())
+                    .addBidder(new ParsedBody().setName(subsection3Rows[0].trim())));
+
                 if (subsection3Rows.length > 1) {
-                    // raw address is the whole content of the subsection V.3 without the first row
-                    StringBuilder builder = new StringBuilder();
-                    final String[] rawAddressArray = Arrays.copyOfRange(subsection3Rows, 1, subsection3Rows.length);
-                    for (String rawAddressPart : rawAddressArray) {
-                        builder.append(rawAddressPart);
+                    int addresStartIndex = 1;
+                    // check whether the row includes oraganization id               
+                    if (subsection3Rows[1].trim().matches("(NL)?\\d+(B\\d{2})?")) {
+                        lot.getBids().get(0).getBidders().get(0)
+                            .addBodyId(TenderNedTenderFormUtils.parseBodyIdentifier(subsection3Rows[1]));
+
+                        addresStartIndex++;
                     }
 
+                    // raw address is the rest of content of the subsection V.3
+                    final String rawAddress = String.join("", Arrays.copyOfRange(subsection3Rows, addresStartIndex,
+                        subsection3Rows.length));
+
                     lot.getBids().get(0).getBidders().get(0)
-                            .setAddress(new ParsedAddress()
-                                    .setRawAddress(builder.toString().trim()));
+                        .setAddress(new ParsedAddress().setRawAddress(rawAddress.trim()));
                 }
                 lotElement = lotElement.nextElementSibling();
             }
@@ -297,7 +291,7 @@ final class TenderNedTenderAncientContractAwardHandler {
 
             lots.add(lot);
 
-            if (lotElement.className().equals(sectionFooterClassName)) {
+            if (lotElement == null || lotElement.className().equals(sectionFooterClassName)) {
                 break;
             }
         } while (true);

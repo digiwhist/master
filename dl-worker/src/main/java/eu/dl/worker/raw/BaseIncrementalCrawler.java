@@ -20,9 +20,10 @@ public abstract class BaseIncrementalCrawler extends BaseCrawler {
     private LocalDate startDate;
     private LocalDate endDate;
 
+    protected LocalDate actualDate;
+
     @Override
     public final void doWork(final Message message) {
-        LocalDate actualDate = null;
         try {
             getTransactionUtils().begin();
             initialSetup();

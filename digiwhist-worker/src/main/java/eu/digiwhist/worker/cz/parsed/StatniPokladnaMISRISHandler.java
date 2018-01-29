@@ -18,13 +18,13 @@ public final class StatniPokladnaMISRISHandler implements StatniPokladnaHandler 
         return StatniPokladnaBudgetParserUtils.parseCommonBudgetItem(record)
             .setReport(BudgetItemReportType.BUDGET_EXECUTION.name())
             .setYear(parseYear(record.get(0)))
-            .setLevel3Code(record.get(5))
+            .setLevel1Code(record.get(3))
             .setLevel2Code(record.get(6))
+            .setLevel3Code(record.get(5))
             .setValue(record.get(15))
             .setPlannedValue(record.get(11))
             .setBody(new ParsedBody()
-                .addBodyId(StatniPokladnaBudgetParserUtils.parseICO(record.get(getIcoColumnIndex()))))
-            .setLevel1Code(record.get(3));
+                .addBodyId(StatniPokladnaBudgetParserUtils.parseICO(record.get(getIcoColumnIndex()))));
     }
 
     @Override

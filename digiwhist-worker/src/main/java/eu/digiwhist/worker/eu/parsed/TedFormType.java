@@ -7,6 +7,8 @@ package eu.digiwhist.worker.eu.parsed;
  */
 public enum TedFormType {
     /** Contract notice form. */
+    PRIOR_INFORMATION_NOTICE(1),
+    /** Contract notice form. */
     CONTRACT_NOTICE(2),
     /** Contract award notice form. */
     CONTRACT_AWARD_NOTICE(3),

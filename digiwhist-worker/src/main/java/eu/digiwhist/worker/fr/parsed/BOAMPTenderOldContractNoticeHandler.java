@@ -3,6 +3,7 @@ package eu.digiwhist.worker.fr.parsed;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedAwardCriterion;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
+import eu.dl.worker.utils.StringUtils;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -40,7 +41,7 @@ final class BOAMPTenderOldContractNoticeHandler {
     static void parse(final Element publicationElement, final ParsedTender parsedTender) {
         parsedTender
                 .setDescription(JsoupUtils.selectText("DONNEES > CARACTERISTIQUES > QUANTITE", publicationElement))
-                .setEstimatedStartDate(BOAMPTenderParserUtils.removeDotsAtTheEnd(JsoupUtils.selectText(
+                .setEstimatedStartDate(StringUtils.removeDotsAtTheEnd(JsoupUtils.selectText(
                         "DONNEES > DUREE > DEB_PRESTATION", publicationElement)))
                 .setEligibleBidLanguages(parseTenderEligibleBidLanguages(publicationElement))
                 .setAwardCriteria(parseTenderAwardCriteria(publicationElement))
@@ -53,7 +54,7 @@ final class BOAMPTenderOldContractNoticeHandler {
                 .setContactPoint(JsoupUtils.selectText("DONNEES > CORRESPONDANTS > ADMIN_TECH", publicationElement));
 
         parsedTender.getPublications().get(0)
-                .setDispatchDate(BOAMPTenderParserUtils.removeDotsAtTheEnd(JsoupUtils.selectText("DONNEES > ENVOI_BOMP",
+                .setDispatchDate(StringUtils.removeDotsAtTheEnd(JsoupUtils.selectText("DONNEES > ENVOI_BOMP",
                         publicationElement)));
     }
 
@@ -71,7 +72,31 @@ final class BOAMPTenderOldContractNoticeHandler {
         if (eligibleBidLanguage == null) {
             return null;
         }
-        return Arrays.asList(BOAMPTenderParserUtils.removeDotsAtTheEnd(eligibleBidLanguage));
+        return Arrays.asList(StringUtils.removeDotsAtTheEnd(eligibleBidLanguage));
+    }
+
+    /**
+     * Parse tender award conditions list from publication element.
+     *
+     * @param publicationElement
+     *         publication element to be parsed
+     *
+     * @return award criterion list or empty list
+     */
+    private static List<ParsedAwardCriterion> parseTenderConditions(final Element publicationElement) {
+        Element criteriaNode = JsoupUtils.selectFirst("DONNEES > CONDITIONS > CRITERES > TITRE:contains(Critères"
+            + " d'attribution)", publicationElement);
+
+        List<ParsedAwardCriterion> awardCriteria = new ArrayList<>();
+
+        if (criteriaNode != null) {
+            Element n = criteriaNode;
+            while ((n = n.nextElementSibling()) != null) {
+                awardCriteria.add(new ParsedAwardCriterion().setName(n.nodeName()));
+            }
+        }
+        
+        return awardCriteria;
     }
 
     /**
@@ -83,10 +108,14 @@ final class BOAMPTenderOldContractNoticeHandler {
      * @return award criterion list or Null
      */
     private static List<ParsedAwardCriterion> parseTenderAwardCriteria(final Element publicationElement) {
+        List<ParsedAwardCriterion> awardCriteria = new ArrayList<>();
+
+        awardCriteria.addAll(parseTenderConditions(publicationElement));
+
         String awardCriteriaString = JsoupUtils.selectText("DONNEES > CONDITIONS > CRITERES > LISTE",
-                publicationElement);
+            publicationElement);
         if (awardCriteriaString == null) {
-            return null;
+            return awardCriteria.isEmpty() ? null : awardCriteria;
         }
 
         // Sometimes award criteria are not filled in percents: "- 1) valeur technique (manoeuvrabilit�, compacit� du
@@ -95,8 +124,8 @@ final class BOAMPTenderOldContractNoticeHandler {
         // d�lai de livraison (chariot t�lescopique + pi�ces d�tach�es) note sur 10 points, coefficient 2."
         // I do not know how to parse, so I set it to description
         if (!awardCriteriaString.contains("%")) {
-            return new ArrayList<>(Collections.singletonList(new ParsedAwardCriterion()
-                    .setDescription(awardCriteriaString)));
+            awardCriteria.add(new ParsedAwardCriterion().setDescription(awardCriteriaString));
+            return awardCriteria;
         }
 
         // Usually colon is before percent (delimiter is ':'), but not always (delimiter is '('). See
@@ -114,30 +143,25 @@ final class BOAMPTenderOldContractNoticeHandler {
         //   prestations sera not� de 1 � 5, affect� d'un coefficient de 3 soit 30 % de pond�ration (5 �tant la
         //   meilleure note). le crit�re analys� est le prix global et forfaitaire de l'offre."
         // In pattern below is not '%', because some award criterion looks something like " : 10 points %"
-        Pattern r = Pattern.compile(" : \\d{1,3}");
-        Matcher m = r.matcher(awardCriteriaString);
+        Matcher m = Pattern.compile(" : \\d{1,3}").matcher(awardCriteriaString);
         boolean isColonBeforePercent = m.find();
         char nameWeightDelimiter;
         if (isColonBeforePercent) {
             nameWeightDelimiter = ':';
         } else {
-            r = Pattern.compile(" \\(\\d{1,3} %");
-            m = r.matcher(awardCriteriaString);
+            m = Pattern.compile(" \\(\\d{1,3} %").matcher(awardCriteriaString);
             boolean isPercentInBrackets = m.find();
             if (isPercentInBrackets) {
                 nameWeightDelimiter = '(';
             } else {
                 // award criteria are probably filled incorrectly. E.g. "- lot1 prix 80% etendue de gamme 20% ; - lot 2
                 // qualit� �chantillons 40% etendue de gamme 10% prix 50%."
-                return new ArrayList<>(Collections.singletonList(new ParsedAwardCriterion()
-                        .setDescription(awardCriteriaString)));
+                awardCriteria.add(new ParsedAwardCriterion().setDescription(awardCriteriaString));
+                return awardCriteria;
             }
         }
 
-        List<ParsedAwardCriterion> awardCriteria = new ArrayList<>();
-
         List<String> awardCriterionStrings = new ArrayList<>(Arrays.asList(awardCriteriaString.split(" ; -")));
-
         // Splitting by the " ; -" is not always correct. See "- valeur technique de l'offre (- pertinence de la
         // m�thodologie propos�e et ad�quation avec les objectifs fix�s 20 % ; - qualit� des r�f�rences de l'�quipe
         // projet30 %) : 50 % ; - prix : 30 % ; - d�lai d'ex�cution : 20 %."
@@ -149,7 +173,7 @@ final class BOAMPTenderOldContractNoticeHandler {
                 if (awardCriterionStrings.get(i).lastIndexOf(nameWeightDelimiter) == -1
                         || awardCriterionStrings.get(i).lastIndexOf('%') == -1) {
                     logger.debug("We are joining \"{}\" and \"{}\", because they represents one award criterion",
-                            awardCriterionStrings.get(i), awardCriterionStrings.get(i + 1));
+                        awardCriterionStrings.get(i), awardCriterionStrings.get(i + 1));
                     // merge this string with next string, because they are one award criterion
                     assert i < awardCriterionStrings.size() - 1;
                     awardCriterionStrings.set(i + 1, awardCriterionStrings.get(i) + awardCriterionStrings.get(i + 1));
@@ -170,7 +194,7 @@ final class BOAMPTenderOldContractNoticeHandler {
         if (awardCriterionStrings.size() == 1) {
             int lastIndexOfDelimiter = awardCriterionStrings.get(0).lastIndexOf(nameWeightDelimiter);
             String weight = BOAMPTenderParserUtils.getNumberAtTheBeginning(
-                    awardCriterionStrings.get(0).substring(lastIndexOfDelimiter + 1));
+                awardCriterionStrings.get(0).substring(lastIndexOfDelimiter + 1));
             if (weight == null) {
                 // The award criteria can be incorrectly filled:
                 // "pour le lot no2 : installation et maintenance d'équipements radio antares et de leurs
@@ -179,8 +203,8 @@ final class BOAMPTenderOldContractNoticeHandler {
                 //  les indications portées sur le bordereau des prix unitaires prévaudront sur toutes autres
                 //  indications de l'offre."
                 // IMHO we are not able to automatically parse award criterion, so we save it as description
-                return new ArrayList<>(Collections.singletonList(new ParsedAwardCriterion()
-                        .setDescription(awardCriteriaString)));
+                awardCriteria.add(new ParsedAwardCriterion().setDescription(awardCriteriaString));
+                return awardCriteria;
             }
             if (!weight.equals("100")) {
                 awardCriterionStrings = new ArrayList<>(Arrays.asList(awardCriteriaString.split("% -")));
@@ -195,13 +219,12 @@ final class BOAMPTenderOldContractNoticeHandler {
                         //  par mission et par type d'intervenants 20 % - adéquation temps/mission 20 % : 40 %."
                         // IMHO we are not able to automatically parse award criterion, so we save it as description
                         return new ArrayList<>(Collections.singletonList(new ParsedAwardCriterion()
-                                .setDescription(awardCriteriaString)));
+                            .setDescription(awardCriteriaString)));
                     }
                     weight = BOAMPTenderParserUtils.getNumberAtTheBeginning(awardCriterionString.substring(
-                            lastIndexOfDelimiter + 1));
+                        lastIndexOfDelimiter + 1));
                     awardCriteria.add(new ParsedAwardCriterion()
-                            .setName(awardCriterionString.substring(0, lastIndexOfDelimiter))
-                            .setWeight(weight));
+                        .setName(awardCriterionString.substring(0, lastIndexOfDelimiter)).setWeight(weight));
                 }
                 return awardCriteria;
             }
@@ -213,20 +236,18 @@ final class BOAMPTenderOldContractNoticeHandler {
             // (not�e sur 3) - qualit� de l'�preuve 0 (not�e sur 17) : 70 % "
             // The weight should be at the end separated by delimiter, so we want last index of the delimiter
             int lastIndexOfDelimiter = awardCriterionString.lastIndexOf(nameWeightDelimiter);
-
             if (lastIndexOfDelimiter != -1) {
                 final String weight = BOAMPTenderParserUtils.getNumberAtTheBeginning(
-                        awardCriterionString.substring(lastIndexOfDelimiter + 1));
+                    awardCriterionString.substring(lastIndexOfDelimiter + 1));
                 awardCriteria.add(new ParsedAwardCriterion()
-                        .setName(awardCriterionString.substring(0, lastIndexOfDelimiter))
-                        .setWeight(weight));
+                    .setName(awardCriterionString.substring(0, lastIndexOfDelimiter)).setWeight(weight));
             } else {
                 // The award criteria can be incorrectly filled:
                 // "- descriptif de la d�marche d'insertion : 60 % ; - co�t du dispositif 30 % ; - moyens associ�s au
                 // d�veloppement durable 10 %."
                 // IMHO we are not able to automatically parse award criterion, so we save it as description
-                return new ArrayList<>(Collections.singletonList(new ParsedAwardCriterion()
-                        .setDescription(awardCriteriaString)));
+                awardCriteria.add(new ParsedAwardCriterion().setDescription(awardCriteriaString));
+                return awardCriteria;
             }
         }
 
@@ -292,7 +313,7 @@ final class BOAMPTenderOldContractNoticeHandler {
         return bidDeadlineTimeElement == null || !bidDeadlineTimeElement.tagName().equals("autres")
                 ? bidDeadlineDateElement.text()
                 : bidDeadlineDateElement.text() + " " +
-                BOAMPTenderParserUtils.removeDotsAtTheEnd(bidDeadlineDateElement.nextElementSibling().text());
+                StringUtils.removeDotsAtTheEnd(bidDeadlineDateElement.nextElementSibling().text());
     }
 
     /**

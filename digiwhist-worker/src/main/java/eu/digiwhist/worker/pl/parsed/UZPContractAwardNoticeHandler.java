@@ -17,6 +17,7 @@ import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
+import java.util.Arrays;
 
 /**
  * Parser for contract notice form specific data.
@@ -32,20 +33,19 @@ public final class UZPContractAwardNoticeHandler {
     }
 
     /**
-     * @param parsedTender
-     *         parsed tender
      * @param document
      *         xml document
-     *
-     * @return parsed tender
+     * @param machineReadableUrl
+     *      machine readable URL of included publication
+     * @return list of parsed tenders
      */
-    public static ParsedTender parse(final ParsedTender parsedTender, final Document document) {
-        return parsedTender
+    public static List<ParsedTender> parse(final Document document, final String machineReadableUrl) {
+        return Arrays.asList(UZPTenderParserUtils.parseCommonFormData(document, machineReadableUrl)
             .addPublications(parsePublications(document))
             .setEstimatedPrice(parseEstimatedPrice(document))
             .addFunding(parseFunding(document))
             .addNpwpReason(JsoupUtils.selectText("zamowienie_uzasadnienie, zal_uzasadnienie", document))
-            .setLots(parseLots(document));
+            .setLots(parseLots(document)));
     }
 
     /**
@@ -129,9 +129,11 @@ public final class UZPContractAwardNoticeHandler {
             return null;
         }
 
-        final List<ParsedTenderLot> lots = new ArrayList<>();
+        int positionOnPage = 0;
+        final List<ParsedTenderLot> lots = new ArrayList<>();        
         for (Element node : lotNodes) {
             ParsedTenderLot lot = new ParsedTenderLot()
+                .setPositionOnPage(String.valueOf(positionOnPage))
                 .setTitle(JsoupUtils.selectText("nazwa", node))
                 .setLotNumber(JsoupUtils.selectText("nr_czesci_1", node))
                 .setAwardDecisionDate(JsoupUtils.selectText("data_zam", node))
@@ -152,6 +154,8 @@ public final class UZPContractAwardNoticeHandler {
             }
 
             lots.add(lot);
+
+            positionOnPage++;
         }
 
         return lots;
@@ -212,8 +216,7 @@ public final class UZPContractAwardNoticeHandler {
             .setStreet(JsoupUtils.selectText("adres", lotNode))
             .setCity(JsoupUtils.selectText("miejsc", lotNode))
             .setPostcode(JsoupUtils.selectText("kod", lotNode))
-            .setCountry(JsoupUtils.selectText("wojew", lotNode))
-            .setRawAddress(JsoupUtils.selectText("wojewodztwo", lotNode));
+            .setState(JsoupUtils.selectText("wojewodztwo", lotNode));
     }
 
     /**

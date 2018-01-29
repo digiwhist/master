@@ -1,5 +1,6 @@
 package eu.dl.worker.indicator.plugin;
 
+import eu.dl.dataaccess.dto.indicator.IndicatorStatus;
 import eu.dl.dataaccess.dto.indicator.TenderIndicatorType;
 import eu.dl.dataaccess.dto.master.MasterTender;
 import org.junit.Test;
@@ -31,18 +32,40 @@ public final class CentralizedProcurementIndicatorPluginTest {
      */
     @Test
     public void noIndicatorTest() {
-        assertNull(plugin.evaulate(null));
-        assertNull(plugin.evaulate(nullTender));
-        assertNull(plugin.evaulate(tender2));
+        assertNull(plugin.evaluate(null));
     }
 
     /**
      * Test of positive result.
      */
     @Test
-    public void okTest() {
-        assertEquals(plugin.evaulate(tender1).getType(),
+    public void isCentralProcurementTest() {
+        assertEquals(plugin.evaluate(tender1).getType(),
                 TenderIndicatorType.ADMINISTRATIVE_CENTRALIZED_PROCUREMENT.name());
+        assertEquals(plugin.evaluate(tender1).getValue(), Double.valueOf(100));
+        assertEquals(plugin.evaluate(tender1).getStatus(), IndicatorStatus.CALCULATED);
+    }
+
+    /**
+     * Test of positive result.
+     */
+    @Test
+    public void isNotCentralProcurementTest() {
+        assertEquals(plugin.evaluate(tender2).getType(),
+                TenderIndicatorType.ADMINISTRATIVE_CENTRALIZED_PROCUREMENT.name());
+        assertEquals(plugin.evaluate(tender2).getValue(), Double.valueOf(0));
+        assertEquals(plugin.evaluate(tender2).getStatus(), IndicatorStatus.CALCULATED);
+    }
+
+    /**
+     * Test of positive result.
+     */
+    @Test
+    public void nullCentralProcurementTest() {
+        assertEquals(plugin.evaluate(tender2).getType(),
+                TenderIndicatorType.ADMINISTRATIVE_CENTRALIZED_PROCUREMENT.name());
+        assertNull(plugin.evaluate(nullTender).getValue());
+        assertEquals(plugin.evaluate(nullTender).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
     }
 
     /**

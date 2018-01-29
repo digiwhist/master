@@ -1,17 +1,17 @@
 package eu.digiwhist.worker.sk.raw;
 
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import eu.digiwhist.worker.raw.BaseDigiwhistIncrementalCrawler;
+import eu.dl.core.UnrecoverableException;
+import eu.dl.worker.utils.ThreadUtils;
+
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
-
-import eu.digiwhist.worker.raw.BaseDigiwhistIncrementalCrawler;
-import eu.dl.core.UnrecoverableException;
 
 /**
  * Tender crawler for Slovakia.
@@ -49,7 +49,7 @@ public final class UvoTenderCrawler extends BaseDigiwhistIncrementalCrawler {
         try {
             HtmlPage actualPage = webClient.getPage(SOURCE_URL + date.format(DATE_FORMATTER));
             if (actualPage != null) {
-                humanize(HUMANIZE_TIME);
+                ThreadUtils.humanize(HUMANIZE_TIME);
                 @SuppressWarnings("unchecked") final List<HtmlAnchor> detailPageLinks = (List<HtmlAnchor>) actualPage
                         .getByXPath(
                         "//a[@class='ul-link']");

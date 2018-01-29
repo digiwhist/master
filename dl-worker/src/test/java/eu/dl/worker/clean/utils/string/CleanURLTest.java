@@ -65,5 +65,7 @@ public final class CleanURLTest {
         assertNull(StringUtils.cleanURL("www.test.com"));
         assertNull(StringUtils.cleanURL("non url string"));
         assertNull(StringUtils.cleanURL("foo://www.test.com"));
+        assertNull(StringUtils.cleanURL("http://"));
+        assertNull(StringUtils.cleanURL("https:"));
     }
 }

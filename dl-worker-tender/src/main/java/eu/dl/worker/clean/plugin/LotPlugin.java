@@ -8,6 +8,7 @@ import java.util.Map;
 
 import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
+import eu.dl.worker.clean.utils.CleanUtils;
 import eu.dl.worker.clean.utils.LotUtils;
 import eu.dl.worker.utils.ArrayUtils;
 
@@ -92,7 +93,8 @@ public class LotPlugin extends BaseDateTimePlugin<LotPlugin, ParsedTender, Clean
         if (parsedTender.getLots() != null) {
             logger.debug("Cleaning lots for parsed tender {} starts", parsedTender.getId());
             cleanTender.setLots(ArrayUtils.walk(parsedTender.getLots(),
-                    (parsedLot) -> LotUtils.cleanLot(parsedLot, numberFormats, formatters, lotMappings)));
+                    (parsedLot) -> LotUtils.cleanLot(parsedLot, numberFormats, formatters, lotMappings,
+                        CleanUtils.getParsedItemCountry(parsedTender))));
             logger.debug("Cleaning lots for parsed tender {} finished", parsedTender.getId());
         }
 

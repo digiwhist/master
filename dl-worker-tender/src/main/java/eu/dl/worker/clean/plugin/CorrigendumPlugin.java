@@ -7,6 +7,7 @@ import java.util.List;
 
 import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
+import eu.dl.worker.clean.utils.CleanUtils;
 import eu.dl.worker.clean.utils.CorrigendumUtils;
 import eu.dl.worker.utils.ArrayUtils;
 
@@ -75,7 +76,8 @@ public class CorrigendumPlugin extends BaseDateTimePlugin<CorrigendumPlugin, Par
         if (parsedTender.getCorrections() != null) {
             logger.debug("Cleaning corrections in parsed tender {} starts", parsedTender.getId());
             cleanTender.setCorrections(ArrayUtils.walk(parsedTender.getCorrections(),
-                (parsedCorrigendum) -> CorrigendumUtils.cleanCorrigendum(parsedCorrigendum, numberFormat, formatters)));
+                (parsedCorrigendum) -> CorrigendumUtils.cleanCorrigendum(parsedCorrigendum, numberFormat, formatters,
+                    CleanUtils.getParsedItemCountry(parsedTender))));
             logger.debug("Cleaning corrections in parsed tender {} finished", parsedTender.getId());
         }
 

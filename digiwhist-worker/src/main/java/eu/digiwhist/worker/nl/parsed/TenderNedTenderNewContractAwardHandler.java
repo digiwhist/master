@@ -1,6 +1,5 @@
 package eu.digiwhist.worker.nl.parsed;
 
-import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedBid;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
@@ -28,6 +27,10 @@ import static eu.digiwhist.worker.nl.parsed.TenderNedTenderOldAndNewFormUtils
         .OLD_AND_NEW_SUBSECTION_II_2_14_TITLE_SELECTOR;
 import static eu.digiwhist.worker.nl.parsed.TenderNedTenderOldAndNewFormUtils
         .OLD_AND_NEW_SUBSECTION_II_2_TITLE_SELECTOR;
+import static eu.digiwhist.worker.nl.parsed.TenderNedTenderOldAndNewFormUtils.OLD_AND_NEW_SUBSECTION_I_5_TITLE_SELECTOR;
+import static eu.digiwhist.worker.nl.parsed.TenderNedTenderOldAndNewFormUtils
+        .OLD_AND_NEW_SUBSECTION_II_1_1_TITLE_SELECTOR;
+import org.apache.commons.lang.BooleanUtils;
 
 /**
  * Parser for TenderNed new contract award form specific data.
@@ -55,25 +58,54 @@ final class TenderNedTenderNewContractAwardHandler {
         TenderNedTenderOldAndNewFormUtils.parseCommonAttributes(parsedTender, form);
 
         parsedTender.getBuyers().get(0).getAddress()
-                .setUrl(TenderNedTenderOldAndNewFormUtils.parseNewBuyerUrl(form));
+            .setUrl(TenderNedTenderOldAndNewFormUtils.parseNewBuyerUrl(form));
 
         parsedTender.getBuyers().get(0)
-                .setBuyerType(TenderNedTenderOldAndNewFormUtils.parseNewTenderBuyerType(form));
+            .setBuyerType(TenderNedTenderOldAndNewFormUtils.parseNewTenderBuyerType(form))
+            .setMainActivities(parseBuyerMainActivity(form));
 
         parsedTender
-                .setCpvs(TenderNedTenderOldAndNewFormUtils.parseNewTenderCpvs(form))
-                .setHasLots(TenderNedTenderOldAndNewFormUtils.parseIfTenderHasLots(ParserUtils.getSubsectionOfElements(
-                        JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_6_TITLE_SELECTOR, form),
-                        JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_7_TITLE_SELECTOR, form))))
-                .addFunding(TenderNedTenderOldAndNewFormUtils.parseTenderFunding(ParserUtils.getSubsectionOfElements(
-                        JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_2_13_TITLE_SELECTOR, form),
-                        JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_2_14_TITLE_SELECTOR, form))))
-                .setIsFrameworkAgreement(TenderNedTenderOldAndNewFormUtils.parseNewTenderIsFrameworkAgreement(form))
-                .addPublication(TenderNedTenderOldAndNewFormUtils.parseNewTenderPreviousPublicationInTed(form))
-                .setFinalPrice(parseTenderFinalPrice(form))
-                .setLots(parseTenderLots(form));
+            .setCpvs(TenderNedTenderOldAndNewFormUtils.parseNewTenderCpvs(form))
+            .setHasLots(TenderNedTenderOldAndNewFormUtils.parseIfTenderHasLots(ParserUtils.getSubsectionOfElements(
+                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_6_TITLE_SELECTOR, form),
+                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_7_TITLE_SELECTOR, form))))
+            .addFunding(TenderNedTenderOldAndNewFormUtils.parseTenderFunding(ParserUtils.getSubsectionOfElements(
+                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_2_13_TITLE_SELECTOR, form),
+                JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_2_14_TITLE_SELECTOR, form))))
+            .setIsFrameworkAgreement(TenderNedTenderOldAndNewFormUtils.parseNewTenderIsFrameworkAgreement(form))
+            .addPublication(TenderNedTenderOldAndNewFormUtils.parseNewTenderPreviousPublicationInTed(form))
+            .setFinalPrice(parseTenderFinalPrice(form))
+            .setLots(parseTenderLots(form))
+            .setIsCoveredByGpa(TenderNedTenderOldAndNewFormUtils.parseIsTenderCoveredByGpa(form))
+            .setSupplyType(TenderNedTenderOldAndNewFormUtils.parseTenderSupplyType(form))
+            .setBuyerAssignedId(TenderNedTenderOldAndNewFormUtils.parseBuyerAssignedId(form));
 
         return parsedTender;
+    }
+
+    /**
+     * Parse buyer main activity value from document.
+     *
+     * @param form
+     *         document to be parsed
+     *
+     * @return non-empty list of activities or null
+     */
+    private static List<String> parseBuyerMainActivity(final Element form) {
+        Elements nodes = JsoupUtils.select("ul > li", ParserUtils.getSubsectionOfElements(
+            JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_I_5_TITLE_SELECTOR, form),
+            JsoupUtils.selectFirst(OLD_AND_NEW_SUBSECTION_II_1_1_TITLE_SELECTOR, form)));
+
+        if (nodes == null || nodes.isEmpty()) {
+            return null;
+        }
+
+        List<String> activities = new ArrayList<>();
+        nodes.forEach(n -> {
+            activities.add(n.text());
+        });
+
+        return activities;
     }
 
     /**
@@ -168,39 +200,38 @@ final class TenderNedTenderNewContractAwardHandler {
             }
 
             Element descriptionListInV23 = JsoupUtils.selectFirst("h5:has(span:containsOwn(V.2.3)) + dl",
-                    awardedLotSubsection);
+                awardedLotSubsection);
             lot.setContractNumber(JsoupUtils.selectFirst("span:containsOwn(Opdracht nr.:)", titleElement)
-                            .nextSibling().toString().trim())
-                    .setAwardDecisionDate(JsoupUtils.selectText("h5:has(span:containsOwn(V.2.1)) + p",
-                            awardedLotSubsection))
-                    .addBid(new ParsedBid()
-                            .setIsWinning(Boolean.TRUE.toString())
-                            .addBidder(new ParsedBody()
-                                    .setName(ParserUtils.getFromContent(descriptionListInV23,
-                                            "dt:containsOwn(Officiële benaming:) + dd", 0))
-                                    .addBodyId(new BodyIdentifier()
-                                            .setId(ParserUtils.getFromContent(descriptionListInV23,
-                                                    "dl > dt:containsOwn(Nationale identificatie:) + dd", 0)))
-                                    .setAddress(new ParsedAddress()
-                                            .setStreet(ParserUtils.getFromContent(descriptionListInV23,
-                                                    "dt:containsOwn(Postadres:) + dd", 0))
-                                            .setCity(ParserUtils.getFromContent(descriptionListInV23,
-                                                    "dt:containsOwn(Plaats:) + dd", 0))
-                                            .addNuts(ParserUtils.getFromContent(descriptionListInV23,
-                                                    "dt:containsOwn(NUTS-code:) + dd", 0))
-                                            .setPostcode(ParserUtils.getFromContent(descriptionListInV23,
-                                                    "dt:containsOwn(Postcode:) + dd", 0))
-                                            .setCountry(ParserUtils.getFromContent(descriptionListInV23,
-                                                    "dt:containsOwn(Land:) + dd", 0))
-                                            .setUrl(ParserUtils.getFromContent(descriptionListInV23,
-                                                    "dt:containsOwn(Internetadres:) + dd", 0)))
-                                    .setEmail(ParserUtils.getFromContent(descriptionListInV23,
-                                            "dt:containsOwn(E-mail:) + dd", 0))));
+                    .nextSibling().toString().trim())
+                .setAwardDecisionDate(JsoupUtils.selectText("h5:has(span:containsOwn(V.2.1)) + p",
+                    awardedLotSubsection))
+                .addBid(new ParsedBid()
+                    .setIsWinning(Boolean.TRUE.toString())
+                    .addBidder(new ParsedBody()
+                        .setName(ParserUtils.getFromContent(descriptionListInV23,
+                            "dt:containsOwn(Officiële benaming:) + dd", 0))
+                        .addBodyId(TenderNedTenderFormUtils.parseBodyIdentifier(ParserUtils.getFromContent(
+                            descriptionListInV23, "dl > dt:containsOwn(Nationale identificatie:) + dd", 0)))
+                        .setAddress(new ParsedAddress()
+                            .setStreet(ParserUtils.getFromContent(descriptionListInV23,
+                                "dt:containsOwn(Postadres:) + dd", 0))
+                            .setCity(ParserUtils.getFromContent(descriptionListInV23,
+                                "dt:containsOwn(Plaats:) + dd", 0))
+                            .addNuts(ParserUtils.getFromContent(descriptionListInV23,
+                                "dt:containsOwn(NUTS-code:) + dd", 0))
+                            .setPostcode(ParserUtils.getFromContent(descriptionListInV23,
+                                "dt:containsOwn(Postcode:) + dd", 0))
+                            .setCountry(ParserUtils.getFromContent(descriptionListInV23,
+                                "dt:containsOwn(Land:) + dd", 0))
+                            .setUrl(ParserUtils.getFromContent(descriptionListInV23,
+                                "dt:containsOwn(Internetadres:) + dd", 0)))
+                        .setEmail(ParserUtils.getFromContent(descriptionListInV23,
+                            "dt:containsOwn(E-mail:) + dd", 0))));
 
             // set title only when it is not already set
             if (lot.getTitle() == null) {
                 final String lotTitle = JsoupUtils.selectFirst("span:containsOwn(Benaming:)", titleElement)
-                        .nextSibling().toString().trim();
+                    .nextSibling().toString().trim();
                 if (!lotTitle.equals("-")) {
                     lot.setTitle(lotTitle);
                 }
@@ -209,14 +240,14 @@ final class TenderNedTenderNewContractAwardHandler {
             // lot estimated price + bid price (it is in V.2.4)
             final String estimatedPriceTitle = "Aanvankelijk geraamde totale waarde van de opdracht/het perceel:";
             Element estimatedPriceElement = JsoupUtils.selectFirst("p:containsOwn(" + estimatedPriceTitle + ")",
-                    awardedLotSubsection);
+                awardedLotSubsection);
             if (estimatedPriceElement != null) {
                 // lot estimated price
                 final String estimatedPriceNetAmount = estimatedPriceElement.ownText().substring(
-                        estimatedPriceTitle.length()).trim();
+                    estimatedPriceTitle.length()).trim();
                 if (!estimatedPriceNetAmount.equals("-")) {
                     lot.setEstimatedPrice(new ParsedPrice()
-                            .setNetAmount(estimatedPriceNetAmount));
+                        .setNetAmount(estimatedPriceNetAmount));
                 }
 
                 // bid price
@@ -242,11 +273,33 @@ final class TenderNedTenderNewContractAwardHandler {
             }
 
             // bids count
-            String bidsCountText = JsoupUtils.selectText("h5:has(span:containsOwn(V.2.2)) + p", awardedLotSubsection);
-            if (bidsCountText != null) {
-                final String bidsCountTitle = "Aantal inschrijvingen:";
-                assert bidsCountText.startsWith(bidsCountTitle);
+            String bidsCountTitle = "Aantal inschrijvingen:";
+            String bidsCountText = JsoupUtils.selectText("h5:has(span:containsOwn(V.2.2))"
+                + " ~ p:containsOwn(" + bidsCountTitle + ")", awardedLotSubsection);
+            if (bidsCountText != null) {                
                 lot.setBidsCount(bidsCountText.substring(bidsCountTitle.length()).trim());
+            }
+
+            String isConsortiumTitle = "De opdracht is gegund aan een groep ondernemers:";
+            String isConsortiumText = JsoupUtils.selectText("h5:has(span:containsOwn(V.2.2))"
+                + " ~ p:containsOwn(" + isConsortiumTitle + ")", awardedLotSubsection);
+            if (isConsortiumText != null) {
+                lot.getBids().get(0).setIsConsortium(BooleanUtils.toStringTrueFalse(TenderNedTenderFormUtils.meansYes(
+                    isConsortiumText.substring(isConsortiumTitle.length()))));
+            }
+            
+            String electronicBidsCountTitle = "Aantal langs elektronische weg ontvangen inschrijvingen:";
+            String electronicBidsCountText = JsoupUtils.selectText("h5:has(span:containsOwn(V.2.2))"
+                + " ~ p:containsOwn(" + electronicBidsCountTitle + ")", awardedLotSubsection);
+            if (electronicBidsCountText != null) {
+                lot.setElectronicBidsCount(electronicBidsCountText.substring(electronicBidsCountTitle.length()));
+            }
+
+            String isAwrdedTitle = "Een opdracht/perceel wordt gegund:";
+            String isAwrdedText = JsoupUtils.selectText("p:containsOwn(" + isAwrdedTitle + ")", awardedLotSubsection);
+            if (isAwrdedText != null) {
+                lot.setIsAwarded(BooleanUtils.toStringTrueFalse(TenderNedTenderFormUtils.meansYes(
+                    isAwrdedText.substring(isAwrdedTitle.length()))));
             }
         }
 

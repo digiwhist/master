@@ -8,6 +8,7 @@ import eu.dl.dataaccess.dto.master.MasterBid;
 import eu.dl.dataaccess.dto.master.MasterBody;
 import eu.dl.dataaccess.dto.master.MasterTender;
 import eu.dl.dataaccess.dto.master.MasterTenderLot;
+import java.time.LocalDateTime;
 import org.mongojack.DBQuery;
 
 import java.util.ArrayList;
@@ -106,5 +107,23 @@ class MongoMasterTenderDAO extends GenericMongoDAO<MasterTender> implements Mast
     @Override
     public final List<String> getIdsBySourceAndVersion(final String name, final String version) {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public final List<MasterTender> getByCountry(final String countryCode, final Integer page, final String source) {
+        return null;
+    }
+
+
+    @Override
+    public final List<MasterTender> getModifiedAfter(final LocalDateTime timestamp, final String modifiedBy,
+        final Integer page, final boolean opentender) {
+        return null;
+    }
+
+    @Override
+    public final List<MasterTender> getByCountry(final String countryCode, final Integer page, final String source,
+        final boolean opentender) {
+        return null;
     }
 }

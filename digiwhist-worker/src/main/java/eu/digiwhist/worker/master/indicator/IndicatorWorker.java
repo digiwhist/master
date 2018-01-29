@@ -1,15 +1,11 @@
 package eu.digiwhist.worker.master.indicator;
 
-import java.util.Arrays;
-import java.util.Map.Entry;
-
 import eu.digiwhist.dataaccess.dao.DAOFactory;
 import eu.digiwhist.dataaccess.utils.PopulateUtils;
-import eu.dl.dataaccess.dao.IndicatorDAO;
 import eu.dl.dataaccess.dao.MasterBodyDAO;
 import eu.dl.dataaccess.dao.MasterTenderDAO;
 import eu.dl.dataaccess.dao.TransactionUtils;
-import eu.dl.dataaccess.dto.indicator.EntitySpecificIndicator;
+import eu.dl.dataaccess.dto.indicator.Indicator;
 import eu.dl.dataaccess.dto.master.MasterTender;
 import eu.dl.worker.BaseWorker;
 import eu.dl.worker.Message;
@@ -22,12 +18,21 @@ import eu.dl.worker.indicator.plugin.ElectronicAuctionIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.EnglishLanguageIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.FrameworkAgreementIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.IndicatorPlugin;
+import eu.dl.worker.indicator.plugin.KeyMissingFieldsIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.NewCompanyIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.NoticeAndAwardDiscrepanciesIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.PoliticalConnectionsOfSuppliers;
 import eu.dl.worker.indicator.plugin.ProcedureTypeIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.SingleBidIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.TaxHavenIndicatorPlugin;
 import eu.dl.worker.utils.BasicPluginRegistry;
 import eu.dl.worker.utils.PluginRegistry;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map.Entry;
 
 /**
  * This worker calculates indicators for tenders.
@@ -52,8 +57,6 @@ public class IndicatorWorker extends BaseWorker {
 
     protected PluginRegistry<IndicatorPlugin<MasterTender>> indicatorPluginRegistry = new BasicPluginRegistry();
 
-    private final IndicatorDAO indicatorDao;
-
     /**
      * Initialization of everythong.
      */
@@ -64,11 +67,9 @@ public class IndicatorWorker extends BaseWorker {
         masterDao = DAOFactory.getDAOFactory().getMasterTenderDAO(getName(), VERSION);
 
         masterBodyDao = DAOFactory.getDAOFactory().getMasterBodyDAO(getName(), VERSION);
-        
-        indicatorDao = DAOFactory.getDAOFactory().getIndicatorDAO(getName(), VERSION);
 
-        populateUtils = new PopulateUtils(masterBodyDao, null);
-        
+        populateUtils = new PopulateUtils(masterBodyDao);
+
         registerIndicatorPlugins();
     }
 
@@ -94,28 +95,32 @@ public class IndicatorWorker extends BaseWorker {
 
     @Override
     public final void doWork(final Message message) {
-    		transactionUtils.begin();
-        
-    		String id = message.getValue("id");
+        transactionUtils.begin();
+
+        String id = message.getValue("id");
 
         final MasterTender tender = masterDao.getById(id);
 
         if (tender != null) {
-            MasterTender populatedTender = populateUtils.populateBodies(Arrays.asList(tender)).get(0);
-            
+            populateUtils.populateBodies(Arrays.asList(tender));
+
+            List<Indicator> indicators = new ArrayList<>();
+
             // iterate over all indicator plugins and execute them in a proper order
             for (Entry<String, IndicatorPlugin<MasterTender>> entry : indicatorPluginRegistry.getPlugins().entrySet()) {
                 IndicatorPlugin<MasterTender> plugin = entry.getValue();
-                EntitySpecificIndicator indicator = (EntitySpecificIndicator) plugin.evaulate(tender);
-                indicatorDao.delete(tender.getId(), plugin.getType());
+                Indicator indicator = (Indicator) plugin.evaluate(tender);
                 if (indicator != null) {
-                    // set entity id for which was the indicator calculated
-                    indicator.setRelatedEntityId(tender.getId());
-                    indicatorDao.save(indicator);
+                    indicators.add(indicator);
                 }
             }
+
+            tender.setIndicators(indicators);
+
+            populateUtils.depopulateBodies(Arrays.asList(tender));
+            masterDao.save(tender);
         }
-        
+
         transactionUtils.commit();
     }
 
@@ -128,7 +133,7 @@ public class IndicatorWorker extends BaseWorker {
     protected final TransactionUtils getTransactionUtils() {
         return DAOFactory.getDAOFactory().getTransactionUtils();
     }
-    
+
     /**
      * Registers indicator plugins.
      */
@@ -180,15 +185,30 @@ public class IndicatorWorker extends BaseWorker {
                 new CallForTenderIndicatorPlugin();
         indicatorPluginRegistry.registerPlugin(
                 priorInformationNoticePlugin.getType(), priorInformationNoticePlugin);
-        
+
         ProcedureTypeIndicatorPlugin procedureTypePlugin =
                 new ProcedureTypeIndicatorPlugin();
         indicatorPluginRegistry.registerPlugin(
                 procedureTypePlugin.getType(), procedureTypePlugin);
-        
+
         TaxHavenIndicatorPlugin taxHavenPlugin =
                 new TaxHavenIndicatorPlugin();
         indicatorPluginRegistry.registerPlugin(
                 taxHavenPlugin.getType(), taxHavenPlugin);
+
+        KeyMissingFieldsIndicatorPlugin keyMissingFieldsPlugin = new KeyMissingFieldsIndicatorPlugin(
+                DAOFactory.getDAOFactory().getMatchedTenderDAO(null, null, Collections.emptyList()),
+                DAOFactory.getDAOFactory().getCleanTenderDAO(null, null));
+        indicatorPluginRegistry.registerPlugin(keyMissingFieldsPlugin.getType(), keyMissingFieldsPlugin);
+
+        NoticeAndAwardDiscrepanciesIndicatorPlugin noticeAndAwardDiscPlugin =
+                new NoticeAndAwardDiscrepanciesIndicatorPlugin(
+                        DAOFactory.getDAOFactory().getMatchedTenderDAO(null, null, Collections.emptyList()));
+        indicatorPluginRegistry.registerPlugin(noticeAndAwardDiscPlugin.getType(), noticeAndAwardDiscPlugin);
+
+        PoliticalConnectionsOfSuppliers politicalConnectionsOfSuppliers = new PoliticalConnectionsOfSuppliers(
+                masterBodyDao);
+        indicatorPluginRegistry.registerPlugin(politicalConnectionsOfSuppliers.getType(),
+                politicalConnectionsOfSuppliers);
     }
 }

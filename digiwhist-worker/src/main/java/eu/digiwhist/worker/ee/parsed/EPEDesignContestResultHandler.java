@@ -9,6 +9,9 @@ import eu.dl.dataaccess.dto.parsed.ParsedBid;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Design contest result handler for E-procurement in Estonia.
@@ -31,41 +34,46 @@ public final class EPEDesignContestResultHandler {
      *
      * @param doc
      *      parsed document
+     * @param publicationDate
+     *      publication date
      * @return parsed tender
      */
-    public static ParsedTender parse(final Document doc) {
+    public static ParsedTender parse(final Document doc, final String publicationDate) {
         Element context = EPEParserUtils.getDataTable(doc);
 
-        return EPEParserUtils.parsePublicationAndTitle(doc)
+        return EPEParserUtils.parsePublicationAndTitle(doc, publicationDate)
             .setCpvs(EPEParserUtils.parseCPVs("^II\\.1\\.3\\)", context))
             .addFunding(EPEParserUtils.parseEUFunding("^VI\\.1\\)", context))
             .setAppealBodyName(EPEParserUtils.parseAppealBodyName("^VI\\.3\\.3\\)", context))
             .setLots(EPEParserUtils.parseLots(
                 EPEDesignContestResultHandler::parseLot,
                 JsoupUtils.selectFirst("tr:matches(^V OSA:) + tr", context),
-                JsoupUtils.selectFirst("tr:matches(^VI OSA:)", context)));
+                JsoupUtils.selectFirst("tr:matches(^VI OSA:)", context),
+                null));
             
     }
 
     /**
      * @param node
      *      node that includes lot data
+     * @param metaData
+     *      meta data
      * @return parsed lot or null
      */
-    private static ParsedTenderLot parseLot(final Element node) {
+    private static List<ParsedTenderLot> parseLot(final Element node, final Map<String, Object> metaData) {
         if (node == null) {
             return null;
         }
 
-        return new ParsedTenderLot()
+        return Arrays.asList(new ParsedTenderLot()
             // text of first row includes number, remove non-digit characters
-            .setLotNumber(node.child(0).text().replaceAll("\\D", ""))
-            .setTitle(EPEParserUtils.regexValueByLabel("Nimetus", "Nimetus (?<value>.+)", node))
+            .setLotNumber(JsoupUtils.selectText("tr", node).replaceAll("\\D", ""))
+            .setTitle(EPEParserUtils.regexValueByLabel("Nimetus", "(?<value>.+)", node))
             .setMaxFrameworkAgreementParticipants(EPEParserUtils.regexValueByLabel("^V\\.1\\.1\\)", "(?<value>\\d+)",
                 node))
             .addBid(new ParsedBid()
                 .setIsWinning(Boolean.TRUE.toString())
                 .addBidder(EPEParserUtils.parseBody("^V\\.1\\.3\\)", node))
-                .setPrice(EPEParserUtils.parsePrice("^V\\.2\\)", node)));
+                .setPrice(EPEParserUtils.parsePrice("^V\\.2\\)", node))));
     }
 }

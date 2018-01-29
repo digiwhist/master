@@ -5,6 +5,8 @@ import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.codetables.BuyerType;
 import eu.dl.dataaccess.dto.codetables.CountryCode;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
+import eu.dl.dataaccess.dto.codetables.SelectionMethod;
+import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
 import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.clean.plugin.AddressPlugin;
@@ -15,6 +17,8 @@ import eu.dl.worker.clean.plugin.IntegerPlugin;
 import eu.dl.worker.clean.plugin.LotPlugin;
 import eu.dl.worker.clean.plugin.PricePlugin;
 import eu.dl.worker.clean.plugin.PublicationPlugin;
+import eu.dl.worker.clean.plugin.SelectionMethodPlugin;
+import eu.dl.worker.clean.plugin.TenderProcedureTypePlugin;
 import eu.dl.worker.clean.plugin.TenderSupplyTypePlugin;
 
 import java.text.NumberFormat;
@@ -51,18 +55,62 @@ public class DOFFINTenderCleaner extends BaseDigiwhistTenderCleaner {
     protected final void registerSpecificPlugins() {
         Map<String, Map<Enum, List<String>>> lotMappings = new HashMap<>();
         lotMappings.put("countryMappings", countryMapping());
+        lotMappings.put("selectionMethod", selectionMethodMapping());
 
         pluginRegistry
-                .registerPlugin("integerPlugin", new IntegerPlugin(NUMBER_FORMAT))
-                .registerPlugin("date", new DatePlugin<>(DATE_FORMATTERS))
-                .registerPlugin("datetime", new DateTimePlugin<>(DATETIME_FORMATTERS))
-                .registerPlugin("publications",
-                        new PublicationPlugin(NUMBER_FORMAT, DATE_FORMATTERS, formTypeMapping()))
-                .registerPlugin("lots", new LotPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, lotMappings))
-                .registerPlugin("prices", new PricePlugin(NUMBER_FORMAT))
-                .registerPlugin("address", new AddressPlugin())
-                .registerPlugin("bodies", new BodyPlugin(bodyTypeMapping(), null, countryMapping()))
-                .registerPlugin("supplyType", new TenderSupplyTypePlugin(supplyTypeMapping()));
+            .registerPlugin("integerPlugin", new IntegerPlugin(NUMBER_FORMAT))
+            .registerPlugin("date", new DatePlugin<>(DATE_FORMATTERS))
+            .registerPlugin("datetime", new DateTimePlugin<>(DATETIME_FORMATTERS))
+            .registerPlugin("publications",
+                new PublicationPlugin(NUMBER_FORMAT, DATE_FORMATTERS, formTypeMapping()))
+            .registerPlugin("lots", new LotPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, lotMappings))
+            .registerPlugin("prices", new PricePlugin(NUMBER_FORMAT))
+            .registerPlugin("address", new AddressPlugin())
+            .registerPlugin("bodies", new BodyPlugin(bodyTypeMapping(), null, countryMapping()))
+            .registerPlugin("supplyType", new TenderSupplyTypePlugin(supplyTypeMapping()))
+            .registerPlugin("selectionMethod", new SelectionMethodPlugin(selectionMethodMapping()))
+            .registerPlugin("procedureType", new TenderProcedureTypePlugin(procedureTypeMapping()));
+    }
+
+    /**
+     * @return procedure type mapping.
+     */
+    private Map<Enum, List<String>> procedureTypeMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(TenderProcedureType.OPEN, Arrays.asList("pt_open"));
+        mapping.put(TenderProcedureType.RESTRICTED, Arrays.asList("pt_restricted", "pt_accelerated_restricted",
+            "pt_accelerated_restricted_choice"));
+        mapping.put(TenderProcedureType.COMPETITIVE_DIALOG, Arrays.asList("pt_competitive_dialogue"));
+        mapping.put(TenderProcedureType.INOVATION_PARTNERSHIP, Arrays.asList("pt_innovation_partnership"));
+        mapping.put(TenderProcedureType.NEGOTIATED_WITH_PUBLICATION,
+            Arrays.asList("pt_accelerated_negotiated", "pt_negotiated_with_competition",
+                "PT_AWARD_CONTRACT_WITH_PRIOR_PUBLICATION", "PT_COMPETITIVE_NEGOTIATION",
+                "pt_negotiated_with_prior_call", "f02_pt_accelerated_negotiated"));
+        mapping.put(TenderProcedureType.NEGOTIATED_WITHOUT_PUBLICATION,
+            Arrays.asList("PT_NEGOTIATED_WITHOUT_PUBLICATION", "f03_award_without_prior_publication",
+                "f03_pt_negotiated_without_competition", "f06_pt_negotiated_without_competition",
+                "f06_award_without_prior_publication", "PT_AWARD_CONTRACT_WITHOUT_CALL",
+                "PT_AWARD_CONTRACT_WITHOUT_PUBLICATION"));
+        mapping.put(TenderProcedureType.NEGOTIATED,
+            Arrays.asList("NEGOTIATED", "pt_negotiated_choice", "PT_INVOLVING_NEGOTIATION"));
+
+        return mapping;
+    }
+
+
+
+    /**
+     * @return selection method mapping.
+     */
+    private Map<Enum, List<String>> selectionMethodMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(SelectionMethod.LOWEST_PRICE, Arrays.asList(SelectionMethod.LOWEST_PRICE.name()));
+        mapping.put(SelectionMethod.MEAT, Arrays.asList(SelectionMethod.MEAT.name(),
+            "MOST_ECONOMICALLY_ADVANTAGEOUS_TENDER"));
+        
+        return mapping;
     }
 
     /**
@@ -72,9 +120,11 @@ public class DOFFINTenderCleaner extends BaseDigiwhistTenderCleaner {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
         mapping.put(PublicationFormType.CONTRACT_NOTICE, Arrays.asList("2", "82", "61", "51", "5", "102", "F102",
-                "85", "F02", "F52"));
-        mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("F03", "15", "3", "83", "6"));
-        mapping.put(PublicationFormType.PRIOR_INFORMATION_NOTICE, Arrays.asList("F01", "1", "4", "7"));
+            "85", "F02", "F52", PublicationFormType.CONTRACT_NOTICE.name()));
+        mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("F03", "15", "3", "83", "6",
+            PublicationFormType.CONTRACT_AWARD.name()));
+        mapping.put(PublicationFormType.PRIOR_INFORMATION_NOTICE, Arrays.asList("F01", "1", "4", "7",
+            PublicationFormType.PRIOR_INFORMATION_NOTICE.name()));
 
         return mapping;
     }

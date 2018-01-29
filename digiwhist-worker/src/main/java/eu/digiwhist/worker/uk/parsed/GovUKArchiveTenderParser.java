@@ -14,13 +14,13 @@ import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.dataaccess.dto.raw.RawData;
+import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.parser.Parser;
 import org.jsoup.select.Elements;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,6 +28,7 @@ import java.util.List;
 import static eu.dl.worker.utils.jsoup.JsoupUtils.select;
 import static eu.dl.worker.utils.jsoup.JsoupUtils.selectAttribute;
 import static eu.dl.worker.utils.jsoup.JsoupUtils.selectText;
+import java.util.stream.Collectors;
 
 /**
  * Tender parser for GOV UK.
@@ -50,17 +51,17 @@ public class GovUKArchiveTenderParser extends BaseDigiwhistTenderParser {
         final Elements contractAwards = select("NOTICES > CONTRACT_AWARD", document);
         final Elements priorInformations = select("NOTICES > PRIOR_INFORMATION", document);
 
-        for (Element contract : contracts) {
-            parsedTenders.add(parseTender(contract, rawData.getSourceUrl().toString(), NOTICE));
-        }
+        contracts.forEach(n -> {
+            parsedTenders.add(parseTender(n, rawData.getSourceUrl().toString(), NOTICE));
+        });
 
-        for (Element contractAward : contractAwards) {
-            parsedTenders.add(parseTender(contractAward, rawData.getSourceUrl().toString(), AWARD));
-        }
+        contractAwards.forEach(n -> {
+            parsedTenders.add(parseTender(n, rawData.getSourceUrl().toString(), AWARD));
+        });
 
-        for (Element priorInformation : priorInformations) {
-            parsedTenders.add(parseTender(priorInformation, rawData.getSourceUrl().toString(), PRIOR_INFORMATION));
-        }
+        priorInformations.forEach(n -> {
+            parsedTenders.add(parseTender(n, rawData.getSourceUrl().toString(), PRIOR_INFORMATION));
+        });
 
         return parsedTenders.isEmpty() ? null : parsedTenders;
     }
@@ -75,108 +76,153 @@ public class GovUKArchiveTenderParser extends BaseDigiwhistTenderParser {
      * @return ParsedTender
      */
     private ParsedTender parseTender(final Element element, final String url, final String sourceFormType) {
-        final String includedPublicationSourceId = selectNonEmptyText("NOTICE_ID", element);
+        String includedPublicationSourceId = selectNonEmptyText("NOTICE_ID", element);
+
+        String procedureType = parseNationalProcedureType(element);
 
         final ParsedTender parsedTender = new ParsedTender()
-                .setSize(selectNonEmptyAttribute("CONTRACTS_FINDER_NOTICE_GROUP", element))
-                .setIsOnBehalfOf(selectNonEmptyAttribute("PURCHASING_ON_BEHALF", "VALUE", element))
-                .setTitle(selectNonEmptyText("TITLE_CONTRACT", element))
-                .setSupplyType(selectNonEmptyAttribute("TYPE_CONTRACT", "VALUE", element))
-                .setDescription(selectNonEmptyText("SHORT_CONTRACT_DESCRIPTION", element))
-                .setEstimatedStartDate(parseEstimatedStartDate(element))
-                .setEstimatedCompletionDate(parseEstimatedCompletionDate(element))
-                .setBidDeadline(parseBidDeadline(element))
-                .setAwardDecisionDate(selectNonEmptyText("AwardedDate", element))
-                .setBuyerAssignedId(selectNonEmptyText("file_reference_number", element))
-                .setEstimatedDurationInDays(selectNonEmptyText("PERIOD_WORK_DATE_STARTING > DAYS", element))
-                .setEstimatedDurationInMonths(selectNonEmptyText("PERIOD_WORK_DATE_STARTING > MONTHS", element))
-                .setEstimatedDurationInYears(selectNonEmptyText("PERIOD_WORK_DATE_STARTING > YEARS", element))
-                .setNationalProcedureType(parseNationalProcedureType(element))
-                .addFunding(new ParsedFunding()
-                        .setIsEuFund(String.valueOf(select("RELATES_TO_EU_PROJECT_NO", element).first() != null)))
-                .addPublication(new ParsedPublication()
-                        .setSource(PublicationSources.UK_GOV)
-                        .setIsIncluded(true)
-                        .setMachineReadableUrl(url)
-                        .setVersion(selectNonEmptyAttribute("CONTRACTS_FINDER_VERSION", element))
-                        .setSourceId(includedPublicationSourceId)
-                        .setSourceFormType(sourceFormType)
-                        .setHumanReadableUrl(selectNonEmptyText("URL_GENERAL", element))
-                        .setLanguage(selectNonEmptyAttribute("LANGUAGE_EC", "VALUE", element))
-                        .setDispatchDate(selectLocalDate("NOTICE_DISPATCH_DATE > DAY",
-                                "NOTICE_DISPATCH_DATE > MONTH", "NOTICE_DISPATCH_DATE > YEAR", element))
-                        .setPublicationDate(selectNonEmptyText("SYSTEM_PUBLISHED_DATE", element))
-                        .setIsValid(parseIsPublicationValid(element)))
-                .addPublication(parsePublication("PARENT_NOTICE_ID", element))
-                .addPublication(parsePublication("ROOT_NOTICE_ID", element))
-                .addPublication(includedPublicationSourceId == null ? null : new ParsedPublication()
-                        .setHumanReadableUrl("https://data.gov.uk/data/contracts-finder-archive/contract/"
-                                + includedPublicationSourceId)
-                        .setSource(PublicationSources.UK_GOV)
-                        .setIsIncluded(false))
-                .addBuyer(new ParsedBody()
-                        .setName(selectNonEmptyText(new String[]{"ORGANISATION", "BUYER_GROUP_NAME", "OrganisationName",
-                                "Organisation > Name"}, element))
-                        .setAddress(new ParsedAddress()
-                                .setStreet(selectNonEmptyText("ADDRESS", element))
-                                .setCity(selectNonEmptyText("TOWN", element))
-                                .setPostcode(selectNonEmptyText("POSTAL_CODE", element))
-                                .setUrl(selectNonEmptyText("URL_BUYER", element)))
-                        .setContactName(selectNonEmptyText("CONTACT_POINT", element))
-                        .setPhone(selectNonEmptyText("PHONE", element))
-                        .setEmail(selectNonEmptyText("E_MAIL", element))
-                        .setBuyerType(selectNonEmptyAttribute("type_of_contracting_authority_other", "value", element))
-                        .addBodyId(parseBodyId(element)))
-                .setAddressOfImplementation(new ParsedAddress()
-                        .setRawAddress(selectNonEmptyText("SITE_OR_LOCATION > LABEL > p", element))
-                        .addNuts(selectNonEmptyAttribute("NUTS", "CODE", element))
-                        .setCity(selectNonEmptyText("DELIVERY_LOCATION > TOWN", element))
-                        .setCountry(selectNonEmptyText("DELIVERY_LOCATION > COUNTRY", element))
-                        .setPostcode(selectNonEmptyText("DELIVERY_LOCATION > POSTAL_CODE", element)))
-                .setEstimatedPrice(new ParsedPrice()
-                        .setCurrency(selectNonEmptyAttribute("COSTS_RANGE_AND_CURRENCY", "CURRENCY", element))
-                        .setMinNetAmount(selectNonEmptyText("RANGE_VALUE_COST > LOW_VALUE", element))
-                        .setMaxNetAmount(selectNonEmptyText("RANGE_VALUE_COST > HIGH_VALUE", element)))
-                .addAwardCriterion(new ParsedAwardCriterion()
-                        .setName(selectNonEmptyText("CRITERIA", element))
-                        .setWeight(selectNonEmptyText("WEIGHTING", element)))
-                .addLot(new ParsedTenderLot()
-                        .setStatus(selectNonEmptyText("Status", element))
-                        .addBid(!sourceFormType.equals(AWARD) ? null : new ParsedBid()
-                                .setIsWinning(Boolean.TRUE.toString())
-                                .setPrice(new ParsedPrice()
-                                        .setAmountWithVat(selectNonEmptyText("TOTAL_FINAL_VALUE > " +
-                                                "COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE > VALUE_COST", element))
-                                        .setCurrency(selectNonEmptyAttribute("TOTAL_FINAL_VALUE " +
-                                                "COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE", "CURRENCY", element))
-                                )));
+            .setSize(selectNonEmptyAttribute("CONTRACTS_FINDER_NOTICE_GROUP", element))
+            .setIsOnBehalfOf(selectNonEmptyAttribute("PURCHASING_ON_BEHALF", "VALUE", element))
+            .setTitle(selectNonEmptyText("TITLE_CONTRACT", element))
+            .setSupplyType(selectNonEmptyAttribute("TYPE_CONTRACT", "VALUE", element))
+            .setDescription(selectNonEmptyText("SHORT_CONTRACT_DESCRIPTION", element))
+            .setEstimatedStartDate(parseEstimatedStartDate(element))
+            .setEstimatedCompletionDate(parseEstimatedCompletionDate(element))
+            .setBidDeadline(parseBidDeadline(element))
+            .setAwardDecisionDate(selectNonEmptyText("AwardedDate", element))
+            .setBuyerAssignedId(selectNonEmptyText("file_reference_number", element))
+            .setEstimatedDurationInDays(selectNonEmptyText("PERIOD_WORK_DATE_STARTING > DAYS", element))
+            .setEstimatedDurationInMonths(selectNonEmptyText("PERIOD_WORK_DATE_STARTING > MONTHS", element))
+            .setEstimatedDurationInYears(selectNonEmptyText("PERIOD_WORK_DATE_STARTING > YEARS", element))
+            .setNationalProcedureType(procedureType)
+            .setProcedureType(procedureType)
+            .addFunding(new ParsedFunding()
+                .setIsEuFund(String.valueOf(!JsoupUtils.exists("RELATES_TO_EU_PROJECT_NO", element))))
+            .addPublication(new ParsedPublication()
+                .setSource(PublicationSources.UK_GOV)
+                .setIsIncluded(true)
+                .setMachineReadableUrl(url)
+                .setVersion(selectNonEmptyAttribute("CONTRACTS_FINDER_VERSION", element))
+                .setSourceId(includedPublicationSourceId)
+                .setSourceFormType(sourceFormType)
+                .setHumanReadableUrl(selectNonEmptyText("URL_GENERAL", element))
+                .setLanguage(selectNonEmptyAttribute("LANGUAGE_EC", "VALUE", element))
+                .setDispatchDate(selectLocalDate("NOTICE_DISPATCH_DATE", element))
+                .setPublicationDate(selectNonEmptyText("SYSTEM_PUBLISHED_DATE", element))
+                .setIsValid(parseIsPublicationValid(element)))
+            .addPublication(parsePublication("PARENT_NOTICE_ID", element))
+            .addPublication(parsePublication("ROOT_NOTICE_ID", element))
+            .addPublication(parsePublication("FILE_REFERENCE_NUMBER", element))
+            .addPublication(includedPublicationSourceId == null ? null : new ParsedPublication()
+                .setHumanReadableUrl("https://data.gov.uk/data/contracts-finder-archive/contract/"
+                    + includedPublicationSourceId)
+                .setSource(PublicationSources.UK_GOV)
+                .setIsIncluded(false))
+            .addBuyer(parseBuyer(JsoupUtils.selectFirst("CONTRACTING_AUTHORITY_INFORMATION,"
+                + " AUTHORITY_PRIOR_INFORMATION", element)))
+            .setAddressOfImplementation(new ParsedAddress()
+                .setRawAddress(selectNonEmptyText("SITE_OR_LOCATION > LABEL > p", element))
+                .addNuts(selectNonEmptyAttribute("NUTS", "CODE", element))
+                .setCity(selectNonEmptyText("DELIVERY_LOCATION > TOWN", element))
+                .setCountry(selectNonEmptyText("DELIVERY_LOCATION > COUNTRY", element))
+                .setPostcode(selectNonEmptyText("DELIVERY_LOCATION > POSTAL_CODE", element)))
+            .setEstimatedPrice(new ParsedPrice()
+                .setCurrency(selectNonEmptyAttribute("COSTS_RANGE_AND_CURRENCY", "CURRENCY", element))
+                .setMinNetAmount(selectNonEmptyText("RANGE_VALUE_COST > LOW_VALUE", element))
+                .setMaxNetAmount(selectNonEmptyText("RANGE_VALUE_COST > HIGH_VALUE", element)))
+            .addAwardCriterion(new ParsedAwardCriterion()
+                .setName(selectNonEmptyText("CRITERIA", element))
+                .setWeight(selectNonEmptyText("WEIGHTING", element)))
+            .addLot(new ParsedTenderLot()
+                .setStatus(selectNonEmptyText("Status", element))
+                .addBid(!sourceFormType.equals(AWARD) ? null : new ParsedBid()
+                    .setIsWinning(Boolean.TRUE.toString())
+                    .setPrice(new ParsedPrice()
+                        .setAmountWithVat(selectNonEmptyText("TOTAL_FINAL_VALUE > " +
+                            "COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE > VALUE_COST", element))
+                        .setCurrency(selectNonEmptyAttribute("TOTAL_FINAL_VALUE " +
+                            "COSTS_RANGE_AND_CURRENCY_WITH_VAT_RATE", "CURRENCY", element)))
+                    .addBidder(parseBody(JsoupUtils.selectFirst("ECONOMIC_OPERATOR_NAME_ADDRESS", element)))
+                    .setIsSubcontracted(String.valueOf(!JsoupUtils.exists("NO_CONTRACT_LIKELY_SUB_CONTRACTED",
+                        element))))
+                .setAwardDecisionDate(selectLocalDate("CONTRACT_AWARD_DATE", element)))
+            .addAwardCriterion(parseAwardCriterion(element))
+            .setIsFrameworkAgreement(JsoupUtils.hasAttribute(JsoupUtils.selectFirst("FRAMEWORK_AGREEMENT", element),
+                "VALUE", "YES").toString())
+            .setEligibleBidLanguages(parseEligibleLanguages(element));
 
-        // Parse main CPVs
-        final Elements mainCpvs = select("CPV_MAIN", element);
-        if (mainCpvs != null) {
-            for (Element mainCpv : mainCpvs) {
-                parsedTender.addCpv(new ParsedCPV()
-                        .setCode(selectNonEmptyAttribute("CPV_CODE", "CODE", mainCpv))
-                        .setIsMain(String.valueOf(true)));
-            }
-        }
 
-        // Parse additional CPVs
-        final Elements additionalCpvs = select("CPV_ADDITIONAL", element);
-        if (additionalCpvs != null) {
-            for (Element additionalCpv : additionalCpvs) {
-                final String code = selectNonEmptyAttribute("CPV_CODE", "CODE", additionalCpv);
+        // Parse CPVs
+        final Elements cpvs = select("CPV_MAIN, CPV_ADDITIONAL", element);
+        if (cpvs != null) {
+            cpvs.forEach(n -> {
+                String code = selectNonEmptyAttribute("CPV_CODE", "CODE", n);
 
-                // Code is added only if its not already there
-                if (code != null && parsedTender.getCpvs().stream().noneMatch(t -> t.getCode().equals(code))) {
+                if (code != null && (parsedTender.getCpvs() == null || parsedTender.getCpvs().stream()
+                        .noneMatch(t -> t.getCode().equals(code)))) {
                     parsedTender.addCpv(new ParsedCPV()
-                            .setCode(code)
-                            .setIsMain(String.valueOf(false)));
+                        .setCode(code)
+                        .setIsMain(String.valueOf(n.tagName().equalsIgnoreCase("CPV_MAIN"))));
                 }
-            }
+            });
         }
 
         return parsedTender;
+    }
+
+    /**
+     * @param element
+     *      element that includes aligible languages
+     * @return non-empty list of languages or null
+     */
+    private List<String> parseEligibleLanguages(final Element element) {
+        Elements languages = JsoupUtils.select("OTHER_LANGUAGE_VALUE", element);
+        if (languages == null || languages.isEmpty()) {
+            return null;
+        }
+
+        return languages.stream().map(n -> n.text()).collect(Collectors.toList());
+    }
+
+    /**
+     * @param element
+     *      element that includes body data
+     * @return body or null
+     */
+    private ParsedBody parseBody(final Element element) {
+        if (element == null) {
+            return null;
+        }
+
+        return new ParsedBody()
+            .setName(selectNonEmptyText(new String[]{"ORGANISATION", "BUYER_GROUP_NAME", "OrganisationName",
+                "Organisation > Name"}, element))
+            .setAddress(new ParsedAddress()
+                .setStreet(selectNonEmptyText("ADDRESS", element))
+                .setCity(selectNonEmptyText("TOWN", element))
+                .setPostcode(selectNonEmptyText("POSTAL_CODE", element))
+                .setUrl(selectNonEmptyText("URL", element)))
+            .setContactName(selectNonEmptyText("CONTACT_POINT", element))
+            .setPhone(selectNonEmptyText("PHONE", element))
+            .setEmail(selectNonEmptyText("E_MAIL", element));
+    }
+
+    /**
+     * @param element
+     *      element that includes buyer data
+     * @return buyer or null
+     */
+    private ParsedBody parseBuyer(final Element element) {
+        ParsedBody buyer = parseBody(element);
+
+        if (buyer != null) {
+            buyer
+                .addBodyId(parseBodyId(element))
+                .setBuyerType(selectNonEmptyAttribute("type_of_contracting_authority_other", "value", element));
+            buyer.getAddress().setUrl(selectNonEmptyText("URL_BUYER", element));
+        }
+
+        return buyer;
     }
 
     /**
@@ -214,9 +260,21 @@ public class GovUKArchiveTenderParser extends BaseDigiwhistTenderParser {
      * @return String or null
      */
     private String parseNationalProcedureType(final Element element) {
-        Element procedureType = select("TYPE_OF_PROCEDURE > * > *", element).first();
+        Element procedureType = select("TYPE_OF_PROCEDURE > * > *, TYPE_OF_PROCEDURE_DEF > *", element).first();
 
         return procedureType == null ? null : procedureType.tagName();
+    }
+
+    /**
+     * Parse award criterion.
+     *
+     * @param element element to parse from
+     * @return String or null
+     */
+    private ParsedAwardCriterion parseAwardCriterion(final Element element) {
+        Element criterion = select("AWARD_CRITERIA_CONTRACT_AWARD_NOTICE_INFORMATION > * > *", element).first();
+
+        return criterion == null ? null : new ParsedAwardCriterion().setName(criterion.tagName());
     }
 
     /**
@@ -242,8 +300,7 @@ public class GovUKArchiveTenderParser extends BaseDigiwhistTenderParser {
      */
     private String parseEstimatedCompletionDate(final Element element) {
 
-        String estimatedCompletionDate = selectLocalDate("END_DATE > DAY", "END_DATE > MONTH", "END_DATE > YEAR",
-                element);
+        String estimatedCompletionDate = selectLocalDate("END_DATE", element);
 
         if (estimatedCompletionDate == null) {
             estimatedCompletionDate = selectNonEmptyText("End", element);
@@ -259,8 +316,7 @@ public class GovUKArchiveTenderParser extends BaseDigiwhistTenderParser {
      * @return String or null
      */
     private String parseEstimatedStartDate(final Element element) {
-        String estimatedStartDate = selectLocalDate(
-                "START_DATE > DAY", "START_DATE > MONTH", "START_DATE > YEAR", element);
+        String estimatedStartDate = selectLocalDate("START_DATE", element);
 
         if (estimatedStartDate == null) {
             estimatedStartDate = selectNonEmptyText("Start", element);
@@ -276,8 +332,7 @@ public class GovUKArchiveTenderParser extends BaseDigiwhistTenderParser {
      * @return String or null
      */
     private String parseBidDeadline(final Element element) {
-        String bidDeadline = selectLocalDateTime("RECEIPT_LIMIT_DATE > DAY", "RECEIPT_LIMIT_DATE > MONTH",
-                "RECEIPT_LIMIT_DATE > YEAR", "RECEIPT_LIMIT_DATE > TIME", element);
+        String bidDeadline = selectLocalDateTime("RECEIPT_LIMIT_DATE", element);
 
         if (bidDeadline == null) {
             bidDeadline = selectNonEmptyText("DeadlineDate", element);
@@ -351,61 +406,56 @@ public class GovUKArchiveTenderParser extends BaseDigiwhistTenderParser {
     }
 
     /**
-     * Create date string from selectors.
+     * Create date string from selected element in the given context.
      *
-     * @param daySelector   daySelector
-     * @param monthSelector monthSelector
-     * @param yearSelector  yearSelector
-     * @param element       element to be parsed from
-     *
-     * @return String or null
+     * @param selector
+     *      date node selector (holds nodes DAY, MONTH and YEAR)
+     * @param element
+     *      element to be parsed from
+     * @return date string or null
      */
-    private String selectLocalDate(final String daySelector, final String monthSelector, final String yearSelector,
-                                   final Element element) {
-        final String day = selectNonEmptyText(daySelector, element);
-        final String month = selectNonEmptyText(monthSelector, element);
-        final String year = selectNonEmptyText(yearSelector, element);
-
-        if (day != null && month != null && year != null) {
-            return String.valueOf(LocalDate.of(Integer.valueOf(year), Integer.valueOf(month), Integer.valueOf(day)));
-        }
-
-        return null;
+    private String selectLocalDate(final String selector, final Element element) {
+        LocalDateTime datetime = parseDateTime(JsoupUtils.selectFirst(selector, element));
+        return datetime == null ? null : datetime.toLocalDate().toString();
     }
 
     /**
-     * Create date string from selectors.
+     * Create date time string from selected element in the given context.
      *
-     * @param daySelector   daySelector
-     * @param monthSelector monthSelector
-     * @param yearSelector  yearSelector
-     * @param timeSelector  timeSelector
-     * @param element       element to be parsed from
-     *
-     * @return String or null
+     * @param selector
+     *      datetime node selector (holds nodes DAY, MONTH, YEAR and TIME)
+     * @param element
+     *      element to be parsed from
+     * @return date time string or null
      */
-    private String selectLocalDateTime(final String daySelector, final String monthSelector, final String yearSelector,
-                                       final String timeSelector, final Element element) {
-        final String day = selectNonEmptyText(daySelector, element);
-        final String month = selectNonEmptyText(monthSelector, element);
-        final String year = selectNonEmptyText(yearSelector, element);
-        final String time = selectNonEmptyText(timeSelector, element);
+    private String selectLocalDateTime(final String selector, final Element element) {
+        LocalDateTime datetime = parseDateTime(JsoupUtils.selectFirst(selector, element));
+        return datetime == null ? null : datetime.toString();
+    }
 
-        if (day != null && month != null && year != null && time != null) {
-            final String[] hourAndMinutes = time.split(":");
+    /**
+     * @param element
+     *      element that includes date(time) nodes (YEAR, MONTH, DAY, and optionally TIME).
+     * @return local date time or null
+     */
+    private LocalDateTime parseDateTime(final Element element) {
+        String day = selectNonEmptyText("DAY", element);
+        String month = selectNonEmptyText("MONTH", element);
+        String year = selectNonEmptyText("YEAR", element);
+        String time = selectNonEmptyText("TIME", element);
 
-            if (hourAndMinutes.length > 1) {
-                final String hour = hourAndMinutes[0];
-                final String minutes = hourAndMinutes[1];
-
-                if (!hour.isEmpty() && !minutes.isEmpty()) {
-                    return String.valueOf(LocalDateTime.of(Integer.valueOf(year), Integer.valueOf(month),
-                            Integer.valueOf(day), Integer.valueOf(hour), Integer.valueOf(minutes)));
-                }
-            }
+        if (day == null && month == null && year == null) {
+            return null;
         }
 
-        return null;
+        Integer hours = 0, minutes = 0;
+        if (time != null) {
+            String[] hourAndMinutes = time.split(":");
+            hours = Integer.valueOf(hourAndMinutes[0]);
+            minutes = Integer.valueOf(hourAndMinutes[1]);
+        }
+
+        return LocalDateTime.of(Integer.valueOf(year), Integer.valueOf(month), Integer.valueOf(day), hours, minutes);
     }
 
     @Override
