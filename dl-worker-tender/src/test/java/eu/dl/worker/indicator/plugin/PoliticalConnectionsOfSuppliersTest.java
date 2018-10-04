@@ -249,6 +249,11 @@ public class PoliticalConnectionsOfSuppliersTest {
         }
 
         @Override
+        public List getModifiedAfter(final LocalDateTime timestamp, final String modifiedBy, final String country, final Integer page) {
+            return null;
+        }
+
+        @Override
         public MasterBody getEmptyInstance() {
             return null;
         }

@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -85,6 +86,11 @@ public class LogicalORPluginTest {
 
         @Override public Foo setPublicationDate(final LocalDate publicationDate) {
             return this;
+        }
+
+        @Override
+        public LocalDateTime getCreatedRaw() {
+            return null;
         }
     }
     

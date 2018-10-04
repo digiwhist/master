@@ -6,7 +6,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -437,7 +436,7 @@ public final class CleanTenderLot extends BaseCleanTenderLot<CleanTenderLot> imp
     }
 
     @Override
-    @Transient
+    
     @JsonIgnore
     public CleanTenderLot getValid() {
         setAddressOfImplementation(removeNonsenses(addressOfImplementation));

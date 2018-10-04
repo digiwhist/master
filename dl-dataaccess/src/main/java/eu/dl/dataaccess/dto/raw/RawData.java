@@ -1,19 +1,13 @@
 package eu.dl.dataaccess.dto.raw;
 
+import eu.dl.dataaccess.dto.StorableDTO;
+
 import java.net.URL;
 import java.util.Map;
-
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-
-import eu.dl.dataaccess.dto.StorableDTO;
 
 /**
  * Raw data and metadata.
  */
-@Entity
-@Table(name = "raw_data")
 public class RawData extends StorableDTO implements Raw {
 
     /**
@@ -51,7 +45,7 @@ public class RawData extends StorableDTO implements Raw {
      *
      * @return the source url
      */
-    @Transient
+    
     public final URL getSourceUrl() {
         return sourceUrl;
     }
@@ -71,7 +65,7 @@ public class RawData extends StorableDTO implements Raw {
      *
      * @return the post parameters
      */
-    @Transient
+    
     public final Map<String, Object> getPostParameters() {
         return postParameters;
     }
@@ -91,7 +85,7 @@ public class RawData extends StorableDTO implements Raw {
      *
      * @return the source data
      */
-    @Transient
+    
     public final String getSourceData() {
         return sourceData;
     }
@@ -111,7 +105,7 @@ public class RawData extends StorableDTO implements Raw {
      *
      * @return the source binary data
      */
-    @Transient
+    
     public final byte[] getSourceBinaryData() {
         return sourceBinaryData;
     }
@@ -131,7 +125,7 @@ public class RawData extends StorableDTO implements Raw {
      *
      * @return the source data mime type
      */
-    @Transient
+    
     public final String getSourceDataMimeType() {
         return sourceDataMimeType;
     }
@@ -151,7 +145,7 @@ public class RawData extends StorableDTO implements Raw {
      *
      * @return the source file name
      */
-    @Transient
+    
     public final String getSourceFileName() {
         return sourceFileName;
     }

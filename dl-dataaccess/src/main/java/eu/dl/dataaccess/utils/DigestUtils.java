@@ -1,6 +1,10 @@
 package eu.dl.dataaccess.utils;
 
-import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
+import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
+import eu.dl.dataaccess.dto.generic.Address;
+import eu.dl.dataaccess.dto.matched.MatchedBody;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.text.Normalizer;
 import java.util.ArrayList;
@@ -20,12 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.tuple.Pair;
-
-import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
-import eu.dl.dataaccess.dto.generic.Address;
-import eu.dl.dataaccess.dto.matched.MatchedBody;
+import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 
 /**
  * Class provides string standardization functions, hash function etc.
@@ -619,7 +618,7 @@ public final class DigestUtils {
     		if (stdName != null && stdAddress != null) {
     			return new WeightedHash()
     					.setHash(sha256Hex(stdName + HASH_SEPARATOR + stdAddress))
-    					.setWeight(2);
+    					.setWeight(2.2);
     		}
     		
     		return null;
@@ -639,7 +638,7 @@ public final class DigestUtils {
 	    			WeightedHash hash = new WeightedHash();
 	    			hash.setHash(sha256Hex(stdName + HASH_SEPARATOR + stdAddress + HASH_SEPARATOR 
 	    					+ bodyId.getScope() + HASH_SEPARATOR + bodyId.getId()));
-	    			hash.setWeight(3);
+	    			hash.setWeight(3.0);
 	    			result.add(hash);
 	    		}
     		}
@@ -649,7 +648,7 @@ public final class DigestUtils {
 	    			WeightedHash hash = new WeightedHash();
 	    			hash.setHash(sha256Hex(stdName + HASH_SEPARATOR 
 	    					+ bodyId.getScope() + HASH_SEPARATOR + bodyId.getId()));
-	    			hash.setWeight(2);
+	    			hash.setWeight(2.3);
 	    			result.add(hash);
 	    		}
     		}
@@ -659,7 +658,7 @@ public final class DigestUtils {
 	    			WeightedHash hash = new WeightedHash();
 	    			hash.setHash(sha256Hex(stdAddress + HASH_SEPARATOR 
 	    					+ bodyId.getScope() + HASH_SEPARATOR + bodyId.getId()));
-	    			hash.setWeight(2);
+	    			hash.setWeight(2.1);
 	    			result.add(hash);
 	    		}
     		}

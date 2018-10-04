@@ -28,6 +28,15 @@ public interface GenericDAO<T> extends BaseDAO<T> {
     T getById(String id);
 
     /**
+     * Returns objects identified by the ids.
+     *
+     * @param ids
+     *            list of unique identifier
+     * @return found objects
+     */
+    List<T> getByIds(List<String> ids);
+
+    /**
      * Returns objects which has been stored by the particular version of the
      * crawler/downloader.
      *
@@ -71,6 +80,23 @@ public interface GenericDAO<T> extends BaseDAO<T> {
      * @return set of objects modified after timestamp
      */
     List<T> getModifiedAfter(LocalDateTime timestamp, String modifiedBy, Integer page);
+
+    /**
+     * Returns objects which has been modified after timestamp by certain
+     * source. The result is paged with 1000 records per page.
+     *
+     * @param timestamp
+     *            objects modified after this timestamp will be returned
+     * @param createdBy
+     *            "author" of the change
+     * @param countryCode
+     *            country code
+     * @param page
+     *            order of the page in the result (for first page set 0)
+     *
+     * @return set of objects modified after timestamp
+     */
+    List<T> getModifiedAfter(LocalDateTime timestamp, String createdBy, String countryCode, Integer page);
     
     /**
      * Removes object identified by the id.

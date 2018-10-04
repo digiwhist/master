@@ -13,6 +13,17 @@ import java.util.List;
  *         implementation class type that should be used for clean tender
  */
 public interface CleanTenderDAO<T extends CleanTender> extends CleanDAO<T> {
+
+    /**
+     * Returns the object by given id.
+     *
+     * @param id
+     *         id to be searched
+     *
+     * @return mastered body with given id
+     */
+    T getById(String id);
+
     /**
      * Returns paged list of clean items for a specific country.
      *

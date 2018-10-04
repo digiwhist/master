@@ -1,24 +1,24 @@
 package eu.dl.worker.indicator.plugin;
 
-import eu.dl.dataaccess.dao.CleanDAO;
 import eu.dl.dataaccess.dao.CleanTenderDAO;
 import eu.dl.dataaccess.dao.MatchedTenderDAO;
 import eu.dl.dataaccess.dto.clean.CleanBid;
 import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.clean.CleanTenderLot;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
-import static eu.dl.dataaccess.dto.codetables.PublicationFormType.CONTRACT_AWARD;
 import eu.dl.dataaccess.dto.codetables.SelectionMethod;
 import eu.dl.dataaccess.dto.indicator.Indicator;
 import eu.dl.dataaccess.dto.indicator.TenderIndicatorType;
 import eu.dl.dataaccess.dto.master.MasterTender;
+import eu.dl.dataaccess.dto.matched.MatchedTender;
+import eu.dl.dataaccess.utils.TenderUtils;
+
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 
+import static eu.dl.dataaccess.dto.codetables.PublicationFormType.CONTRACT_AWARD;
 import static eu.dl.dataaccess.dto.codetables.PublicationFormType.CONTRACT_NOTICE;
-import eu.dl.dataaccess.dto.matched.MatchedTender;
-import eu.dl.dataaccess.utils.TenderUtils;
 
 /**
  * This plugin calculates number of key missing fields in form.
@@ -27,7 +27,7 @@ public class KeyMissingFieldsIndicatorPlugin extends BaseIndicatorPlugin impleme
 
     private final MatchedTenderDAO matchedTenderDAO;
 
-    private final CleanDAO cleanTenderDAO;
+    private final CleanTenderDAO cleanTenderDAO;
 
     /**
      * Default constructor.

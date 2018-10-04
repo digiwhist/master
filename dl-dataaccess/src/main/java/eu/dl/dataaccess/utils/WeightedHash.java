@@ -10,7 +10,7 @@ public class WeightedHash {
 
 	private String hash;
 	
-	private Integer weight;
+	private Double weight;
 
 	/**
 	 * Getter.
@@ -34,7 +34,7 @@ public class WeightedHash {
 	 * Getter.
 	 * @return hash weight
 	 */
-	public final Integer getWeight() {
+	public final Double getWeight() {
 		return weight;
 	}
 
@@ -43,7 +43,7 @@ public class WeightedHash {
 	 * @param weight hash weight
 	 * @return this for fluent
 	 */
-	public final WeightedHash setWeight(final Integer weight) {
+	public final WeightedHash setWeight(final Double weight) {
 		this.weight = weight;
 		return this;
 	}

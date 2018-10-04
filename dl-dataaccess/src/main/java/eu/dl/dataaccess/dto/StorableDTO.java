@@ -1,35 +1,21 @@
 package eu.dl.dataaccess.dto;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.MappedSuperclass;
-import javax.persistence.Transient;
-
-import org.hibernate.annotations.GenericGenerator;
-import org.hibernate.annotations.Type;
-import org.mongojack.ObjectId;
-
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import eu.dl.dataaccess.annotation.SystemProperty;
 import eu.dl.dataaccess.annotation.Transformable;
-import eu.dl.dataaccess.hibernate.JsonType;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
 
 
 /**
  * Abstract class containing common metadata properties.
  */
-@org.hibernate.annotations.TypeDef(name = "JsonType", typeClass = JsonType.class)
-@MappedSuperclass
 @Transformable
 public abstract class StorableDTO {
     /**
      * Object id - automatically generated unique identifier (surrogate key).
      */
-    @ObjectId
     @JsonProperty("id")
     private String id;
 
@@ -80,14 +66,15 @@ public abstract class StorableDTO {
     private String persistentId;
 
     /**
+     * Defines in which order should be this item processed.
+     */
+    private String processingOrder;
+
+    /**
      * Gets the id.
      *
      * @return the id
      */
-    @ObjectId
-    @Id
-    @GeneratedValue(generator = "uuid")
-    @GenericGenerator(name = "uuid", strategy = "uuid2")
     public final String getId() {
         return id;
     }
@@ -98,7 +85,6 @@ public abstract class StorableDTO {
      * @param id
      *            the new id
      */
-    @ObjectId
     @JsonProperty("id")
     public final void setId(final String id) {
         this.id = id;
@@ -225,7 +211,6 @@ public abstract class StorableDTO {
      *
      * @return the meta data
      */
-    @Transient
     public final HashMap<String, Object> getMetaData() {
         return metaData;
     }
@@ -236,7 +221,6 @@ public abstract class StorableDTO {
      * @param metaData
      *            the meta data
      */
-    @SystemProperty
     public final void setMetaData(final HashMap<String, Object> metaData) {
         this.metaData = metaData;
     }
@@ -246,7 +230,6 @@ public abstract class StorableDTO {
      * 
      * @return data
      */
-    @Type(type = "JsonType")
     public final JsonData getData() {
         return data;
     }
@@ -274,5 +257,19 @@ public abstract class StorableDTO {
     @SystemProperty
     public final void setPersistentId(final String persistentId) {
         this.persistentId = persistentId;
+    }
+
+    /**
+     * @return the processingOrder
+     */
+    public final String getProcessingOrder() {
+        return processingOrder;
+    }
+
+    /**
+     * @param processingOrder param
+     */
+    public final void setProcessingOrder(final String processingOrder) {
+        this.processingOrder = processingOrder;
     }
 }

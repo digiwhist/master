@@ -1,13 +1,7 @@
 package eu.dl.dataaccess.dto.clean;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
@@ -15,6 +9,9 @@ import eu.dl.dataaccess.dto.codetables.BuyerType;
 import eu.dl.dataaccess.dto.generic.Address;
 import eu.dl.dataaccess.utils.ClassUtils;
 import eu.dl.dataaccess.utils.ValidationUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Body (company, organization, ...).
@@ -371,7 +368,6 @@ public class CleanBody extends CleanStorableDTO implements Validable {
     }
 
     @Override
-    @Transient
     @JsonIgnore
     public final CleanBody getValid() {
         setAddress(ClassUtils.removeNonsenses(address));

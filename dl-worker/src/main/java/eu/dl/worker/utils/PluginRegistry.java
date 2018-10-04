@@ -24,7 +24,7 @@ public interface PluginRegistry<T> {
      * 
      * @return self for the fluent interfaces
      */
-    PluginRegistry registerPlugin(String pluginId, T plugin);
+    PluginRegistry<T> registerPlugin(String pluginId, T plugin);
 	
     /**
      * Unregisters plugin from the queue.
@@ -34,7 +34,7 @@ public interface PluginRegistry<T> {
      * 
      * @return self for the fluent interface
      */
-	PluginRegistry unRegisterPlugin(String pluginId);
+	PluginRegistry<T> unRegisterPlugin(String pluginId);
 	
     /**
      * Return the whole queue of plugins. The plugins will be exacuted in the

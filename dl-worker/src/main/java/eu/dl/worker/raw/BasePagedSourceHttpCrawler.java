@@ -20,7 +20,7 @@ public abstract class BasePagedSourceHttpCrawler extends BaseHttpCrawler impleme
     public final void doWork(final Message message) {
         setCurrentPageNumber(1);
         // get first page of list with results for given date
-        HtmlPage actualPage = getSearchResultsStartPage();
+        HtmlPage actualPage = getSearchResultsStartPage(message);
 
         // go through all the list pages and extract details from each
         while (actualPage != null && isPageValid(actualPage)) {
@@ -51,9 +51,11 @@ public abstract class BasePagedSourceHttpCrawler extends BaseHttpCrawler impleme
     /**
      * Returns the first page of the list to start crawling from.
      *
+     * @param message
+     *      incoming message
      * @return the start page for crawling the list - usually first page of the results list
      */
-    protected abstract HtmlPage getSearchResultsStartPage();
+    protected abstract HtmlPage getSearchResultsStartPage(final Message message);
 
     /**
      * @return the currentPageNumber

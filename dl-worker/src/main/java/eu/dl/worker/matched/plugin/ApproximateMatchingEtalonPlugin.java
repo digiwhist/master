@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import eu.dl.dataaccess.dao.EtalonBodyDAO;
 import eu.dl.dataaccess.dao.MatchedBodyDAO;
-import eu.dl.dataaccess.dao.mongo.ApproximateMatchBodyDAO;
+import eu.dl.dataaccess.dao.ApproximateMatchBodyDAO;
 import eu.dl.dataaccess.dto.matched.EtalonBody;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 import eu.dl.dataaccess.utils.DigestUtils;

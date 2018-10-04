@@ -8,9 +8,9 @@ import eu.dl.dataaccess.dto.master.MasterTender;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import static eu.dl.dataaccess.dto.indicator.TenderIndicatorType.INTEGRITY_CALL_FOR_TENDER_PUBLICATION;
+import java.util.Set;
 
 /**
  * This plugin calculates call for tenders publication indicator.
@@ -28,8 +28,7 @@ public class CallForTenderIndicatorPlugin extends BaseIndicatorPlugin implements
             return insufficient();
         }
 
-        Set<String> countries = config.getParamValueAsList("indicator.priorInformationNotice.redFlag",
-                ",", HashSet.class);
+        Set<String> countries = config.getParamValueAsList("indicator.priorInformationNotice.redFlag", ",", HashSet.class);
 
         if ((tender.getCountry() != null && tender.getPublications() == null)) {
             return countries.contains(tender.getCountry())

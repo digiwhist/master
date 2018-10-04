@@ -144,6 +144,6 @@ public class NoticeAndAwardDiscrepanciesIndicatorPlugin extends BaseIndicatorPlu
 
     @Override
     public final String getType() {
-        return TenderIndicatorType.TRANSPARENCY_NOTICE_AND_AWARD_DISCREPANCIES.name();
+        return TenderIndicatorType.ADMINISTRATIVE_NOTICE_AND_AWARD_DISCREPANCIES.name();
     }
 }

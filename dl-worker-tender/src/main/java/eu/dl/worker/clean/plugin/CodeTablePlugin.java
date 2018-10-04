@@ -19,18 +19,46 @@ public abstract class CodeTablePlugin<T extends Parsable, U extends Cleanable> e
 
     protected Map<Enum, List<String>> mapping;
 
+    protected Map<Enum, List<List<String>>> freeTextMapping;
+
     /**
      * CodeTable plugin should be initialised with mapping.
      *
      * @param mapping
-     *            mapping of the values, the form should be like
-     *            Enum.APPLE =>
-     *              ("apples", "aples", "paple")
-     *            Enum.MAPPLE =>
-     *              ("mapples", "maple")
+     *      mapping of the values, the form should be like
+     *      Enum.APPLE => ("apples", "aples", "paple")
+     *      Enum.MAPPLE => ("mapples", "maple")
+     *
+     *      eg. first row of mapping above means:
+     *          IF text == "apples" OR "aples" OR "paple" SET Enum.APPLE
      */
     public CodeTablePlugin(final Map<Enum, List<String>> mapping) {
         this.mapping = mapping;
+    }
+
+    /**
+     * CodeTable plugin should be initialised with mapping.
+     *
+     * @param mapping
+     *      mapping of the values, the form should be like
+     *      Enum.APPLE => ("apples", "aples", "paple")
+     *      Enum.MAPPLE => ("mapples", "maple")
+     *
+     *      eg. first row of mapping above means:
+     *          IF text == ("apples" OR "aples" OR "paple") SET Enum.APPLE
+     *
+     *
+     * @param freeTextMapping
+     *      mapping of the values used for searcn in free text, all of mappings must be included in the text
+     *      Enum.APPLE => (("app", "pples"), ("apple"))
+     *      Enum.MAPPLE => (("map", "pples"))
+     *
+     *      eg. first row of mapping above means:
+     *          IF text CONTAINS(("app" AND "pples") OR "apple") SET Enum.APPLE
+     */
+    public CodeTablePlugin(final Map<Enum, List<String>> mapping, final Map<Enum, List<List<String>>> freeTextMapping) {
+        this.mapping = mapping;
+        this.freeTextMapping = freeTextMapping;
     }
 
     /**

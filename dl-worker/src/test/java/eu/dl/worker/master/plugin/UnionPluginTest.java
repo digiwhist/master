@@ -12,6 +12,9 @@ import org.junit.Test;
 
 import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.List;
+import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import static org.junit.Assert.assertTrue;
 
@@ -23,8 +26,7 @@ public class UnionPluginTest {
             .setPublications(Arrays.asList(
                     new Publication()
                             .setSourceId("a")
-                            .setPublicationDate(LocalDate.MIN)
-                            .setVersion(1),
+                            .setIsIncluded(true),
                     new Publication()
                             .setSourceId("b")
                             .setPublicationDate(LocalDate.MIN)
@@ -42,9 +44,7 @@ public class UnionPluginTest {
                             .setPublicationDate(LocalDate.MIN)
                             .setVersion(1),
                     new Publication()
-                            .setSourceId("b")
-                            .setPublicationDate(LocalDate.MIN)
-                            .setVersion(1),
+                            .setSourceId("b"),
                     new Publication()
                             .setSourceId("c")
                             .setPublicationDate(LocalDate.MIN)
@@ -68,7 +68,15 @@ public class UnionPluginTest {
                 masterTender,
                 Arrays.asList(matchedTender1, matchedTender2));
 
-        assertTrue(masterTender.getPublications().size() == 3);
+        List<Publication> publications = masterTender.getPublications();
+
+        Supplier<Stream<Publication>> publicationsStream = () -> publications.stream();
+
+
+        assertTrue(publications.size() == 3);
+        assertTrue(publicationsStream.get().anyMatch(n -> n.getSourceId().equals("a") && n.getIsIncluded()));
+        assertTrue(publicationsStream.get().anyMatch(n -> n.getSourceId().equals("b")));
+        assertTrue(publicationsStream.get().anyMatch(n -> n.getSourceId().equals("c")));
     }
 
     /**

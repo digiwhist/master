@@ -1,9 +1,5 @@
 package eu.dl.worker.parsed;
 
-import java.util.List;
-
-import org.apache.logging.log4j.ThreadContext;
-
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dao.ParsedDAO;
 import eu.dl.dataaccess.dao.RawDAO;
@@ -12,6 +8,10 @@ import eu.dl.dataaccess.dto.raw.Raw;
 import eu.dl.worker.BaseWorker;
 import eu.dl.worker.Message;
 import eu.dl.worker.MessageFactory;
+import org.apache.logging.log4j.ThreadContext;
+
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 /**
  * Base class for all the parsers.
@@ -61,7 +61,13 @@ public abstract class BaseParser<V extends Raw, T extends Parsable> extends Base
                 parsedTender.setPersistentId(rawPersistentId + "_" + counter);
                 counter++;
             }
-            
+
+            // set item processing order
+            if (rawItem.getCreated() != null) {
+                DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSS");
+                parsedTender.setProcessingOrder(rawItem.getCreated().format(formatter));
+            }
+
             getTransactionUtils().begin();
             final String parsedId = parsedDao.save(parsedTender);
             getTransactionUtils().commit();

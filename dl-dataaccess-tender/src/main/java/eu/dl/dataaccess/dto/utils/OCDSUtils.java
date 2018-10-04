@@ -798,7 +798,7 @@ public final class OCDSUtils {
 
                 // AWARDS + BIDS + CONTRACTS
                 if (l.getBids() != null) {                    
-                    for(MasterBid b : l.getBids()) {
+                    for (MasterBid b : l.getBids()) {
                         Index.BID.next();
                                                 
                         // BID
@@ -818,7 +818,7 @@ public final class OCDSUtils {
 
                         // AWARD + CONTRACT
                         if (Objects.equals(b.getIsWinning(), Boolean.TRUE)) {
-                            MasterBody digiwhistSupplier = OCDSUtils.getLeaderBody(b.getBidders());
+                            MasterBody supplier = OCDSUtils.getLeaderBody(b.getBidders());
 
                             // AWARD
                             OCDSAward award = new OCDSAward()
@@ -842,25 +842,19 @@ public final class OCDSUtils {
                                 .setValue(OCDSUtils.getOCDSValueFromPrice(p.getPrice(), "netAmount"))
                                 .setPayer(OCDSUtils.getOCDSOrganizationReference(ocdsBuyer))
                                 .setPayee(tenderers == null ? null : OCDSUtils.getOCDSOrganizationReference(
-                                    OCDSUtils.getOCDSOrganizationFromMasterBody(digiwhistSupplier,
+                                    OCDSUtils.getOCDSOrganizationFromMasterBody(supplier,
                                         OCDSPartyRole.SUPPLIER))));
 
                             LocalDateTime contractSigned = getDateTime(tender.getContractSignatureDate());
                             List<OCDSDocument> contractDocuments = getOCDSContractDocuments(ocdsDocuments);
 
                             if (contractSigned != null || contractDocuments != null || transactions != null) {
-                                OCDSContract ocdsContract = new OCDSContract()
+                                ocds.addContract(new OCDSContract()
                                     .setId(Index.CONTRACT.next())
                                     .setAwardId(Index.AWARD.current())
                                     .setSigned(getDateTime(tender.getContractSignatureDate()))
-                                    .addDocuments(getOCDSContractDocuments(ocdsDocuments));
-
-                                if (transactions != null) {
-                                    ocdsContract.setImplementation(
-                                        new OCDSImplementation().setTransactions(transactions));
-                                }
-
-                                ocds.addContract(ocdsContract);
+                                    .addDocuments(contractDocuments)
+                                    .setImplementation(new OCDSImplementation().setTransactions(transactions)));
                             }
                         }               
                     }
@@ -935,16 +929,16 @@ public final class OCDSUtils {
      * @return OCDS buyer or null
      */
     private static OCDSOrganization getOCDSReleaseBuyer(final MasterTender tender) {
-        MasterBody digiwhistBuyer = OCDSUtils.getLeaderBody(tender.getBuyers());
+        MasterBody buyer = OCDSUtils.getLeaderBody(tender.getBuyers());
 
-        OCDSOrganization ocdsBuyer = OCDSUtils.getOCDSOrganizationFromMasterBody(digiwhistBuyer, OCDSPartyRole.BUYER);
+        OCDSOrganization ocdsBuyer = OCDSUtils.getOCDSOrganizationFromMasterBody(buyer, OCDSPartyRole.BUYER);
 
         if (ocdsBuyer != null) {
             if (Objects.equals(tender.getIsOnBehalfOf(), Boolean.TRUE)) {
                 MasterBody behalfOf = OCDSUtils.getLeaderBody(tender.getOnBehalfOf());
                 ocdsBuyer.setName(behalfOf != null ? behalfOf.getName() : null);
             } else {
-                ocdsBuyer.setName(digiwhistBuyer.getName());
+                ocdsBuyer.setName(buyer.getName());
             }
         }
 

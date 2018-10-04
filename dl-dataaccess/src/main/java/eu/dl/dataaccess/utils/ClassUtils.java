@@ -21,7 +21,7 @@ public final class ClassUtils {
     private static final Logger logger = LoggerFactory.getLogger(ClassUtils.class);
 
     /**
-     * Supress default constructor for noninstatiability.
+     * Suppress default constructor for noninstatiability.
      */
     private ClassUtils() {
     }

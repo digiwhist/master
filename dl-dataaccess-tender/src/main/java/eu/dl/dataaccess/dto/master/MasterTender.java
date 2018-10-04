@@ -6,9 +6,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Transient;
 
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.codetables.NpwpReason;
@@ -22,13 +19,10 @@ import eu.dl.dataaccess.dto.generic.Price;
 import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.indicator.Indicator;
 
-// TODO: Auto-generated Javadoc
 
 /**
  * Public Contract. Contains full info about single contract.
  */
-@Entity
-@Table(name = "master_tender")
 @Transformable
 public class MasterTender extends BaseMasterTenderLot<MasterTender> implements Masterable {
 
@@ -331,11 +325,16 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
     private List<Indicator> indicators;
 
     /**
+     * Digiwhist price.
+     */
+    private Price digiwhistPrice;
+
+    /**
      * Gets the buyer assigned id.
      *
      * @return the buyerAssignedId
      */
-    @Transient
+    
     public final String getBuyerAssignedId() {
         return buyerAssignedId;
     }
@@ -358,7 +357,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the procedureType
      */
-    @Transient
+    
     public final TenderProcedureType getProcedureType() {
         return procedureType;
     }
@@ -381,7 +380,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the nationalProcedureType
      */
-    @Transient
+    
     public final String getNationalProcedureType() {
         return nationalProcedureType;
     }
@@ -404,7 +403,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return is the procedure accelerated
      */
-    @Transient
+    
     public final Boolean getIsAcceleratedProcedure() {
         return isAcceleratedProcedure;
     }
@@ -427,7 +426,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return reason for the accelerated procedure
      */
-    @Transient
+    
     public final String getAcceleratedProcedureJustification() {
         return acceleratedProcedureJustification;
     }
@@ -450,7 +449,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the maxBidsCount
      */
-    @Transient
+    
     public final Integer getMaxBidsCount() {
         return maxBidsCount;
     }
@@ -473,7 +472,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the supplyType
      */
-    @Transient
+    
     public final TenderSupplyType getSupplyType() {
         return supplyType;
     }
@@ -496,7 +495,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the size
      */
-    @Transient
+    
     public final TenderSize getSize() {
         return size;
     }
@@ -519,7 +518,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the bidDeadline
      */
-    @Transient
+    
     public final LocalDateTime getBidDeadline() {
         return bidDeadline;
     }
@@ -542,7 +541,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the documentsDeadline
      */
-    @Transient
+    
     public final LocalDateTime getDocumentsDeadline() {
         return documentsDeadline;
     }
@@ -565,7 +564,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the documentsPayable
      */
-    @Transient
+    
     public final Boolean getDocumentsPayable() {
         return documentsPayable;
     }
@@ -588,7 +587,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the documentsPrice
      */
-    @Transient
+    
     public final Price getDocumentsPrice() {
         return documentsPrice;
     }
@@ -611,7 +610,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the documentsLocation
      */
-    @Transient
+    
     public final Address getDocumentsLocation() {
         return documentsLocation;
     }
@@ -635,7 +634,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      * @return true if the access to documents is free, false for restricted
      * access
      */
-    @Transient
+    
     public final Boolean getIsDocumentsAccessRestricted() {
         return isDocumentsAccessRestricted;
     }
@@ -658,7 +657,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the isCentralProcurement
      */
-    @Transient
+    
     public final Boolean getIsCentralProcurement() {
         return isCentralProcurement;
     }
@@ -681,7 +680,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the isJointProcurement
      */
-    @Transient
+    
     public final Boolean getIsJointProcurement() {
         return isJointProcurement;
     }
@@ -704,7 +703,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the buyers
      */
-    @Transient
+    
     public final List<MasterBody> getBuyers() {
         return buyers;
     }
@@ -747,7 +746,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return true if the purchase is being made for someone else
      */
-    @Transient
+    
     public final Boolean getIsOnBehalfOf() {
         return isOnBehalfOf;
     }
@@ -770,7 +769,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the list of onBehalfOf
      */
-    @Transient
+    
     public final List<MasterBody> getOnBehalfOf() {
         return onBehalfOf;
     }
@@ -813,7 +812,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return body from whom further information can be obtained
      */
-    @Transient
+    
     public final MasterBody getFurtherInformationProvider() {
         return furtherInformationProvider;
     }
@@ -837,7 +836,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      * @return body from whom specifications and additional documents can be
      * obtained
      */
-    @Transient
+    
     public final MasterBody getSpecificationsProvider() {
         return specificationsProvider;
     }
@@ -861,7 +860,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return body to whom tenders/requests to participate must be sent
      */
-    @Transient
+    
     public final MasterBody getBidsRecipient() {
         return bidsRecipient;
     }
@@ -884,7 +883,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the public finalations
      */
-    @Transient
+    
     public final List<Publication> getPublications() {
         return publications;
     }
@@ -907,7 +906,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the administrators
      */
-    @Transient
+    
     public final List<MasterBody> getAdministrators() {
         return administrators;
     }
@@ -930,7 +929,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the supervisors
      */
-    @Transient
+    
     public final List<MasterBody> getSupervisors() {
         return supervisors;
     }
@@ -953,7 +952,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the specificationsCreator
      */
-    @Transient
+    
     public final MasterBody getSpecificationsCreator() {
         return specificationsCreator;
     }
@@ -976,7 +975,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return is tender divided into lots
      */
-    @Transient
+    
     public final Boolean getHasLots() {
         return hasLots;
     }
@@ -999,7 +998,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the lots
      */
-    @Transient
+    
     public final List<MasterTenderLot> getLots() {
         return lots;
     }
@@ -1042,7 +1041,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the candidates
      */
-    @Transient
+    
     public final List<MasterBody> getCandidates() {
         return candidates;
     }
@@ -1065,7 +1064,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the approachedBidders
      */
-    @Transient
+    
     public final List<MasterBody> getApproachedBidders() {
         return approachedBidders;
     }
@@ -1088,7 +1087,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the documents
      */
-    @Transient
+    
     public final List<Document> getDocuments() {
         return documents;
     }
@@ -1111,7 +1110,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the courtProceedings
      */
-    @Transient
+    
     public final List<URL> getCourtProceedings() {
         return courtProceedings;
     }
@@ -1134,7 +1133,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the courtInterventions
      */
-    @Transient
+    
     public final List<URL> getCourtInterventions() {
         return courtInterventions;
     }
@@ -1157,7 +1156,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the npwpReasons
      */
-    @Transient
+    
     public final List<NpwpReason> getNpwpReasons() {
         return npwpReasons;
     }
@@ -1180,7 +1179,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the deposits
      */
-    @Transient
+    
     public final String getDeposits() {
         return deposits;
     }
@@ -1203,7 +1202,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the personalRequirements
      */
-    @Transient
+    
     public final String getPersonalRequirements() {
         return personalRequirements;
     }
@@ -1226,7 +1225,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the economicRequirements
      */
-    @Transient
+    
     public final String getEconomicRequirements() {
         return economicRequirements;
     }
@@ -1249,7 +1248,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the technicalRequirements
      */
-    @Transient
+    
     public final String getTechnicalRequirements() {
         return technicalRequirements;
     }
@@ -1272,7 +1271,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the appealBodyName
      */
-    @Transient
+    
     public final String getAppealBodyName() {
         return appealBodyName;
     }
@@ -1295,7 +1294,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the mediationBodyName
      */
-    @Transient
+    
     public final String getMediationBodyName() {
         return mediationBodyName;
     }
@@ -1318,7 +1317,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return justification for framework agreement going over 4 years
      */
-    @Transient
+    
     public final String getExcessiveFrameworkAgreementJustification() {
         return excessiveFrameworkAgreementJustification;
     }
@@ -1343,7 +1342,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      * @return true if the whole tender is cancelled, false if just some of its
      * lots
      */
-    @Transient
+    
     public final Boolean getIsWholeTenderCancelled() {
         return isWholeTenderCancelled;
     }
@@ -1367,7 +1366,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the enquiryDeadline
      */
-    @Transient
+    
     public final LocalDate getEnquiryDeadline() {
         return enquiryDeadline;
     }
@@ -1390,7 +1389,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the awardDeadline
      */
-    @Transient
+    
     public final LocalDate getAwardDeadline() {
         return awardDeadline;
     }
@@ -1411,7 +1410,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
     /**
      * @return the awardDeadlineDuration
      */
-    @Transient
+    
     public final Integer getAwardDeadlineDuration() {
         return awardDeadlineDuration;
     }
@@ -1432,7 +1431,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the finalPrice
      */
-    @Transient
+    
     public final Price getFinalPrice() {
         return finalPrice;
     }
@@ -1455,7 +1454,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the eligibleBidLanguages
      */
-    @Transient
+    
     public final List<String> getEligibleBidLanguages() {
         return eligibleBidLanguages;
     }
@@ -1478,7 +1477,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the isEInvoiceAccepted
      */
-    @Transient
+    
     public final Boolean getIsEInvoiceAccepted() {
         return isEInvoiceAccepted;
     }
@@ -1501,7 +1500,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return the corrections
      */
-    @Transient
+    
     public final List<Corrigendum> getCorrections() {
         return corrections;
     }
@@ -1524,7 +1523,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return value of modificationReason
      */
-    @Transient
+    
     public final String getModificationReason() {
         return modificationReason;
     }
@@ -1547,7 +1546,7 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      *
      * @return value of modificationReasonDescription
      */
-    @Transient
+    
     public final String getModificationReasonDescription() {
         return modificationReasonDescription;
     }
@@ -1689,6 +1688,23 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      */
     public final MasterTender setCountry(final String country) {
         this.country = country;
+        return this;
+    }
+
+    /**
+     * @return digiwhist price
+     */
+    public final Price getDigiwhistPrice() {
+        return digiwhistPrice;
+    }
+
+    /**
+     * @param digiwhistPrice
+     *      digiwhist price to be set
+     * @return this instance for chaining
+     */
+    public final MasterTender setDigiwhistPrice(final Price digiwhistPrice) {
+        this.digiwhistPrice = digiwhistPrice;
         return this;
     }
 }

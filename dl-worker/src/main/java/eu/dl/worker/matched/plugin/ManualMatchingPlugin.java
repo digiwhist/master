@@ -8,6 +8,8 @@ import org.cache2k.Cache2kBuilder;
 import eu.dl.dataaccess.dao.ManualMatchDAO;
 import eu.dl.dataaccess.dto.matched.ManualMatch;
 import eu.dl.dataaccess.dto.matched.ManuallyMatchable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This plugin checks, whether there are some manual fixes entered for the
@@ -17,6 +19,8 @@ import eu.dl.dataaccess.dto.matched.ManuallyMatchable;
  *
  */
 public class ManualMatchingPlugin<T extends ManuallyMatchable> implements MatchingPlugin<T> {
+    
+    protected final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     private ManualMatchDAO manualMatchDao;
 
@@ -58,8 +62,8 @@ public class ManualMatchingPlugin<T extends ManuallyMatchable> implements Matchi
 	@Override
     public final MatchingResult match(final T item) {
         MatchingResult matchingResult = new MatchingResult();
-        
-        String groupId = cache.peek(item.getHash());
+//        logger.i("Number of matched groups whitch includes etalon is greather then 1. {}", groupIds);
+        String groupId = cache.peek(item.getFullHash());
         if (groupId != null) {
             // the same hash found, storing into the same group
             matchingResult.setGroupId(groupId);
@@ -77,7 +81,7 @@ public class ManualMatchingPlugin<T extends ManuallyMatchable> implements Matchi
         List<ManualMatch> manuallyEntered = manualMatchDao.getAllEntries(this.flag);
         if (manuallyEntered != null && !manuallyEntered.isEmpty()) {
         		for (ManualMatch match : manuallyEntered) {
-        			cache.put(match.getHash(), match.getGroupId());
+        			cache.put(match.getFullHash(), match.getGroupId());
         		}
         }
 	}

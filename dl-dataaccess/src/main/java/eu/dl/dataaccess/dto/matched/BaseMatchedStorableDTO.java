@@ -1,6 +1,5 @@
 package eu.dl.dataaccess.dto.matched;
 
-import javax.persistence.MappedSuperclass;
 
 import eu.dl.dataaccess.dto.BaseParsedAndCleanStorableDTO;
 
@@ -8,7 +7,6 @@ import eu.dl.dataaccess.dto.BaseParsedAndCleanStorableDTO;
 /**
  * Common metadata for matched storable objects.
  */
-@MappedSuperclass
 public abstract class BaseMatchedStorableDTO extends BaseParsedAndCleanStorableDTO {
 
     /**

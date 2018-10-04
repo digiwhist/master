@@ -17,7 +17,7 @@ public final class ValidationUtils {
     private static final Logger logger = LoggerFactory.getLogger(ValidationUtils.class);
 
     /**
-     * Supress default constructor for noninstatiability.
+     * Suppress default constructor for noninstatiability.
      */
     private ValidationUtils() {
     }

@@ -1,19 +1,17 @@
 package eu.dl.dataaccess.dto.generic;
 
-import java.net.URL;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import eu.dl.dataaccess.annotation.Transformable;
+import eu.dl.dataaccess.dto.PlainDocument;
 import eu.dl.dataaccess.dto.clean.Validable;
 import eu.dl.dataaccess.dto.codetables.DocumentType;
 import eu.dl.dataaccess.dto.matched.MasterablePart;
 import eu.dl.dataaccess.utils.ValidationUtils;
+
+import java.net.URL;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Metadata on document.
@@ -88,6 +86,11 @@ public class Document implements MasterablePart, Validable {
     private String plainDocumentId;
 
     /**
+     * Plain document ({@link PlainDocument}).
+     */
+    private PlainDocument plainDocument;
+
+    /**
      * Tender id.
      */
     private String tenderId;
@@ -96,7 +99,7 @@ public class Document implements MasterablePart, Validable {
      * Publication date.
      */
     private LocalDate publicationDate;
-    
+
     /**
      * @return the title
      */
@@ -318,6 +321,23 @@ public class Document implements MasterablePart, Validable {
         return this;
     }
 
+    /**
+     * @return plain document
+     */
+    public final PlainDocument getPlainDocument() {
+        return plainDocument;
+    }
+
+    /**
+     * @param plainDocument
+     *            plain document to be set
+     * @return the basic parsed document
+     */
+    public final Document setPlainDocument(final PlainDocument plainDocument) {
+        this.plainDocument = plainDocument;
+        return this;
+    }
+
     @Override
     public final String getTenderId() {
         return null;
@@ -349,7 +369,6 @@ public class Document implements MasterablePart, Validable {
     }
 
     @Override
-    @Transient
     @JsonIgnore
     public final Document getValid() {
         setExtensions(ValidationUtils.getValid(extensions));
@@ -357,5 +376,10 @@ public class Document implements MasterablePart, Validable {
         
         return ValidationUtils.getValid(this, description, extensions, format, language, order, otherVersions,
             plainDocumentId, publicationDate, publicationDateTime, signatureDate, tenderId, title, type, url, version);
+    }
+
+    @Override
+    public final LocalDateTime getCreatedRaw() {
+        return null;
     }
 }

@@ -1,17 +1,14 @@
 package eu.dl.dataaccess.dto.generic;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.List;
-
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.clean.Validable;
 import eu.dl.dataaccess.utils.ClassUtils;
 import eu.dl.dataaccess.utils.ValidationUtils;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Corrigendum.
@@ -272,7 +269,6 @@ public class Corrigendum implements Validable {
     }
 
     @Override
-    @Transient
     @JsonIgnore
     public final Corrigendum getValid() {
         setOriginalCpvs(ValidationUtils.getValid(originalCpvs));

@@ -1,5 +1,6 @@
 package eu.dl.worker.clean.utils;
 
+import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.utils.RemoveNonsenseUtils;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -128,6 +129,10 @@ public final class DateUtils {
     private static <T> T parseDateTime(final String dateTime, final List<DateTimeFormatter> formatters,
                                        final BiFunction<String, DateTimeFormatter, T> parser)
             throws DateTimeParseException {
+
+        if (formatters.isEmpty()) {
+            throw new UnrecoverableException("No formatter are defined.");
+        }
 
         DateTimeParseException exception = null;
         for (DateTimeFormatter formatter : formatters) {

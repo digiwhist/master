@@ -1,12 +1,5 @@
 package eu.dl.worker.master;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
-
-import org.apache.logging.log4j.ThreadContext;
-
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dao.MasterDAO;
 import eu.dl.dataaccess.dao.MatchedDAO;
@@ -20,6 +13,12 @@ import eu.dl.worker.indicator.plugin.IndicatorPlugin;
 import eu.dl.worker.master.plugin.MasterPlugin;
 import eu.dl.worker.utils.BasicPluginRegistry;
 import eu.dl.worker.utils.PluginRegistry;
+import org.apache.logging.log4j.ThreadContext;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * Base class for all the masters.
@@ -35,7 +34,7 @@ public abstract class BaseMaster<T extends Matchable & MasterablePart, V extends
 
     private static final String INCOMING_EXCHANGE_NAME = "matched";
 
-    protected PluginRegistry<MasterPlugin<T, V, T>> pluginRegistry = new BasicPluginRegistry<>();
+    protected PluginRegistry<MasterPlugin> pluginRegistry = new BasicPluginRegistry<>();
 
     protected PluginRegistry<IndicatorPlugin<V>> indicatorPluginRegistry = new BasicPluginRegistry();
 
@@ -91,7 +90,7 @@ public abstract class BaseMaster<T extends Matchable & MasterablePart, V extends
         }
 
         item.setPersistentId(getPersistentId(matchedItems));
-        
+        item.setProcessingOrder(getProcessingOrder(matchedItems));
         // preprocess matched items before creating master
         matchedItems = generalPreprocessData(matchedItems);
         if (matchedItems.isEmpty()) {
@@ -105,7 +104,7 @@ public abstract class BaseMaster<T extends Matchable & MasterablePart, V extends
         }
 
         // iterate over all plugins and execute them in a proper order
-        for (Entry<String, MasterPlugin<T, V, T>> entry : pluginRegistry.getPlugins().entrySet()) {
+        for (Entry<String, MasterPlugin> entry : pluginRegistry.getPlugins().entrySet()) {
             MasterPlugin<T, V, T> plugin = entry.getValue();
             item = plugin.master(matchedItems, item, matchedItems);
         }
@@ -159,6 +158,26 @@ public abstract class BaseMaster<T extends Matchable & MasterablePart, V extends
      * @return persistent id 
      */
     protected abstract String getPersistentId(List<T> matchedItems);
+
+    /**
+     * Creates processing order as the minimal available.
+     * @param matchedItems set of items
+     * @return persistent id
+     */
+    private String getProcessingOrder(final List<T> matchedItems) {
+        if (matchedItems == null || matchedItems.isEmpty()) {
+            return null;
+        }
+
+        String min = null;
+        for (T item : matchedItems) {
+            if (item.getProcessingOrder() != null && (min == null || min.compareTo(item.getProcessingOrder()) < 0)) {
+                min = item.getProcessingOrder();
+            }
+        }
+
+        return min;
+    }
 
     @Override
     protected final void resend(final String version, final String dateFrom, final String dateTo) {

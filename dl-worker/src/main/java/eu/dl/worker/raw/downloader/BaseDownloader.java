@@ -1,15 +1,19 @@
 package eu.dl.worker.raw.downloader;
 
-import static eu.dl.worker.raw.utils.DownloaderUtils.generatePersistentId;
-
-import java.util.List;
-
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dao.RawDAO;
 import eu.dl.dataaccess.dto.raw.Raw;
 import eu.dl.worker.Message;
 import eu.dl.worker.MessageFactory;
 import eu.dl.worker.raw.BaseRawWorker;
+import eu.dl.worker.utils.ThreadUtils;
+
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+import static eu.dl.worker.raw.utils.DownloaderUtils.generatePersistentId;
 
 /**
  * Provides basic functionality for data download from given url.
@@ -35,6 +39,20 @@ public abstract class BaseDownloader<T extends Raw> extends BaseRawWorker {
     public final void doWork(final Message message) {
         logger.debug("Doing work for message {}", message);
 
+        String humanizeProperty = this.getClass().getName() + ".humanize";
+        String humanize = config.getParam(humanizeProperty);
+        if (humanize != null) {            
+            try {
+                int ms = Integer.valueOf(humanize);
+                if (ms > 0) {
+                    ThreadUtils.sleep(ms);
+                }
+            } catch (final NumberFormatException ex) {
+                logger.error("Value '{}' of property {} isn't an integer", humanize, humanizeProperty);
+                throw new UnrecoverableException("Configuration property must be an integer", ex);
+            }
+        }
+
         // download and populate raw data (there might me more records at once => list of raw data objects)
         final List<T> rawData = downloadAndPopulateRawData(message);
 
@@ -47,9 +65,15 @@ public abstract class BaseDownloader<T extends Raw> extends BaseRawWorker {
                 rawDataItem.setPersistentId(generatePersistentId(rawDataItem, getSourceId()));
             }
 
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSS");
+            rawDataItem.setProcessingOrder(Timestamp.valueOf(LocalDateTime.now()).toLocalDateTime().format(formatter));
             final String savedId = rawDao.save(rawDataItem);
             getTransactionUtils().commit();
             logger.info("Stored raw data as {}", savedId);
+
+            // post-processing, doesn't affect raw record
+            postProcess(rawDataItem);
+
             // create and publish message with saved id
             final Message outgoingMessage = MessageFactory.getMessage();
             outgoingMessage.setValue("id", savedId);
@@ -110,6 +134,14 @@ public abstract class BaseDownloader<T extends Raw> extends BaseRawWorker {
      * @return downloader version
      */
     public abstract String getVersion();
+
+    /**
+     * Post-processing. Method doesn't (shouldn't) affect saved raw record, but gives the opportunity to do operations after record saving.
+     *
+     * @param raw
+     *      saved raw record
+     */
+    protected abstract void postProcess(T raw);
 
     @Override
     protected final String getIncomingQueueName() {

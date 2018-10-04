@@ -116,6 +116,6 @@ public final class NoticeAndAwardDiscrepanciesIndicatorPluginTest {
      */
     @Test
     public void getTypeTest() {
-        assertEquals(plugin.getType(), TenderIndicatorType.TRANSPARENCY_NOTICE_AND_AWARD_DISCREPANCIES.name());
+        assertEquals(plugin.getType(), TenderIndicatorType.ADMINISTRATIVE_NOTICE_AND_AWARD_DISCREPANCIES.name());
     }
 }

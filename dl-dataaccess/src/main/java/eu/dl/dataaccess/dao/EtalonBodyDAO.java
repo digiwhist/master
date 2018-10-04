@@ -2,7 +2,6 @@ package eu.dl.dataaccess.dao;
 
 import java.util.List;
 
-import eu.dl.dataaccess.dao.mongo.ApproximateMatchBodyDAO;
 import eu.dl.dataaccess.dto.matched.PoolBody;
 
 /**

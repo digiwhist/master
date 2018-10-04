@@ -121,12 +121,6 @@ public abstract class BaseIncrementalCrawler extends BaseCrawler {
                 .append("-").append(startDate.format(DateTimeFormatter.BASIC_ISO_DATE))
                 .append("-").append(endDate.format(DateTimeFormatter.BASIC_ISO_DATE))
                 .toString());
-
-            // set dates from crawler audit collection if such record exists
-            final LocalDate lastCrawledDate = crawlerAuditDao.getLastCrawledDateByCrawler();
-            if (lastCrawledDate != null) {
-                startDate = lastCrawledDate.plus(1, getIncrementUnit());
-            }
         } else {
             // set dates from crawler audit collection
             final LocalDate lastCrawledDate = crawlerAuditDao.getLastCrawledDateByCrawler();

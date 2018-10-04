@@ -14,9 +14,6 @@ import eu.dl.dataaccess.dto.generic.Price;
 import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.utils.InitUtils;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Transient;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,13 +21,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-// TODO: Auto-generated Javadoc
 
 /**
  * Public Contract. Contains full info about single contract.
  */
-@Entity
-@Table(name = "matched_tender")
 public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implements ManuallyMatchable, Matchable {
 
     /**
@@ -42,6 +36,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
     public MatchedTender(final CleanTender cleanTender) {
         super();
         setCleanObjectId(cleanTender.getId());
+        setProcessingOrder(cleanTender.getProcessingOrder());
         setBuyerAssignedId(cleanTender.getBuyerAssignedId());
         setProcedureType(cleanTender.getProcedureType());
         setNationalProcedureType(cleanTender.getNationalProcedureType());
@@ -135,6 +130,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
         setEnvisagedMaxCandidatesCount(cleanTender.getEnvisagedMaxCandidatesCount());
         setLimitedCandidatesCountCriteria(cleanTender.getLimitedCandidatesCountCriteria());
         setCountry(cleanTender.getCountry());
+        setRawObjectId(cleanTender.getRawObjectId());
     }
 
     /**
@@ -432,12 +428,14 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
 
     private LocalDate publicationDate;
 
+
+
     /**
      * Gets the buyer assigned id.
      *
      * @return the buyerAssignedId
      */
-    @Transient
+    
     public final String getBuyerAssignedId() {
         return buyerAssignedId;
     }
@@ -460,7 +458,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the procedureType
      */
-    @Transient
+    
     public final TenderProcedureType getProcedureType() {
         return procedureType;
     }
@@ -483,7 +481,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the nationalProcedureType
      */
-    @Transient
+    
     public final String getNationalProcedureType() {
         return nationalProcedureType;
     }
@@ -506,7 +504,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return is the procedure accelerated
      */
-    @Transient
+    
     public final Boolean getIsAcceleratedProcedure() {
         return isAcceleratedProcedure;
     }
@@ -529,7 +527,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return reason for the accelerated procedure
      */
-    @Transient
+    
     public final String getAcceleratedProcedureJustification() {
         return acceleratedProcedureJustification;
     }
@@ -552,7 +550,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the maxBidsCount
      */
-    @Transient
+    
     public final Integer getMaxBidsCount() {
         return maxBidsCount;
     }
@@ -575,7 +573,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the supplyType
      */
-    @Transient
+    
     public final TenderSupplyType getSupplyType() {
         return supplyType;
     }
@@ -598,7 +596,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the size
      */
-    @Transient
+    
     public final TenderSize getSize() {
         return size;
     }
@@ -621,7 +619,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the bidDeadline
      */
-    @Transient
+    
     public final LocalDateTime getBidDeadline() {
         return bidDeadline;
     }
@@ -644,7 +642,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the documentsDeadline
      */
-    @Transient
+    
     public final LocalDateTime getDocumentsDeadline() {
         return documentsDeadline;
     }
@@ -667,7 +665,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the documentsPayable
      */
-    @Transient
+    
     public final Boolean getDocumentsPayable() {
         return documentsPayable;
     }
@@ -690,7 +688,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the documentsPrice
      */
-    @Transient
+    
     public final Price getDocumentsPrice() {
         return documentsPrice;
     }
@@ -713,7 +711,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the documentsLocation
      */
-    @Transient
+    
     public final Address getDocumentsLocation() {
         return documentsLocation;
     }
@@ -737,7 +735,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      * @return true if the access to documents is free, false for restricted
      * access
      */
-    @Transient
+    
     public final Boolean getIsDocumentsAccessRestricted() {
         return isDocumentsAccessRestricted;
     }
@@ -760,7 +758,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the isCentralProcurement
      */
-    @Transient
+    
     public final Boolean getIsCentralProcurement() {
         return isCentralProcurement;
     }
@@ -783,7 +781,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the isJointProcurement
      */
-    @Transient
+    
     public final Boolean getIsJointProcurement() {
         return isJointProcurement;
     }
@@ -806,7 +804,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the buyers
      */
-    @Transient
+    
     public final List<MatchedBody> getBuyers() {
         return buyers;
     }
@@ -849,7 +847,6 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return true if the purchase is being made for someone else
      */
-    @Transient
     public final Boolean getIsOnBehalfOf() {
         return isOnBehalfOf;
     }
@@ -872,7 +869,6 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the list of onBehalfOf
      */
-    @Transient
     public final List<MatchedBody> getOnBehalfOf() {
         return onBehalfOf;
     }
@@ -915,7 +911,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return body from whom further information can be obtained
      */
-    @Transient
+    
     public final MatchedBody getFurtherInformationProvider() {
         return furtherInformationProvider;
     }
@@ -939,7 +935,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      * @return body from whom specifications and additional documents can be
      * obtained
      */
-    @Transient
+    
     public final MatchedBody getSpecificationsProvider() {
         return specificationsProvider;
     }
@@ -963,7 +959,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return body to whom tenders/requests to participate must be sent
      */
-    @Transient
+    
     public final MatchedBody getBidsRecipient() {
         return bidsRecipient;
     }
@@ -986,7 +982,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the public finalations
      */
-    @Transient
+    
     public final List<Publication> getPublications() {
         return publications;
     }
@@ -1009,7 +1005,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the administrators
      */
-    @Transient
+    
     public final List<MatchedBody> getAdministrators() {
         return administrators;
     }
@@ -1032,7 +1028,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the supervisors
      */
-    @Transient
+    
     public final List<MatchedBody> getSupervisors() {
         return supervisors;
     }
@@ -1055,7 +1051,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the specificationsCreator
      */
-    @Transient
+    
     public final MatchedBody getSpecificationsCreator() {
         return specificationsCreator;
     }
@@ -1078,7 +1074,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return is tender divided into lots
      */
-    @Transient
+    
     public final Boolean getHasLots() {
         return hasLots;
     }
@@ -1101,7 +1097,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the lots
      */
-    @Transient
+    
     public final List<MatchedTenderLot> getLots() {
         return lots;
     }
@@ -1144,7 +1140,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the candidates
      */
-    @Transient
+    
     public final List<MatchedBody> getCandidates() {
         return candidates;
     }
@@ -1167,7 +1163,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the approachedBidders
      */
-    @Transient
+    
     public final List<MatchedBody> getApproachedBidders() {
         return approachedBidders;
     }
@@ -1190,7 +1186,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the documents
      */
-    @Transient
+    
     public final List<Document> getDocuments() {
         return documents;
     }
@@ -1213,7 +1209,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the courtProceedings
      */
-    @Transient
+    
     public final List<URL> getCourtProceedings() {
         return courtProceedings;
     }
@@ -1236,7 +1232,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the courtInterventions
      */
-    @Transient
+    
     public final List<URL> getCourtInterventions() {
         return courtInterventions;
     }
@@ -1259,7 +1255,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the npwpReasons
      */
-    @Transient
+    
     public final List<NpwpReason> getNpwpReasons() {
         return npwpReasons;
     }
@@ -1282,7 +1278,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the deposits
      */
-    @Transient
+    
     public final String getDeposits() {
         return deposits;
     }
@@ -1305,7 +1301,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the personalRequirements
      */
-    @Transient
+    
     public final String getPersonalRequirements() {
         return personalRequirements;
     }
@@ -1328,7 +1324,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the economicRequirements
      */
-    @Transient
+    
     public final String getEconomicRequirements() {
         return economicRequirements;
     }
@@ -1351,7 +1347,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the technicalRequirements
      */
-    @Transient
+    
     public final String getTechnicalRequirements() {
         return technicalRequirements;
     }
@@ -1374,7 +1370,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the appealBodyName
      */
-    @Transient
+    
     public final String getAppealBodyName() {
         return appealBodyName;
     }
@@ -1397,7 +1393,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the mediationBodyName
      */
-    @Transient
+    
     public final String getMediationBodyName() {
         return mediationBodyName;
     }
@@ -1420,7 +1416,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return justification for framework agreement going over 4 years
      */
-    @Transient
+    
     public final String getExcessiveFrameworkAgreementJustification() {
         return excessiveFrameworkAgreementJustification;
     }
@@ -1445,7 +1441,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      * @return true if the whole tender is cancelled, false if just some of its
      * lots
      */
-    @Transient
+    
     public final Boolean getIsWholeTenderCancelled() {
         return isWholeTenderCancelled;
     }
@@ -1469,7 +1465,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the enquiryDeadline
      */
-    @Transient
+    
     public final LocalDate getEnquiryDeadline() {
         return enquiryDeadline;
     }
@@ -1492,7 +1488,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the awardDeadline
      */
-    @Transient
+    
     public final LocalDate getAwardDeadline() {
         return awardDeadline;
     }
@@ -1513,7 +1509,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
     /**
      * @return the awardDeadlineDuration
      */
-    @Transient
+    
     public final Integer getAwardDeadlineDuration() {
         return awardDeadlineDuration;
     }
@@ -1534,7 +1530,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the finalPrice
      */
-    @Transient
+    
     public final Price getFinalPrice() {
         return finalPrice;
     }
@@ -1557,7 +1553,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the eligibleBidLanguages
      */
-    @Transient
+    
     public final List<String> getEligibleBidLanguages() {
         return eligibleBidLanguages;
     }
@@ -1580,7 +1576,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the isEInvoiceAccepted
      */
-    @Transient
+    
     public final Boolean getIsEInvoiceAccepted() {
         return isEInvoiceAccepted;
     }
@@ -1603,7 +1599,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the corrections
      */
-    @Transient
+    
     public final List<Corrigendum> getCorrections() {
         return corrections;
     }
@@ -1626,7 +1622,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return value of modificationReason
      */
-    @Transient
+    
     public final String getModificationReason() {
         return modificationReason;
     }
@@ -1649,7 +1645,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return value of modificationReasonDescription
      */
-    @Transient
+    
     public final String getModificationReasonDescription() {
         return modificationReasonDescription;
     }
@@ -1760,7 +1756,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return tender lots with set structured id
      */
-    @Transient
+    
     @JsonIgnore
     public final List<MatchedTenderLot> getLotsWithStructuredId() {
         if (getLots() == null) {
@@ -1771,7 +1767,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
                 .collect(Collectors.toList());
     }
 
-    @Transient
+    
     @Override
     public final String getTenderId() {
         return getId();
@@ -1813,5 +1809,12 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
     public final MatchedTender setPublicationDate(final LocalDate newPublicationDate) {
         this.publicationDate = newPublicationDate;
         return this;
+    }
+
+    @Override
+    public final String getFullHash() {
+        // we don't have full hash for a tender and we don't use 
+        // manual corrections for tenders now, therefore, we return simple tender hash
+        return hash;
     }
 }

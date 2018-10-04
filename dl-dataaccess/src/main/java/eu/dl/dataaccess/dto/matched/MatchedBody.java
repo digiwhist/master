@@ -1,15 +1,6 @@
 package eu.dl.dataaccess.dto.matched;
 
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.clean.CleanBody;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
@@ -20,12 +11,14 @@ import eu.dl.dataaccess.dto.generic.Address;
 import eu.dl.dataaccess.utils.DigestUtils;
 import eu.dl.dataaccess.utils.WeightedHash;
 
-// TODO: Auto-generated Javadoc
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Body (company, organization, ...).
  */
-@Entity
-@Table(name = "matched_body")
 @Transformable
 public class MatchedBody extends BaseMatchedStorableDTO
     implements Matchable, ManuallyMatchable, ExactellyMatchable, ApproximatellyMatchable, MasterablePart {
@@ -183,7 +176,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      * @return the bodyIds
      */
     @Override
-    @Transient
+    
     public final List<BodyIdentifier> getBodyIds() {
         return bodyIds;
     }
@@ -224,7 +217,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the name
      */
-    @Transient
+    
     public final String getName() {
         return name;
     }
@@ -246,7 +239,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the address
      */
-    @Transient
+    
     public final Address getAddress() {
         return address;
     }
@@ -268,7 +261,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the email
      */
-    @Transient
+    
     public final String getEmail() {
         return email;
     }
@@ -290,7 +283,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the contactPoint
      */
-    @Transient
+    
     public final String getContactPoint() {
         return contactPoint;
     }
@@ -312,7 +305,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the contactName
      */
-    @Transient
+    
     public final String getContactName() {
         return contactName;
     }
@@ -334,7 +327,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the phone
      */
-    @Transient
+    
     public final String getPhone() {
         return phone;
     }
@@ -356,7 +349,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the isLeader
      */
-    @Transient
+    
     public final Boolean getIsLeader() {
         return isLeader;
     }
@@ -378,7 +371,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the mainActivities
      */
-    @Transient
+    
     public final List<BuyerActivityType> getMainActivities() {
         return mainActivities;
     }
@@ -419,7 +412,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the buyerType
      */
-    @Transient
+    
     public final BuyerType getBuyerType() {
         return buyerType;
     }
@@ -441,7 +434,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the isPublic
      */
-    @Transient
+    
     public final Boolean getIsPublic() {
         return isPublic;
     }
@@ -463,7 +456,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the isSubsidized
      */
-    @Transient
+    
     public final Boolean getIsSubsidized() {
         return isSubsidized;
     }
@@ -485,7 +478,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the isSectoral
      */
-    @Transient
+    
     public final Boolean getIsSectoral() {
         return isSectoral;
     }
@@ -507,7 +500,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the isSme
      */
-    @Transient
+    
     public final Boolean getIsSme() {
         return isSme;
     }
@@ -574,7 +567,6 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the hash
      */
-    @Override
     public final String getHash() {
         return hash;
     }
@@ -596,7 +588,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      *
      * @return the checks if is preferred
      */
-    @Transient
+    
     public final Boolean getIsPreferred() {
         return isPreferred;
     }
@@ -656,7 +648,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      * @return postcode
      */
     @Override
-    @Transient
+    
     @JsonIgnore
     public final String getPostcode() {
         if (getAddress() == null) {
@@ -674,7 +666,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
      * @return list of NUTS codes
      */
     @Override
-    @Transient
+    
     @JsonIgnore
     public final List<String> getNuts() {
         if (getAddress() == null) {
@@ -784,6 +776,7 @@ public class MatchedBody extends BaseMatchedStorableDTO
     /**
      * @return full hash of body
      */
+    @Override
     public final String getFullHash() {
         return fullHash;
     }
@@ -813,4 +806,9 @@ public class MatchedBody extends BaseMatchedStorableDTO
 	public final void setAlternativeHashes(final List<WeightedHash> alternativeHashes) {
 		this.alternativeHashes = alternativeHashes;
 	}
+
+    @Override
+    public final LocalDateTime getCreatedRaw() {
+        return null;
+    }
 }

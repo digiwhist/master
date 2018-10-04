@@ -689,10 +689,13 @@ public abstract class BaseParsedTenderLot<T> extends BaseParsedStorableDTO {
      * @return instance of {@code T} class for chaining
      */
     public final T addAwardCriterion(final ParsedAwardCriterion criterion) {
-        if (getAwardCriteria() == null) {
-            setAwardCriteria(new ArrayList<>());
+        if (criterion != null) {
+            if (getAwardCriteria() == null) {
+                setAwardCriteria(new ArrayList<>());
+            }
+            this.awardCriteria.add(criterion);
         }
-        this.awardCriteria.add(criterion);
+
         return (T) this;
     }
 
@@ -740,9 +743,10 @@ public abstract class BaseParsedTenderLot<T> extends BaseParsedStorableDTO {
             if (getAwardCriteria() == null) {
                 setAwardCriteria(new ArrayList<>());
             }
+
+            this.awardCriteria.addAll(newAwardCriteria);
         }
 
-        this.awardCriteria.addAll(newAwardCriteria);
         return (T) this;
     }
 }

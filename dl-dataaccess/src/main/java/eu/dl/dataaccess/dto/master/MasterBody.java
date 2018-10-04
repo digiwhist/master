@@ -1,13 +1,5 @@
 package eu.dl.dataaccess.dto.master;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
@@ -16,11 +8,12 @@ import eu.dl.dataaccess.dto.generic.Address;
 import eu.dl.dataaccess.dto.indicator.Indicator;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Body (company, organization, ...).
  */
-@Entity
-@Table(name = "master_body")
 @Transformable
 public class MasterBody extends BaseMasterStorableDTO implements Masterable {
 
@@ -150,7 +143,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the bodyIds
      */
-    @Transient
+    
     public final List<BodyIdentifier> getBodyIds() {
         return bodyIds;
     }
@@ -191,7 +184,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the name
      */
-    @Transient
+    
     public final String getName() {
         return name;
     }
@@ -213,7 +206,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the address
      */
-    @Transient
+    
     public final Address getAddress() {
         return address;
     }
@@ -235,7 +228,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the email
      */
-    @Transient
+    
     public final String getEmail() {
         return email;
     }
@@ -257,7 +250,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the contactPoint
      */
-    @Transient
+    
     public final String getContactPoint() {
         return contactPoint;
     }
@@ -279,7 +272,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the contactName
      */
-    @Transient
+    
     public final String getContactName() {
         return contactName;
     }
@@ -301,7 +294,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the phone
      */
-    @Transient
+    
     public final String getPhone() {
         return phone;
     }
@@ -323,7 +316,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the isLeader
      */
-    @Transient
+    
     public final Boolean getIsLeader() {
         return isLeader;
     }
@@ -345,7 +338,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the mainActivities
      */
-    @Transient
+    
     public final List<BuyerActivityType> getMainActivities() {
         return mainActivities;
     }
@@ -386,7 +379,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the buyerType
      */
-    @Transient
+    
     public final BuyerType getBuyerType() {
         return buyerType;
     }
@@ -408,7 +401,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the isPublic
      */
-    @Transient
+    
     public final Boolean getIsPublic() {
         return isPublic;
     }
@@ -430,7 +423,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the isSubsidized
      */
-    @Transient
+    
     public final Boolean getIsSubsidized() {
         return isSubsidized;
     }
@@ -452,7 +445,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the isSectoral
      */
-    @Transient
+    
     public final Boolean getIsSectoral() {
         return isSectoral;
     }
@@ -474,7 +467,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the isSme
      */
-    @Transient
+    
     public final Boolean getIsSme() {
         return isSme;
     }
@@ -497,7 +490,6 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      * @see eu.dl.dataaccess.dto.master.Masterable#getGroupId()
      */
     @Override
-    @Column(unique = true)
     public final String getGroupId() {
         return groupId;
 
@@ -562,7 +554,7 @@ public class MasterBody extends BaseMasterStorableDTO implements Masterable {
      *
      * @return the checks if is preferred
      */
-    @Transient
+    
     public final Boolean getIsPreferred() {
         return isPreferred;
     }

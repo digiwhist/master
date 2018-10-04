@@ -48,61 +48,60 @@ public final class LotUtils {
             return null;
         }
 
+        Map<Enum, List<String>> documentTypeMapping = lotMappings != null ? lotMappings.get("documentTypeMapping") : null;
+        Map<Enum, List<String>> unitPriceMapping = lotMappings != null ? lotMappings.get("unitPriceMapping") : null;
+        Map<Enum, List<String>> countryMapping = lotMappings != null ? lotMappings.get("countryMapping") : null;
+        Map<Enum, List<String>> selectionMethodMapping = lotMappings != null ? lotMappings.get("selectionMethodMapping") : null;
+        Map<Enum, List<String>> statusMapping = lotMappings != null ? lotMappings.get("statusMapping") : null;
+
         return new CleanTenderLot()
-                //cleaning of the lotId isn't needed but is necessary to set it
-                .setLotId(parsedLot.getLotId())
-                .setAddressOfImplementation(AddressUtils.cleanAddress(parsedLot.getAddressOfImplementation()))
-                .setAwardCriteria(ArrayUtils.walk(parsedLot.getAwardCriteria(),
-                        (parsedCriterion) -> AwardCriterionUtils.cleanAwardCriterion(parsedCriterion, numberFormat,
-                                AwardCriterionUtils.countWeightMultiplier(parsedLot.getAwardCriteria(), numberFormat))))
-                .setAwardDecisionDate(DateUtils.cleanDate(parsedLot.getAwardDecisionDate(), formatter))
-                .setBids(ArrayUtils.walk(parsedLot.getBids(),
-                        (parsedBid) -> BidUtils.cleanBid(parsedBid, numberFormat, formatter,
-                                lotMappings.get("documentTypeMapping"), lotMappings.get("unitPriceMapping"),
-                                lotMappings.get("countryMapping"), country)))
-                .setBidsCount(LotUtils.removeNonsensicalBidsCount(parsedLot.getBidsCount(), numberFormat))
-                .setCancellationDate(DateUtils.cleanDate(parsedLot.getCancellationDate(), formatter))
-                .setCancellationReason(StringUtils.cleanLongString(parsedLot.getCancellationReason()))
-                .setCompletionDate(DateUtils.cleanDate(parsedLot.getCompletionDate(), formatter))
-                .setContractNumber(StringUtils.cleanShortString(parsedLot.getContractNumber()))
-                .setContractSignatureDate(DateUtils.cleanDate(parsedLot.getContractSignatureDate(), formatter))
-                .setCpvs(CPVUtils.cleanCpvs(parsedLot.getCpvs()))
-                .setDescription(StringUtils.cleanLongString(parsedLot.getDescription()))
-                .setDescriptionEnglish(StringUtils.cleanLongString(parsedLot.getDescriptionEnglish()))
-                .setElectronicBidsCount(NumberUtils.cleanInteger(parsedLot.getElectronicBidsCount(), numberFormat))
-                .setEligibilityCriteria(StringUtils.cleanLongString(parsedLot.getEligibilityCriteria()))
-                .setEstimatedCompletionDate(DateUtils.cleanDate(parsedLot.getEstimatedCompletionDate(), formatter))
-                .setEstimatedDurationInDays(
-                        NumberUtils.cleanInteger(parsedLot.getEstimatedDurationInDays(), numberFormat))
-                .setEstimatedDurationInMonths(
-                        NumberUtils.cleanInteger(parsedLot.getEstimatedDurationInMonths(), numberFormat))
-                .setEstimatedPrice(PriceUtils.cleanPrice(parsedLot.getEstimatedPrice(), numberFormat, country))
-                .setEstimatedStartDate(DateUtils.cleanDate(parsedLot.getEstimatedStartDate(), formatter))
-                .setForeignCompaniesBidsCount(
-                        NumberUtils.cleanInteger(parsedLot.getForeignCompaniesBidsCount(), numberFormat))
-                .setFundings(ArrayUtils.walk(parsedLot.getFundings(),
-                        (parsedFunding) -> FundingUtils.cleanFunding(parsedFunding, numberFormat, country)))
-                .setIsAwarded(StringUtils.cleanBoolean(parsedLot.getIsAwarded()))
-                .setIsCoveredByGpa(StringUtils.cleanBoolean(parsedLot.getIsCoveredByGpa()))
-                .setIsDps(StringUtils.cleanBoolean(parsedLot.getIsDps()))
-                .setIsElectronicAuction(StringUtils.cleanBoolean(parsedLot.getIsElectronicAuction()))
-                .setIsFrameworkAgreement(StringUtils.cleanBoolean(parsedLot.getIsFrameworkAgreement()))
-                .setLotNumber(NumberUtils.cleanInteger(parsedLot.getLotNumber(), numberFormat))
-                .setMaxFrameworkAgreementParticipants(
-                        NumberUtils.cleanInteger(parsedLot.getMaxFrameworkAgreementParticipants(), numberFormat))
-                .setNonEuMemberStatesCompaniesBidsCount(
-                        NumberUtils.cleanInteger(parsedLot.getNonEuMemberStatesCompaniesBidsCount(), numberFormat))
-                .setOtherEuMemberStatesCompaniesBidsCount(
-                        NumberUtils.cleanInteger(parsedLot.getOtherEuMemberStatesCompaniesBidsCount(), numberFormat))
-                .setPositionOnPage(NumberUtils.cleanInteger(parsedLot.getPositionOnPage(), numberFormat))
-                .setSelectionMethod(SelectionMethodUtils.cleanSelectionMethod(parsedLot.getSelectionMethod(),
-                        lotMappings.get("selectionMethodMapping")))
-                .setSmeBidsCount(NumberUtils.cleanInteger(parsedLot.getSmeBidsCount(), numberFormat))
-                .setStatus((TenderLotStatus) CodeTableUtils.mapValue(parsedLot.getStatus(),
-                        lotMappings.get("statusMapping")))
-                .setTitle(StringUtils.cleanShortString(parsedLot.getTitle()))
-                .setTitleEnglish(StringUtils.cleanShortString(parsedLot.getTitleEnglish()))
-                .setValidBidsCount(NumberUtils.cleanInteger(parsedLot.getValidBidsCount(), numberFormat));
+            //cleaning of the lotId isn't needed but is necessary to set it
+            .setLotId(parsedLot.getLotId())
+            .setAddressOfImplementation(AddressUtils.cleanAddress(parsedLot.getAddressOfImplementation()))
+            .setAwardCriteria(ArrayUtils.walk(parsedLot.getAwardCriteria(),
+                (parsedCriterion) -> AwardCriterionUtils.cleanAwardCriterion(parsedCriterion, numberFormat,
+                    AwardCriterionUtils.countWeightMultiplier(parsedLot.getAwardCriteria(), numberFormat))))
+            .setAwardDecisionDate(DateUtils.cleanDate(parsedLot.getAwardDecisionDate(), formatter))
+            .setBids(ArrayUtils.walk(parsedLot.getBids(),
+                (parsedBid) -> BidUtils.cleanBid(parsedBid, numberFormat, formatter, documentTypeMapping, unitPriceMapping, countryMapping,
+                    country)))
+            .setBidsCount(LotUtils.removeNonsensicalBidsCount(parsedLot.getBidsCount(), numberFormat))
+            .setCancellationDate(DateUtils.cleanDate(parsedLot.getCancellationDate(), formatter))
+            .setCancellationReason(StringUtils.cleanLongString(parsedLot.getCancellationReason()))
+            .setCompletionDate(DateUtils.cleanDate(parsedLot.getCompletionDate(), formatter))
+            .setContractNumber(StringUtils.cleanShortString(parsedLot.getContractNumber()))
+            .setContractSignatureDate(DateUtils.cleanDate(parsedLot.getContractSignatureDate(), formatter))
+            .setCpvs(CPVUtils.cleanCpvs(parsedLot.getCpvs()))
+            .setDescription(StringUtils.cleanLongString(parsedLot.getDescription()))
+            .setDescriptionEnglish(StringUtils.cleanLongString(parsedLot.getDescriptionEnglish()))
+            .setElectronicBidsCount(NumberUtils.cleanInteger(parsedLot.getElectronicBidsCount(), numberFormat))
+            .setEligibilityCriteria(StringUtils.cleanLongString(parsedLot.getEligibilityCriteria()))
+            .setEstimatedCompletionDate(DateUtils.cleanDate(parsedLot.getEstimatedCompletionDate(), formatter))
+            .setEstimatedDurationInDays(NumberUtils.cleanInteger(parsedLot.getEstimatedDurationInDays(), numberFormat))
+            .setEstimatedDurationInMonths(NumberUtils.cleanInteger(parsedLot.getEstimatedDurationInMonths(), numberFormat))
+            .setEstimatedPrice(PriceUtils.cleanPrice(parsedLot.getEstimatedPrice(), numberFormat, country))
+            .setEstimatedStartDate(DateUtils.cleanDate(parsedLot.getEstimatedStartDate(), formatter))
+            .setForeignCompaniesBidsCount(NumberUtils.cleanInteger(parsedLot.getForeignCompaniesBidsCount(), numberFormat))
+            .setFundings(ArrayUtils.walk(parsedLot.getFundings(),
+                (parsedFunding) -> FundingUtils.cleanFunding(parsedFunding, numberFormat, country)))
+            .setIsAwarded(StringUtils.cleanBoolean(parsedLot.getIsAwarded()))
+            .setIsCoveredByGpa(StringUtils.cleanBoolean(parsedLot.getIsCoveredByGpa()))
+            .setIsDps(StringUtils.cleanBoolean(parsedLot.getIsDps()))
+            .setIsElectronicAuction(StringUtils.cleanBoolean(parsedLot.getIsElectronicAuction()))
+            .setIsFrameworkAgreement(StringUtils.cleanBoolean(parsedLot.getIsFrameworkAgreement()))
+            .setLotNumber(NumberUtils.cleanInteger(parsedLot.getLotNumber(), numberFormat))
+            .setMaxFrameworkAgreementParticipants(NumberUtils.cleanInteger(parsedLot.getMaxFrameworkAgreementParticipants(), numberFormat))
+            .setNonEuMemberStatesCompaniesBidsCount(
+                NumberUtils.cleanInteger(parsedLot.getNonEuMemberStatesCompaniesBidsCount(), numberFormat))
+            .setOtherEuMemberStatesCompaniesBidsCount(
+                NumberUtils.cleanInteger(parsedLot.getOtherEuMemberStatesCompaniesBidsCount(), numberFormat))
+            .setPositionOnPage(NumberUtils.cleanInteger(parsedLot.getPositionOnPage(), numberFormat))
+            .setSelectionMethod(SelectionMethodUtils.cleanSelectionMethod(parsedLot.getSelectionMethod(), selectionMethodMapping))
+            .setSmeBidsCount(NumberUtils.cleanInteger(parsedLot.getSmeBidsCount(), numberFormat))
+            .setStatus((TenderLotStatus) CodeTableUtils.mapValue(parsedLot.getStatus(), statusMapping))
+            .setTitle(StringUtils.cleanShortString(parsedLot.getTitle()))
+            .setTitleEnglish(StringUtils.cleanShortString(parsedLot.getTitleEnglish()))
+            .setValidBidsCount(NumberUtils.cleanInteger(parsedLot.getValidBidsCount(), numberFormat));
     }
 
     /**

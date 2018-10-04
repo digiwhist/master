@@ -70,15 +70,16 @@ public final class PriceUtils {
             .setNetAmountEur(NumberUtils.cleanBigDecimal(parsedPrice.getNetAmountEur(), numberFormat))
             .setVat(NumberUtils.cleanBigDecimal(removePercentFromVat(parsedPrice.getVat()), numberFormat));
 
-        updateNetAmounts(price);
+        updateNetAmounts(price, country);
 
         Currency currency = price.getCurrency();
-        if (currency == null) {
-            String defaultCurrency = Config.getInstance().getParam("eu.digiwhist.worker."
+        if (currency == null && country != null) {
+            String defaultCurrency = Config.getInstance().getParam("eu.datlab.worker."
                 + Strings.toLowerCase(country) + ".currency");
             
             if (defaultCurrency != null) {
                 currency = Currency.getInstance(defaultCurrency);
+                price.setCurrency(currency);
             }
         }
 
@@ -165,7 +166,7 @@ public final class PriceUtils {
     /**
      * Cleans currency.
      *
-     * @see java.​util.Currency#getInstance(java.lang.String)
+     * @see Currency#getInstance(java.lang.String)
      *
      * @param currency
      *      currency ISO 4217 code
@@ -227,7 +228,8 @@ public final class PriceUtils {
             .setNetAmount(NumberUtils.cleanBigDecimal(parsedUnitPrice.getNetAmount(), numberFormat))
             .setNetAmountEur(NumberUtils.cleanBigDecimal(parsedUnitPrice.getNetAmountEur(), numberFormat))
             .setUnitNumber(NumberUtils.cleanInteger(parsedUnitPrice.getUnitNumber(), numberFormat))
-            .setUnitType((UnitType) CodeTableUtils.mapValue(parsedUnitPrice.getUnitNumber(), unitMapping))
+            .setUnitType((UnitType) CodeTableUtils.mapValue(parsedUnitPrice.getUnitType(), unitMapping))
+            .setDescription(StringUtils.cleanLongString(parsedUnitPrice.getDescription()))
             .setVat(NumberUtils.cleanBigDecimal(removePercentFromVat(parsedUnitPrice.getVat()), numberFormat));
     }
 
@@ -269,10 +271,18 @@ public final class PriceUtils {
      * netAmount = netAmountWithVat/((100+vat)/100)
      *
      * @param price price to be processed
+     * @param country country
      */
-    public static void updateNetAmounts(final Price price) {
+    public static void updateNetAmounts(final Price price, final String country) {
         if (price == null) {
             return;
+        }
+
+        if (price.getVat() == null &&  country != null) {
+            String vat = Config.getInstance().getParam("standardVat." + Strings.toUpperCase(country));
+            if (vat != null) {
+                price.setVat(new BigDecimal(vat));
+            }
         }
 
         if (price.getVat() != null) {

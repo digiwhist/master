@@ -7,6 +7,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
@@ -32,6 +33,8 @@ import eu.dl.worker.utils.NetworkUtils;
 public abstract class BaseHttpDownloader<T extends Raw> extends BaseDownloader<T> {
     private static final String VERSION = "1";
 
+    private final boolean skipExisting;
+
     /**
      * Default constructor.
      */
@@ -42,6 +45,12 @@ public abstract class BaseHttpDownloader<T extends Raw> extends BaseDownloader<T
         if (config.getParam(getName() + ".torEnabled") != null
                 && config.getParam(getName() + ".torEnabled").equals("1")) {
             NetworkUtils.enableTorForHttp();
+        }
+
+        if (config.getParam(getName() + ".skipExisting") != null) {
+            skipExisting = config.getParam(getName() + ".skipExisting").equals("1");
+        } else {
+            skipExisting = false;
         }
     }
 
@@ -55,6 +64,11 @@ public abstract class BaseHttpDownloader<T extends Raw> extends BaseDownloader<T
         final String sourceData = message.getValue("sourceData");
         final String sourceBinaryDataUrl = message.getValue("binaryDataUrl");
         final HashMap<String, Object> metaData = message.getMetaData();
+
+        if (sourceDataUrl != null && skipExisting && rawDao.getBySourceUrl(getName(), getVersion(), sourceDataUrl) != null) {
+            logger.info("Raw data from {} are already downloaded", sourceDataUrl);
+            return Collections.emptyList();
+        }
 
         // download data and populate raw data object
         // valid cases:
@@ -187,5 +201,9 @@ public abstract class BaseHttpDownloader<T extends Raw> extends BaseDownloader<T
      */
     private InputStream downloadFile(final String url) {
         return new ByteArrayInputStream(DownloaderUtils.getUrlResponse(url).bodyAsBytes());
+    }
+
+    @Override
+    protected final void postProcess(final T raw) {
     }
 }

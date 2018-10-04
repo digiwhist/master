@@ -3,8 +3,6 @@ package eu.dl.dataaccess.dto;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 
-import org.mongojack.ObjectId;
-
 /**
  * Basic storable item.
  * 
@@ -13,14 +11,12 @@ public interface Storable {
     /**
      * @return the id
      */
-    @ObjectId
     String getId();
 
     /**
      * @param id
      *            the id to set
      */
-    @ObjectId
     void setId(String id);
 
     /**
@@ -109,4 +105,14 @@ public interface Storable {
      * @param persistentId the persistentId to set
      */
     void setPersistentId(String persistentId);
+
+    /**
+     * @return the processing order
+     */
+    String getProcessingOrder();
+
+    /**
+     * @param processingOrder the processing order to set
+     */
+    void setProcessingOrder(String processingOrder);
 }

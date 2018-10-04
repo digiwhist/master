@@ -1,13 +1,12 @@
 package eu.dl.dataaccess.dto.generic;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.Currency;
-
-import javax.persistence.MappedSuperclass;
-
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.matched.MasterablePart;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Currency;
 
 /**
  * Abstract price.
@@ -16,7 +15,6 @@ import eu.dl.dataaccess.dto.matched.MasterablePart;
  * @param <T>
  *         extending class (for fluent interface purposes)
  */
-@MappedSuperclass
 @Transformable
 public abstract class BasePrice<T extends BasePrice> implements MasterablePart {
     /**
@@ -211,6 +209,16 @@ public abstract class BasePrice<T extends BasePrice> implements MasterablePart {
         return tenderId;
     }
 
+    /**
+     * @param newTenderId
+     *      tender id to be set
+     * @return this instance for chaining
+     */
+    public final T setTenderId(final String newTenderId) {
+        this.tenderId = newTenderId;
+        return (T) this;
+    }
+
     @Override
     public final LocalDate getPublicationDate() {
         return publicationDate;
@@ -224,5 +232,10 @@ public abstract class BasePrice<T extends BasePrice> implements MasterablePart {
     public final T setPublicationDate(final LocalDate newPublicationDate) {
         this.publicationDate = newPublicationDate;
         return (T) this;
+    }
+
+    @Override
+    public final LocalDateTime getCreatedRaw() {
+        return null;
     }
 }

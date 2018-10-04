@@ -57,7 +57,7 @@ public final class ArrayUtils {
     }
 
     /**
-     * Distinct keys in stream.
+     * Distinct keys in stream. If keyExtractor returns null, the item is kept in stream.
      *
      * @param keyExtractor
      *      key extractor
@@ -67,7 +67,10 @@ public final class ArrayUtils {
      */
     public static <T> Predicate<T> distinct(final Function<? super T, ?> keyExtractor) {
         Map<Object, Boolean> seen = new ConcurrentHashMap<>();
-        return t -> seen.putIfAbsent(keyExtractor.apply(t), Boolean.TRUE) == null;
+        return t -> {
+            Object key = keyExtractor.apply(t);
+            return key == null || seen.putIfAbsent(key, Boolean.TRUE) == null;
+        };
     }
 
     /**

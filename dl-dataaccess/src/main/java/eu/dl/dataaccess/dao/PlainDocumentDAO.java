@@ -2,6 +2,8 @@ package eu.dl.dataaccess.dao;
 
 import eu.dl.dataaccess.dto.PlainDocument;
 
+import java.util.List;
+
 /**
  * Plain document DAO. Specifies methods for storing and loading plain documents.
  *
@@ -27,6 +29,16 @@ public interface PlainDocumentDAO {
      * @return parsed item with given id
      */
     PlainDocument getById(String id);
+
+    /**
+     * Returns the plain documents by given ids.
+     *
+     * @param ids
+     *         ids to be searched
+     *
+     * @return parsed item with given id
+     */
+    List<PlainDocument> getByIds(List<String> ids);
 
     /**
      * Returns new instance of PlainDocument.

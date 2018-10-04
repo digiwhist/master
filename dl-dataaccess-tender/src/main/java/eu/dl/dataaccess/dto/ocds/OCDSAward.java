@@ -26,6 +26,14 @@ public class OCDSAward extends BaseOCDSLotsAndDocumentsReferrer<OCDSAward> {
 
     private List<OCDSItem> items;
 
+    private String description;
+
+    private String status;
+
+    private OCDSPeriod contractPeriod;
+
+    private String title;
+
     /**
      * @return id
      */
@@ -202,6 +210,74 @@ public class OCDSAward extends BaseOCDSLotsAndDocumentsReferrer<OCDSAward> {
             this.suppliers.addAll(newSuppliers);
         }
 
+        return this;
+    }
+
+    /**
+     * @return description
+     */
+    public final String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description
+     *      description to be set
+     * @return this instance for chaining
+     */
+    public final OCDSAward setDescription(final String description) {
+        this.description = description;
+        return this;
+    }
+
+    /**
+     * @return status
+     */
+    public final String getStatus() {
+        return status;
+    }
+
+    /**
+     * @param status
+     *      status to be set
+     * @return this instance for chaining
+     */
+    public final OCDSAward setStatus(final String status) {
+        this.status = status;
+        return this;
+    }
+
+    /**
+     * @return contract period
+     */
+    public final OCDSPeriod getContractPeriod() {
+        return contractPeriod;
+    }
+
+    /**
+     * @param contractPeriod
+     *      contract period to be set
+     * @return this instance for chaining
+     */
+    public final OCDSAward setContractPeriod(final OCDSPeriod contractPeriod) {
+        this.contractPeriod = contractPeriod;
+        return this;
+    }
+
+    /**
+     * @return title
+     */
+    public final String getTitle() {
+        return title;
+    }
+
+    /**
+     * @param title
+     *      title to be set
+     * @return this instance for chaining
+     */
+    public final OCDSAward setTitle(final String title) {
+        this.title = title;
         return this;
     }
 }

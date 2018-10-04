@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
 
+import eu.dl.core.config.Config;
 import org.junit.Test;
 
 import eu.dl.dataaccess.dto.generic.Price;
@@ -18,6 +19,14 @@ import static org.junit.Assert.assertNull;
  * @author Tomas Mrazek
  */
 public final class CleanPriceTest {
+
+    /**
+     * Config initialization.
+     */
+    public CleanPriceTest() {
+        Config cfg = Config.getInstance();
+        cfg.addConfigFile("unit_test");
+    }
 
     /**
      * Test of null value.
@@ -45,6 +54,34 @@ public final class CleanPriceTest {
         assertEquals(0, price.getMinNetAmount().compareTo(new BigDecimal(100)));
         assertEquals(0, price.getMaxNetAmount().compareTo(new BigDecimal(100)));
         assertEquals(0, price.getNetAmountEur().compareTo(new BigDecimal(100)));     
+    }
+
+    /**
+     * Test of loading vat from configuration.
+     */
+    @Test
+    public void vatFromConfig() {
+        // vat was found in config
+        Price price = PriceUtils.cleanPrice(new ParsedPrice()
+            .setAmountWithVat("119")
+            .setMinAmountWithVat("119")
+            .setMaxAmountWithVat("119")
+            .setCurrency("EUR"), DecimalFormat.getInstance(), "de");
+        assertEquals(0, price.getNetAmount().compareTo(new BigDecimal(100)));
+        assertEquals(0, price.getMinNetAmount().compareTo(new BigDecimal(100)));
+        assertEquals(0, price.getMaxNetAmount().compareTo(new BigDecimal(100)));
+        assertEquals(0, price.getNetAmountEur().compareTo(new BigDecimal(100)));
+
+        // vat wasn't found in config
+        price = PriceUtils.cleanPrice(new ParsedPrice()
+            .setAmountWithVat("119")
+            .setMinAmountWithVat("119")
+            .setMaxAmountWithVat("119")
+            .setCurrency("EUR"), DecimalFormat.getInstance(), "ed");
+        assertNull(price.getNetAmount());
+        assertNull(price.getMinNetAmount());
+        assertNull(price.getMaxNetAmount());
+        assertNull(price.getNetAmountEur());
     }
 
     /**

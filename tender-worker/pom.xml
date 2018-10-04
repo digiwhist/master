@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>eu.datlab</groupId>
+	<artifactId>tender-worker</artifactId>
+	<version>2.0.2</version>
+	<name>tender-worker</name>
+	<packaging>jar</packaging>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+	</properties>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-core</artifactId>
+			<version>2.9.6</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>2.9.6</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>2.6</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-codec</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.11</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.seleniumhq.selenium</groupId>
+			<artifactId>selenium-server</artifactId>
+			<version>3.14.0</version>
+		</dependency>
+
+		<!-- PARSING -->
+
+		<dependency>
+			<groupId>com.itextpdf</groupId>
+			<artifactId>itextpdf</artifactId>
+			<version>5.5.13</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-csv</artifactId>
+			<version>1.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>net.sf.sevenzipjbinding</groupId>
+			<artifactId>sevenzipjbinding</artifactId>
+			<version>9.20-2.00beta</version>
+		</dependency>
+
+		<!-- LOGGING -->
+		<dependency>
+			<groupId>biz.paluch.logging</groupId>
+			<artifactId>logstash-gelf</artifactId>
+			<version>1.12.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>eu.dl</groupId>
+			<artifactId>dl-core</artifactId>
+			<version>2.0.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>eu.dl</groupId>
+			<artifactId>dl-dataaccess</artifactId>
+			<version>2.0.2</version>
+			<exclusions>
+				<exclusion>
+					<groupId>javax.persistence</groupId>
+					<artifactId>persistence-api</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+
+		<dependency>
+			<groupId>eu.dl</groupId>
+			<artifactId>dl-dataaccess-tender</artifactId>
+			<version>2.0.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>eu.dl</groupId>
+			<artifactId>dl-worker</artifactId>
+			<version>2.0.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>eu.dl</groupId>
+			<artifactId>dl-worker-tender</artifactId>
+			<version>2.0.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>eu.datlab</groupId>
+			<artifactId>tender-dataaccess</artifactId>
+			<version>2.0.2</version>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+		        <groupId>org.codehaus.mojo</groupId>
+		        <artifactId>appassembler-maven-plugin</artifactId>
+		        <version>1.10</version>
+		        <configuration>
+		          	<programs>
+		            	<program>
+		              		<mainClass>eu.dl.worker.runner.Runner</mainClass>
+		              		<id>tender_worker</id>
+		            	</program>
+		          	</programs>
+		        </configuration>
+		    </plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-checkstyle-plugin</artifactId>
+				<version>3.0.0</version>
+				<configuration>
+					<configLocation>../checkstyle.xml</configLocation>
+					<consoleOutput>true</consoleOutput>
+					<includeTestSourceDirectory>true</includeTestSourceDirectory>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+</project>

@@ -57,4 +57,11 @@ public interface CrawlerAuditDAO<T> {
      *            name of the source(worker for example)
      */
     void setWorkerName(String sourceName);
+
+    /**
+     * Gets crawler audit record identified by name and version.
+     *
+     * @return found entry or null
+     */
+    T getByNameAndVersion();
 }

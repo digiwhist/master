@@ -7,7 +7,6 @@ import eu.dl.dataaccess.dto.master.MasterTender;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
@@ -45,7 +44,7 @@ public final class ProcedureTypeIndicatorPluginTest {
      */
     @Before
     public void init() {
-        Config.getInstance().setConfigFile(Arrays.asList("unit_test"));
+        Config.getInstance().addConfigFile("unit_test");
     }
     
     /**

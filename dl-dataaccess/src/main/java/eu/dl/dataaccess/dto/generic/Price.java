@@ -1,20 +1,15 @@
 package eu.dl.dataaccess.dto.generic;
 
-import java.math.BigDecimal;
-
-import javax.persistence.Embeddable;
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.clean.Validable;
 import eu.dl.dataaccess.utils.ValidationUtils;
 
+import java.math.BigDecimal;
+
 /**
  * Price.
  */
-@Embeddable
 @Transformable
 public class Price extends BasePrice<Price> implements Validable {
 
@@ -109,7 +104,6 @@ public class Price extends BasePrice<Price> implements Validable {
     }
 
     @Override
-    @Transient
     @JsonIgnore
     public final Price getValid() {
         return ValidationUtils.getValid(this, amountWithVat, maxAmountWithVat, maxNetAmount, minAmountWithVat,

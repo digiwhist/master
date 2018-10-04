@@ -1,15 +1,12 @@
 package eu.dl.dataaccess.dto.generic;
 
-import java.time.LocalDate;
-
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.clean.Validable;
 import eu.dl.dataaccess.utils.ClassUtils;
 import eu.dl.dataaccess.utils.ValidationUtils;
+
+import java.time.LocalDate;
 
 /**
  * Payment. Information about actual transfer of money.
@@ -61,7 +58,6 @@ public class Payment implements Validable {
     }
 
     @Override
-    @Transient
     @JsonIgnore
     public final Payment getValid() {
         setPrice(ClassUtils.removeNonsenses(price));

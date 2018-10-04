@@ -55,6 +55,8 @@ public final class CleanURLTest {
         assertTrue(StringUtils.cleanURL("www.test.comhttps://www.test.com") instanceof URL);
         assertTrue(StringUtils.cleanURL("www.htp://test.com") instanceof URL);
         assertTrue(StringUtils.cleanURL("ttps://test.com") instanceof URL);
+        assertTrue(StringUtils.cleanURL("https:test.com") instanceof URL);
+        assertTrue(StringUtils.cleanURL("http:www.test.com") instanceof URL);
     }
     
     /**

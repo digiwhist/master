@@ -52,15 +52,16 @@ public final class ArrayUtilsTest {
         map.put("b", 2);
         map.put("c", 1);
         map.put("d", 1);
+        map.put("e", null);
 
         // defined key extractor
-        assertEquals(2, map.entrySet().stream()
+        assertEquals(3, map.entrySet().stream()
             .filter(ArrayUtils.distinct(n -> n.getValue()))
             .collect(Collectors.toSet()).size());
 
 
         // uses Objects#toString on objects, no data reduction
-        assertEquals(4, map.entrySet().stream()
+        assertEquals(5, map.entrySet().stream()
             .filter(ArrayUtils.distinct())
             .collect(Collectors.toSet()).size());
 

@@ -1,6 +1,7 @@
 package eu.dl.worker.master;
 
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
+import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
 import eu.dl.dataaccess.dto.generic.BasePrice;
 import eu.dl.dataaccess.dto.generic.Payment;
 import eu.dl.dataaccess.dto.generic.Publication;
@@ -16,7 +17,10 @@ import eu.dl.dataaccess.dto.utils.DTOUtils;
 import eu.dl.utils.currency.CurrencyService;
 import eu.dl.utils.currency.CurrencyServiceFactory;
 import eu.dl.utils.currency.UnconvertableException;
+import eu.dl.worker.master.plugin.specific.DigiwhistPricePlugin;
+import eu.dl.worker.master.plugin.specific.NoLotStatusPlugin;
 import eu.dl.worker.master.utils.ContractImplementationUtils;
+import org.apache.commons.lang.StringUtils;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -37,6 +41,22 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
     private static final int NUMBER_OF_PUBLICATIONS = 10000;
 
     private final CurrencyService currencyService = CurrencyServiceFactory.getCurrencyService();
+
+    private final DigiwhistPricePlugin digiwhistPricePlugin;
+
+    private final NoLotStatusPlugin noLotStatusPlugin;
+
+    /**
+     * Initialization of everything.
+     */
+    public BaseTenderMaster() {
+        super();
+        config.addConfigFile("indicator");
+
+        digiwhistPricePlugin = new DigiwhistPricePlugin();
+
+        noLotStatusPlugin = new NoLotStatusPlugin();
+    }
 
     @Override
     protected final void registerCommonPlugins() {
@@ -163,6 +183,29 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
     }
 
     /**
+     * Predicate used to filter the resulting set of items. In this case the tender can not be Contract Implementation.
+     *
+     * @return predicate testing whether the group does not contain Contract
+     */
+    protected static Predicate<MatchedTender> isNotContractAmendment() {
+        return new Predicate<MatchedTender>() {
+
+            @Override
+            public boolean test(final MatchedTender t) {
+                for (Publication publication : t.getPublications()) {
+                    if (publication.getIsIncluded() != null && publication.getIsIncluded()
+                            && publication.getFormType() != null
+                            && publication.getFormType().equals(PublicationFormType.CONTRACT_AMENDMENT)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+        };
+    }
+
+    /**
      * Predicate used to filter the resulting set of items. In this case the group should be Contract Implementation.
      *
      * @return predicate testing whether the group does contain Contract Implementation
@@ -259,9 +302,31 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
             final List<T> matchedTenders) {
         processContractImplementation(masterTender, matchedTenders);
 
+        updateLotStatus(masterTender);
+        
         convertPrices(masterTender);
 
-        return masterTender;
+        MasterTender tender = masterTender;
+        tender = digiwhistPricePlugin.master(null, tender, null);
+        tender = noLotStatusPlugin.master(null, tender, null);
+
+        return (V) tender;
+    }
+    
+    /**
+     * This method sets status of each lot to CANCELLED if tender.isWholeTenderCancelled is TRUE.
+     *
+     * @param tender lots are updated for this tender
+     */
+    private void updateLotStatus(final MasterTender tender) {
+        if (tender == null || tender.getLots() == null) {
+            return;
+        }
+
+        // lot status update for whole cancelled tender
+        if (Boolean.TRUE.equals(tender.getIsWholeTenderCancelled())) {
+            tender.getLots().forEach(l -> l.setStatus(TenderLotStatus.CANCELLED));
+        }
     }
 
     /**
@@ -395,5 +460,15 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
      * Returns national currency relevant for this source.
      * @return national currency
      */
-    protected abstract Currency getNationalCurrency();   
+    protected final Currency getNationalCurrency() {
+        String propertyPrefix = StringUtils.substring(getName(), 0, StringUtils.ordinalIndexOf(getName(), ".", 4));
+        String currency = config.getParam(propertyPrefix + ".currency");
+
+        if (currency == null) {
+            logger.warn("Unable to get currency for '{}'", getName());
+            return null;
+        }
+
+        return Currency.getInstance(currency);
+    }
 }

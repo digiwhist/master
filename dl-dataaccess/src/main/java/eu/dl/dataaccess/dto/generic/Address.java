@@ -1,16 +1,13 @@
 package eu.dl.dataaccess.dto.generic;
 
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.clean.Validable;
 import eu.dl.dataaccess.utils.ValidationUtils;
+
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Address.
@@ -159,7 +156,6 @@ public class Address implements Validable {
     /**
      * @return the state
      */
-
     public final String getState() {
         return state;
     }
@@ -198,7 +194,6 @@ public class Address implements Validable {
     }
 
     @Override
-    @Transient
     @JsonIgnore
     public final Address getValid() {
         setNuts(ValidationUtils.getValid(nuts));

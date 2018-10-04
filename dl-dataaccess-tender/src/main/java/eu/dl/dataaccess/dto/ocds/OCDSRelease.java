@@ -1,6 +1,5 @@
 package eu.dl.dataaccess.dto.ocds;
 
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import eu.dl.dataaccess.annotation.Transformable;
@@ -9,8 +8,6 @@ import eu.dl.dataaccess.dto.codetables.OCDSReleaseTag;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * OCDS release. This object doesn't cover full OCDS schema.
@@ -19,9 +16,6 @@ import org.slf4j.LoggerFactory;
  */
 @Transformable
 public class OCDSRelease {
-
-    private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
-
     private String ocid;
 
     private String id;
@@ -45,6 +39,8 @@ public class OCDSRelease {
     private List<OCDSContract> contracts;
 
     private OCDSBid bids;
+
+    private OCDSPlanning planning;
 
     /**
      * @return OCDS id
@@ -345,6 +341,23 @@ public class OCDSRelease {
             this.parties.addAll(newParties);
         }
 
+        return this;
+    }
+
+    /**
+     * @return planning
+     */
+    public final OCDSPlanning getPlanning() {
+        return planning;
+    }
+
+    /**
+     * @param planning
+     *      planning to be set
+     * @return this instance for chaining
+     */
+    public final OCDSRelease setPlanning(final OCDSPlanning planning) {
+        this.planning = planning;
         return this;
     }
 }

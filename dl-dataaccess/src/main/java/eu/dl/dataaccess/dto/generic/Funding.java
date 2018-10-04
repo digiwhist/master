@@ -1,9 +1,6 @@
 package eu.dl.dataaccess.dto.generic;
 
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.clean.Validable;
 import eu.dl.dataaccess.utils.ClassUtils;
@@ -127,7 +124,6 @@ public class Funding implements Validable {
     }
 
     @Override
-    @Transient
     @JsonIgnore
     public final Funding getValid() {
         setAmount(ClassUtils.removeNonsenses(amount));

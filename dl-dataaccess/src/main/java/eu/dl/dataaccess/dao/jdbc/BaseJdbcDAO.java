@@ -1,22 +1,20 @@
 package eu.dl.dataaccess.dao.jdbc;
 
-import java.sql.Connection;
-import java.text.SimpleDateFormat;
-import java.util.List;
-
-import org.apache.commons.lang3.StringEscapeUtils;
-import org.apache.commons.lang3.tuple.Pair;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-
 import eu.dl.core.config.Config;
 import eu.dl.dataaccess.dao.BaseDAO;
+import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.sql.Connection;
+import java.text.SimpleDateFormat;
+import java.util.List;
 
 /**
  * Basic JDBC DAO implementation.
@@ -46,7 +44,7 @@ public abstract class BaseJdbcDAO<T> implements BaseDAO<T> {
     /**
      * Page size used in paged methods.
      */
-    public static final Integer PAGE_SIZE = 1000;
+    public static final Integer PAGE_SIZE = 10000;
 
     /**
      * Initializes connection etc.

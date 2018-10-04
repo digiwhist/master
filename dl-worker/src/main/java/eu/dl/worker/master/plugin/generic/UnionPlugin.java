@@ -4,6 +4,7 @@ import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 import eu.dl.dataaccess.dto.generic.Payment;
 import eu.dl.dataaccess.dto.generic.Publication;
+import eu.dl.dataaccess.dto.generic.UnitPrice;
 import eu.dl.dataaccess.dto.matched.MasterablePart;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 import eu.dl.dataaccess.dto.utils.DTOUtils;
@@ -15,9 +16,9 @@ import eu.dl.worker.utils.ArrayUtils;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * This plugin creates union of multiple arrays.
@@ -85,30 +86,20 @@ public final class UnionPlugin<T extends MasterablePart, V, U>
                 // Get rid of duplicates
                 // Publications
                 if (!listOfAll.isEmpty() && listOfAll.get(0).getClass().equals(Publication.class)) {
-                    result = listOfAll.stream().filter(ArrayUtils.distinct(p ->
-                                    ((Publication) p).getSourceId() +
-                                    ((Publication) p).getMachineReadableUrl() +
-                                    ((Publication) p).getHumanReadableUrl() +
-                                    ((Publication) p).getPublicationDate() +
-                                    ((Publication) p).getVersion() +
-                                    ((Publication) p).getIsIncluded())).collect(Collectors.toList());
-                    HashMap<String, Object> isIncludedPreferred = new HashMap<>();
+                    List<Publication> publications = new ArrayList<>();
+                    listOfAll.stream().map(n -> (Publication) n)
+                        .forEach(n -> {
+                            int i = getPublicationIndex(n, publications);
+                            // publication isn't in result list, add it
+                            if (i < 0) {
+                                publications.add(n);
+                            // publication is in result list, replace existing with new one in case of included publication
+                            } else if (Boolean.TRUE.equals(n.getIsIncluded())) {
+                                publications.set(i, n);
+                            }
+                        });
 
-                    for (Object publication : result) {
-                        String key = ((Publication) publication).getSourceId() +
-                                    ((Publication) publication).getMachineReadableUrl() +
-                                    ((Publication) publication).getHumanReadableUrl() +
-                                    ((Publication) publication).getPublicationDate() +
-                                    ((Publication) publication).getVersion();
-                        if (!isIncludedPreferred.containsKey(key)
-                                || (isIncludedPreferred.containsKey(key)
-                                && ((Publication) publication).getIsIncluded() != null
-                                && ((Publication) publication).getIsIncluded())) {
-                            isIncludedPreferred.put(key, publication);
-                        }
-                    }
-
-                    result = new ArrayList<>(isIncludedPreferred.values());
+                    result = new ArrayList<>(publications);
                 // Bidders
                 } else if (BodyUtils.getBodyFieldNamesInLowerCase().contains(fieldName.toLowerCase())) {
                     result = listOfAll.stream().filter(ArrayUtils.distinct(t -> ((MatchedBody) t).getGroupId()))
@@ -125,13 +116,19 @@ public final class UnionPlugin<T extends MasterablePart, V, U>
                 // BodyIds
                 } else if (fieldName.toLowerCase().equals("bodyids")) {
                     result = listOfAll
-                            .stream()
-                            .map(t -> (BodyIdentifier) t)
-                            .filter(ArrayUtils.distinct(t ->
-                                    (t.getId() == null ? "" : t.getId())
-                                    .concat(t.getType() == null ? "" : t.getType().toString())
-                                    .concat(t.getScope() == null ? "" : t.getScope().toString())))
-                            .collect(Collectors.toList());
+                        .stream()
+                        .map(t -> (BodyIdentifier) t)
+                        .filter(ArrayUtils.distinct(t ->
+                            (t.getId() == null ? "" : t.getId())
+                                .concat(t.getType() == null ? "" : t.getType().toString())
+                                .concat(t.getScope() == null ? "" : t.getScope().toString())))
+                        .collect(Collectors.toList());
+                } else if (fieldName.toLowerCase().equals("unitprices")) {
+                    result = listOfAll
+                        .stream()
+                        .map(t -> (UnitPrice) t)
+                        .filter(ArrayUtils.distinct(t -> t.getDescription() + t.getUnitNumber()))
+                        .collect(Collectors.toList());
                 } else {
                     result = listOfAll.stream().filter(ArrayUtils.distinct())
                         .collect(Collectors.toList());
@@ -153,5 +150,53 @@ public final class UnionPlugin<T extends MasterablePart, V, U>
             }
         }
         return finalItem;
+    }
+
+    /**
+     * @param o1
+     *      first object to be compared
+     * @param o2
+     *      second object to be compared
+     * @return TRUE if both objects are equal or one of then is NULL, otherwise false.
+     */
+    private static boolean isEqual(final Object o1, final Object o2) {
+        if (o1 == null || o2 == null) {
+            return true;
+        }
+
+        return o1.equals(o2);
+    }
+
+    /**
+     * @param p1
+     *      first publication to be compared
+     * @param p2
+     *      second publication to be compared
+     * @return true if the publication are same
+     */
+    private static boolean isPublicationEqual(final Publication p1, final Publication p2) {
+        return isEqual(p1.getSourceId(), p2.getSourceId())
+            && isEqual(p1.getMachineReadableUrl(), p2.getMachineReadableUrl())
+            && isEqual(p1.getHumanReadableUrl(), p2.getHumanReadableUrl())
+            && isEqual(p1.getPublicationDate(), p2.getPublicationDate())
+            && isEqual(p1.getVersion(), p2.getVersion());
+    }
+
+    /**
+     * @param publication
+     *      publication to be checked
+     * @param list
+     *      list of publication
+     * @return index of an existing publication or -1
+     */
+    private static int getPublicationIndex(final Publication publication, final List<Publication> list) {
+        if (publication == null || list == null || list.isEmpty()) {
+            return -1;
+        }
+
+        // find publication with callback
+        return IntStream.range(0, list.size())
+            .filter(i -> isPublicationEqual(publication, list.get(i)))
+            .findFirst().orElse(-1);
     }
 }

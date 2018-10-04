@@ -11,7 +11,21 @@ public enum OCDSSubmissionMethod {
     /**
      * Electronic auction.
      */
-    ELECTRONIC_AUCTION;
+    ELECTRONIC_AUCTION,
+
+    /**
+     * In person.
+     */
+    IN_PERSON,
+
+    /**
+     * Electronic Submission.
+     */
+    ELECTRONIC_SUBMISSION,
+    /**
+     * Written.
+     */
+    WRITTEN;
 
     @Override
     @JsonValue

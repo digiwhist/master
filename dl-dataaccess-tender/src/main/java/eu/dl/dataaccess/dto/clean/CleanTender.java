@@ -8,10 +8,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import eu.dl.dataaccess.annotation.Transformable;
@@ -29,8 +25,6 @@ import eu.dl.dataaccess.utils.ValidationUtils;
 /**
  * Public Contract. Contains full info about single contract.
  */
-@Entity
-@Table(name = "clean_tender")
 @Transformable
 public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Cleanable {
 
@@ -315,9 +309,13 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     private String country;
 
     /**
+     * Created date of raw object.
+     */
+    private LocalDateTime createdRaw;
+
+    /**
      * @return the buyerAssignedId
      */
-    @Transient
     public final String getBuyerAssignedId() {
         return buyerAssignedId;
     }
@@ -336,7 +334,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the procedureType
      */
-    @Transient
+    
     public final TenderProcedureType getProcedureType() {
         return procedureType;
     }
@@ -355,7 +353,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the nationalProcedureType
      */
-    @Transient
+    
     public final String getNationalProcedureType() {
         return nationalProcedureType;
     }
@@ -374,7 +372,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return is the procedure accelerated
      */
-    @Transient
+    
     public final Boolean getIsAcceleratedProcedure() {
         return isAcceleratedProcedure;
     }
@@ -393,7 +391,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return reason for the accelerated procedure
      */
-    @Transient
+    
     public final String getAcceleratedProcedureJustification() {
         return acceleratedProcedureJustification;
     }
@@ -412,7 +410,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the maxBidsCount
      */
-    @Transient
+    
     public final Integer getMaxBidsCount() {
         return maxBidsCount;
     }
@@ -431,7 +429,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the supplyType
      */
-    @Transient
+    
     public final TenderSupplyType getSupplyType() {
         return supplyType;
     }
@@ -450,7 +448,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the size
      */
-    @Transient
+    
     public final TenderSize getSize() {
         return size;
     }
@@ -469,7 +467,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the bidDeadline
      */
-    @Transient
+    
     public final LocalDateTime getBidDeadline() {
         return bidDeadline;
     }
@@ -488,7 +486,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the documentsDeadline
      */
-    @Transient
+    
     public final LocalDateTime getDocumentsDeadline() {
         return documentsDeadline;
     }
@@ -507,7 +505,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the documentsPayable
      */
-    @Transient
+    
     public final Boolean getDocumentsPayable() {
         return documentsPayable;
     }
@@ -526,7 +524,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the documentsPrice
      */
-    @Transient
+    
     public final Price getDocumentsPrice() {
         return documentsPrice;
     }
@@ -545,7 +543,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the documentsLocation
      */
-    @Transient
+    
     public final Address getDocumentsLocation() {
         return documentsLocation;
     }
@@ -565,7 +563,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
      * @return true if the access to documents is free, false for restricted
      * access
      */
-    @Transient
+    
     public final Boolean getIsDocumentsAccessRestricted() {
         return isDocumentsAccessRestricted;
     }
@@ -584,7 +582,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the isCentralProcurement
      */
-    @Transient
+    
     public final Boolean getIsCentralProcurement() {
         return isCentralProcurement;
     }
@@ -603,7 +601,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the isJointProcurement
      */
-    @Transient
+    
     public final Boolean getIsJointProcurement() {
         return isJointProcurement;
     }
@@ -622,7 +620,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the buyers
      */
-    @Transient
+    
     public final List<CleanBody> getBuyers() {
         return buyers;
     }
@@ -661,7 +659,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return true if the purchase is being made for someone else
      */
-    @Transient
+    
     public final Boolean getIsOnBehalfOf() {
         return isOnBehalfOf;
     }
@@ -680,7 +678,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the list of onBehalfOf
      */
-    @Transient
+    
     public final List<CleanBody> getOnBehalfOf() {
         return onBehalfOf;
     }
@@ -717,7 +715,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return body from whom further information can be obtained
      */
-    @Transient
+    
     public final CleanBody getFurtherInformationProvider() {
         return furtherInformationProvider;
     }
@@ -737,7 +735,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
      * @return body from whom specifications and additional documents can be
      * obtained
      */
-    @Transient
+    
     public final CleanBody getSpecificationsProvider() {
         return specificationsProvider;
     }
@@ -757,7 +755,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return body to whom tenders/requests to participate must be sent
      */
-    @Transient
+    
     public final CleanBody getBidsRecipient() {
         return bidsRecipient;
     }
@@ -776,7 +774,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the public finalations
      */
-    @Transient
+    
     public final List<Publication> getPublications() {
         return publications;
     }
@@ -795,7 +793,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the administrators
      */
-    @Transient
+    
     public final List<CleanBody> getAdministrators() {
         return administrators;
     }
@@ -814,7 +812,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the supervisors
      */
-    @Transient
+    
     public final List<CleanBody> getSupervisors() {
         return supervisors;
     }
@@ -833,7 +831,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the specificationsCreator
      */
-    @Transient
+    
     public final CleanBody getSpecificationsCreator() {
         return specificationsCreator;
     }
@@ -852,7 +850,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return is tender divided into lots
      */
-    @Transient
+    
     public final Boolean getHasLots() {
         return hasLots;
     }
@@ -871,7 +869,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the lots
      */
-    @Transient
+    
     public final List<CleanTenderLot> getLots() {
         return lots;
     }
@@ -910,7 +908,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the candidates
      */
-    @Transient
+    
     public final List<CleanBody> getCandidates() {
         return candidates;
     }
@@ -929,7 +927,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the approachedBidders
      */
-    @Transient
+    
     public final List<CleanBody> getApproachedBidders() {
         return approachedBidders;
     }
@@ -948,7 +946,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the documents
      */
-    @Transient
+    
     public final List<Document> getDocuments() {
         return documents;
     }
@@ -967,7 +965,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the courtProceedings
      */
-    @Transient
+    
     public final List<URL> getCourtProceedings() {
         return courtProceedings;
     }
@@ -986,7 +984,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the courtInterventions
      */
-    @Transient
+    
     public final List<URL> getCourtInterventions() {
         return courtInterventions;
     }
@@ -1005,7 +1003,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the npwpReasons
      */
-    @Transient
+    
     public final List<NpwpReason> getNpwpReasons() {
         return npwpReasons;
     }
@@ -1024,7 +1022,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the deposits
      */
-    @Transient
+    
     public final String getDeposits() {
         return deposits;
     }
@@ -1043,7 +1041,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the personalRequirements
      */
-    @Transient
+    
     public final String getPersonalRequirements() {
         return personalRequirements;
     }
@@ -1062,7 +1060,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the economicRequirements
      */
-    @Transient
+    
     public final String getEconomicRequirements() {
         return economicRequirements;
     }
@@ -1081,7 +1079,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the technicalRequirements
      */
-    @Transient
+    
     public final String getTechnicalRequirements() {
         return technicalRequirements;
     }
@@ -1100,7 +1098,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the appealBodyName
      */
-    @Transient
+    
     public final String getAppealBodyName() {
         return appealBodyName;
     }
@@ -1119,7 +1117,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the mediationBodyName
      */
-    @Transient
+    
     public final String getMediationBodyName() {
         return mediationBodyName;
     }
@@ -1138,7 +1136,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return justification for framework agreement going over 4 years
      */
-    @Transient
+    
     public final String getExcessiveFrameworkAgreementJustification() {
         return excessiveFrameworkAgreementJustification;
     }
@@ -1159,7 +1157,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
      * @return true if the whole tender is cancelled, false if just some of its
      * lots
      */
-    @Transient
+    
     public final Boolean getIsWholeTenderCancelled() {
         return isWholeTenderCancelled;
     }
@@ -1179,7 +1177,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the enquiryDeadline
      */
-    @Transient
+    
     public final LocalDate getEnquiryDeadline() {
         return enquiryDeadline;
     }
@@ -1198,7 +1196,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the awardDeadline
      */
-    @Transient
+    
     public final LocalDate getAwardDeadline() {
         return awardDeadline;
     }
@@ -1217,7 +1215,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the awardDeadlineDuration
      */
-    @Transient
+    
     public final Integer getAwardDeadlineDuration() {
         return awardDeadlineDuration;
     }
@@ -1236,7 +1234,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the finalPrice
      */
-    @Transient
+    
     public final Price getFinalPrice() {
         return finalPrice;
     }
@@ -1255,7 +1253,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the eligibleBidLanguages
      */
-    @Transient
+    
     public final List<String> getEligibleBidLanguages() {
         return eligibleBidLanguages;
     }
@@ -1274,7 +1272,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the isEInvoiceAccepted
      */
-    @Transient
+    
     public final Boolean getIsEInvoiceAccepted() {
         return isEInvoiceAccepted;
     }
@@ -1293,7 +1291,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     /**
      * @return the corrections
      */
-    @Transient
+    
     public final List<Corrigendum> getCorrections() {
         return corrections;
     }
@@ -1314,7 +1312,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
      *
      * @return value of modificationReason
      */
-    @Transient
+    
     public final String getModificationReason() {
         return modificationReason;
     }
@@ -1337,7 +1335,7 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
      *
      * @return value of modificationReasonDescription
      */
-    @Transient
+    
     public final String getModificationReasonDescription() {
         return modificationReasonDescription;
     }
@@ -1399,8 +1397,22 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
         return this;
     }
 
+    /**
+     * @return the createdRaw
+     */
+    public final LocalDateTime getCreatedRaw() {
+        return createdRaw;
+    }
+
+    /**
+     * @param createdRaw created date of raw object
+     */
+    public final void setCreatedRaw(final LocalDateTime createdRaw) {
+        this.createdRaw = createdRaw;
+    }
+
     @Override
-    @Transient
+    
     @JsonIgnore
     @Transformable
     public final CleanTender getValid() {

@@ -11,8 +11,7 @@ import java.time.LocalDate;
 /**
  * Crawler Audit DAO implementation for JDBC.
  */
-public class JdbcCrawlerAuditDAO extends GenericJdbcDAO<BasicCrawlerAuditRecord>
-        implements CrawlerAuditDAO<BasicCrawlerAuditRecord> {
+public class JdbcCrawlerAuditDAO extends GenericJdbcDAO<BasicCrawlerAuditRecord> implements CrawlerAuditDAO<BasicCrawlerAuditRecord> {
 
     private static final String TABLE_NAME = "crawler_audit_record";
 
@@ -58,12 +57,8 @@ public class JdbcCrawlerAuditDAO extends GenericJdbcDAO<BasicCrawlerAuditRecord>
         save(crawlerAuditRecord);
     }
 
-    /**
-     * Gets crawler audit record identified by name and version.
-     *
-     * @return found entry or null
-     */
-    private BasicCrawlerAuditRecord getByNameAndVersion() {
+    @Override
+    public final BasicCrawlerAuditRecord getByNameAndVersion() {
         try {
             PreparedStatement statement = connection.prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE createdby = ? AND createdByVersion = ?");

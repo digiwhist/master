@@ -8,6 +8,7 @@ import eu.dl.dataaccess.dto.generic.Funding;
 import eu.dl.dataaccess.dto.generic.Price;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -177,6 +178,8 @@ public abstract class BaseMatchedTenderLot<T> extends BaseMatchedStorableDTO imp
      * Objective criteria for choosing the limited number of candidates.
      */
     private String limitedCandidatesCountCriteria;
+
+    private LocalDateTime createdRaw;
 
     /**
      * @return the title
@@ -751,4 +754,18 @@ public abstract class BaseMatchedTenderLot<T> extends BaseMatchedStorableDTO imp
         this.limitedCandidatesCountCriteria = newLimitedCandidatesCountCriteria;
         return (T) this;
     }
+
+    @Override
+    public final LocalDateTime getCreatedRaw() {
+        return createdRaw;
+    }
+
+    /**
+     * Created date of raw object setter.
+     * @param createdRaw date
+     */
+    public final void setCreatedRaw(final LocalDateTime createdRaw) {
+        this.createdRaw = createdRaw;
+    }
+
 }

@@ -1,16 +1,12 @@
 package eu.dl.dataaccess.dto.parsed;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Public Contract. Contains full info about single contract.
  */
-@Entity
-@Table(name = "parsed_tender")
 public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements Parsable {
     /**
      * Reference number given to contract by buyer.
@@ -290,11 +286,15 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      */
     private String country;
 
+
+    /**
+     * Created date of raw object.
+     */
+    private LocalDateTime createdRaw;
+
     /**
      * @return the buyerAssignedId
      */
-
-    @Transient
     public final String getBuyerAssignedId() {
         return buyerAssignedId;
     }
@@ -315,7 +315,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the procedureType
      */
 
-    @Transient
+    
     public final String getProcedureType() {
         return procedureType;
     }
@@ -336,7 +336,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the nationalProcedureType
      */
 
-    @Transient
+    
     public final String getNationalProcedureType() {
         return nationalProcedureType;
     }
@@ -357,7 +357,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return is the procedure accelerated
      */
 
-    @Transient
+    
     public final String getIsAcceleratedProcedure() {
         return isAcceleratedProcedure;
     }
@@ -378,7 +378,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return reason for the accelerated procedure
      */
 
-    @Transient
+    
     public final String getAcceleratedProcedureJustification() {
         return acceleratedProcedureJustification;
     }
@@ -400,7 +400,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the maxBidsCount
      */
 
-    @Transient
+    
     public final String getMaxBidsCount() {
         return maxBidsCount;
     }
@@ -421,7 +421,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the supplyType
      */
 
-    @Transient
+    
     public final String getSupplyType() {
         return supplyType;
     }
@@ -442,7 +442,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the size
      */
 
-    @Transient
+    
     public final String getSize() {
         return size;
     }
@@ -463,7 +463,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the bidDeadline
      */
 
-    @Transient
+    
     public final String getBidDeadline() {
         return bidDeadline;
     }
@@ -484,7 +484,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the documentsDeadline
      */
 
-    @Transient
+    
     public final String getDocumentsDeadline() {
         return documentsDeadline;
     }
@@ -505,7 +505,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the documentsPayable
      */
 
-    @Transient
+    
     public final String getDocumentsPayable() {
         return documentsPayable;
     }
@@ -526,7 +526,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the documentsPrice
      */
 
-    @Transient
+    
     public final ParsedPrice getDocumentsPrice() {
         return documentsPrice;
     }
@@ -547,7 +547,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the documentsLocation
      */
 
-    @Transient
+    
     public final ParsedAddress getDocumentsLocation() {
         return documentsLocation;
     }
@@ -568,7 +568,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return true if the access to documents is free, false for restricted access
      */
 
-    @Transient
+    
     public final String getIsDocumentsAccessRestricted() {
         return isDocumentsAccessRestricted;
     }
@@ -589,7 +589,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the isCentralProcurement
      */
 
-    @Transient
+    
     public final String getIsCentralProcurement() {
         return isCentralProcurement;
     }
@@ -610,7 +610,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the isJointProcurement
      */
 
-    @Transient
+    
     public final String getIsJointProcurement() {
         return isJointProcurement;
     }
@@ -631,7 +631,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the buyers
      */
 
-    @Transient
+    
     public final List<ParsedBody> getBuyers() {
         return buyers;
     }
@@ -652,7 +652,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return boolean string whether the purchase is being made for someone else
      */
 
-    @Transient
+    
     public final String getIsOnBehalfOf() {
         return isOnBehalfOf;
     }
@@ -673,7 +673,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the list of onBehalfOf
      */
 
-    @Transient
+    
     public final List<ParsedBody> getOnBehalfOf() {
         return onBehalfOf;
     }
@@ -712,7 +712,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return body from whom further information can be obtained
      */
 
-    @Transient
+    
     public final ParsedBody getFurtherInformationProvider() {
         return furtherInformationProvider;
     }
@@ -733,7 +733,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return body from whom specifications and additional documents can be obtained
      */
 
-    @Transient
+    
     public final ParsedBody getSpecificationsProvider() {
         return specificationsProvider;
     }
@@ -754,7 +754,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return body to whom tenders/requests to participate must be sent
      */
 
-    @Transient
+    
     public final ParsedBody getBidsRecipient() {
         return bidsRecipient;
     }
@@ -775,7 +775,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the publications
      */
 
-    @Transient
+    
     public final List<ParsedPublication> getPublications() {
         return publications;
     }
@@ -796,7 +796,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the administrators
      */
 
-    @Transient
+    
     public final List<ParsedBody> getAdministrators() {
         return administrators;
     }
@@ -817,7 +817,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the supervisors
      */
 
-    @Transient
+    
     public final List<ParsedBody> getSupervisors() {
         return supervisors;
     }
@@ -838,7 +838,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the specificationsCreator
      */
 
-    @Transient
+    
     public final ParsedBody getSpecificationsCreator() {
         return specificationsCreator;
     }
@@ -859,7 +859,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return is tender divided into lots
      */
 
-    @Transient
+    
     public final String getHasLots() {
         return hasLots;
     }
@@ -880,7 +880,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the lots
      */
 
-    @Transient
+    
     public final List<ParsedTenderLot> getLots() {
         return lots;
     }
@@ -901,7 +901,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the candidates
      */
 
-    @Transient
+    
     public final List<ParsedBody> getCandidates() {
         return candidates;
     }
@@ -922,7 +922,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the approachedBidders
      */
 
-    @Transient
+    
     public final List<ParsedBody> getApproachedBidders() {
         return approachedBidders;
     }
@@ -943,7 +943,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the documents
      */
 
-    @Transient
+    
     public final List<ParsedDocument> getDocuments() {
         return documents;
     }
@@ -964,7 +964,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the courtProceedings
      */
 
-    @Transient
+    
     public final List<String> getCourtProceedings() {
         return courtProceedings;
     }
@@ -985,7 +985,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the courtInterventions
      */
 
-    @Transient
+    
     public final List<String> getCourtInterventions() {
         return courtInterventions;
     }
@@ -1006,7 +1006,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the npwpReasons
      */
 
-    @Transient
+    
     public final List<String> getNpwpReasons() {
         return npwpReasons;
     }
@@ -1027,7 +1027,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the deposits
      */
 
-    @Transient
+    
     public final String getDeposits() {
         return deposits;
     }
@@ -1048,7 +1048,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the personalRequirements
      */
 
-    @Transient
+    
     public final String getPersonalRequirements() {
         return personalRequirements;
     }
@@ -1069,7 +1069,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the economicRequirements
      */
 
-    @Transient
+    
     public final String getEconomicRequirements() {
         return economicRequirements;
     }
@@ -1090,7 +1090,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the technicalRequirements
      */
 
-    @Transient
+    
     public final String getTechnicalRequirements() {
         return technicalRequirements;
     }
@@ -1111,7 +1111,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the appealBodyName
      */
 
-    @Transient
+    
     public final String getAppealBodyName() {
         return appealBodyName;
     }
@@ -1132,7 +1132,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the mediationBodyName
      */
 
-    @Transient
+    
     public final String getMediationBodyName() {
         return mediationBodyName;
     }
@@ -1153,7 +1153,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return justification for framework agreement going over 4 years
      */
 
-    @Transient
+    
     public final String getExcessiveFrameworkAgreementJustification() {
         return excessiveFrameworkAgreementJustification;
     }
@@ -1175,7 +1175,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return true if the whole tender is cancelled, false if just some of its lots
      */
 
-    @Transient
+    
     public final String getIsWholeTenderCancelled() {
         return isWholeTenderCancelled;
     }
@@ -1196,7 +1196,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the enquiryDeadline
      */
 
-    @Transient
+    
     public final String getEnquiryDeadline() {
         return enquiryDeadline;
     }
@@ -1217,7 +1217,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the awardDeadline
      */
 
-    @Transient
+    
     public final String getAwardDeadline() {
         return awardDeadline;
     }
@@ -1237,7 +1237,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
     /**
      * @return the awardDeadlineDuration
      */
-    @Transient
+    
     public final String getAwardDeadlineDuration() {
         return awardDeadlineDuration;
     }
@@ -1257,7 +1257,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the finalPrice
      */
 
-    @Transient
+    
     public final ParsedPrice getFinalPrice() {
         return finalPrice;
     }
@@ -1278,7 +1278,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the eligibleBidLanguages
      */
 
-    @Transient
+    
     public final List<String> getEligibleBidLanguages() {
         return eligibleBidLanguages;
     }
@@ -1317,7 +1317,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the isEInvoiceAccepted
      */
 
-    @Transient
+    
     public final String getIsEInvoiceAccepted() {
         return isEInvoiceAccepted;
     }
@@ -1338,7 +1338,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      * @return the corrections
      */
 
-    @Transient
+    
     public final List<ParsedCorrigendum> getCorrections() {
         return corrections;
     }
@@ -1360,7 +1360,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      *
      * @return value of modificationReason
      */
-    @Transient
+    
     public final String getModificationReason() {
         return modificationReason;
     }
@@ -1383,7 +1383,7 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
      *
      * @return value of modificationReasonDescription
      */
-    @Transient
+    
     public final String getModificationReasonDescription() {
         return modificationReasonDescription;
     }
@@ -1443,6 +1443,20 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
     public final ParsedTender setCountry(final String country) {
         this.country = country;
         return this;
+    }
+
+    /**
+     * @return the createdRaw
+     */
+    public final LocalDateTime getCreatedRaw() {
+        return createdRaw;
+    }
+
+    /**
+     * @param createdRaw created date of raw object
+     */
+    public final void setCreatedRaw(final LocalDateTime createdRaw) {
+        this.createdRaw = createdRaw;
     }
 
     /**

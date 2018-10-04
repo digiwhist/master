@@ -187,4 +187,19 @@ public class JsoupUtilsTest {
         Assert.assertTrue(JsoupUtils.getRoot(xml).tagName().equals("doc"));
         Assert.assertNull(JsoupUtils.getRoot(null));
     }
+
+    /**
+     * Checks the getNtnSibling function from the JsoupUtils class.
+     */
+    @Test
+    public final void getNtnSiblingTest() {
+        Element node = xml.selectFirst("table > tr");
+
+        Assert.assertNull(JsoupUtils.getNthSibling(node, -1));
+        Assert.assertNull(JsoupUtils.getNthSibling(null, 1));
+        Assert.assertNull(JsoupUtils.getNthSibling(node, 10));
+
+        Assert.assertEquals("first item 1", JsoupUtils.getNthSibling(node, 0).text().toLowerCase());
+        Assert.assertEquals("third item 3", JsoupUtils.getNthSibling(node, 2).text().toLowerCase());
+    }
 }

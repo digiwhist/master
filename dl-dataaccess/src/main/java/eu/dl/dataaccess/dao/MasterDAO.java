@@ -69,6 +69,24 @@ public interface MasterDAO<T> {
      */
     List<T> getModifiedAfter(LocalDateTime timestamp, String modifiedBy, Integer page);
 
+
+    /**
+     * Returns objects which has been modified after timestamp by certain
+     * source. The result is paged with 1000 records per page.
+     *
+     * @param timestamp
+     *            objects modified after this timestamp will be returned
+     * @param createdBy
+     *            "author" of the change
+     * @param country
+     *            country the tender is coming from
+     * @param page
+     *            order of the page in the result
+     *
+     * @return set of objects modified after timestamp
+     */
+    List<T> getModifiedAfter(LocalDateTime timestamp, String createdBy, String country, Integer page);
+
     /**
      * Returns new instance of T.
      *

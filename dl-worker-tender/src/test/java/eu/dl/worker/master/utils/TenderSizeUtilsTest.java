@@ -63,7 +63,7 @@ public final class TenderSizeUtilsTest {
      */
     @Before
     public void init() {
-        Config.getInstance().setConfigFile(Arrays.asList("unit_test"));
+        Config.getInstance().addConfigFile("unit_test");
     }
 
     /**

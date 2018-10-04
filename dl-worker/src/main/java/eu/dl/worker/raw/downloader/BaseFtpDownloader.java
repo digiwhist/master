@@ -48,6 +48,10 @@ public abstract class BaseFtpDownloader<T extends Raw> extends BaseDownloader<T>
         return rawData;
     }
 
+    @Override
+    protected final void postProcess(final T raw) {
+    }
+
     /**
      * @return FTP client
      */

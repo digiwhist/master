@@ -86,8 +86,11 @@ public abstract class BaseTenderCleaner extends BaseCleaner<ParsedTender, CleanT
         } else {
             for (CleanTenderLot lot : cleanTender.getLots()) {
                 if (lot.getStatus() == null) {
-                    lot.setStatus(TenderLotStatus.fromPublicationFormType(
-                            DTOUtils.getPublicationFormType(cleanTender)));
+                    if (lot.getCancellationDate() != null || lot.getCancellationReason() != null) {
+                        lot.setStatus(TenderLotStatus.CANCELLED);
+                    } else {
+                        lot.setStatus(TenderLotStatus.fromPublicationFormType(DTOUtils.getPublicationFormType(cleanTender)));
+                    }
                 }
             }
         }
@@ -182,14 +185,14 @@ public abstract class BaseTenderCleaner extends BaseCleaner<ParsedTender, CleanT
 
             // phase 1) change publications to contract implementation where needed
             for (Publication publication : cleanTender.getPublications()) {
-                if (publication.getIsIncluded()
+                if (Boolean.TRUE.equals(publication.getIsIncluded())
                         && publication.getFormType() == PublicationFormType.CONTRACT_AWARD
                         && cleanTender.getProcedureType() == TenderProcedureType.MINITENDER) {
                     // change the publication type
                     publication.setFormType(PublicationFormType.CONTRACT_IMPLEMENTATION);
                 }
 
-                if (publication.getIsIncluded()
+                if (Boolean.TRUE.equals(publication.getIsIncluded())
                         && publication.getFormType() == PublicationFormType.CONTRACT_IMPLEMENTATION) {
                     includedContractImplementationsFound = true;
                     publicationDate = publication.getPublicationDate();
@@ -201,7 +204,7 @@ public abstract class BaseTenderCleaner extends BaseCleaner<ParsedTender, CleanT
                 for (CleanTenderLot lot : cleanTender.getLots()) {
                     if (lot.getBids() != null) {
                         for (CleanBid bid : lot.getBids()) {
-                            if (bid.getIsWinning()
+                            if (Boolean.TRUE.equals(bid.getIsWinning())
                                     && (bid.getPayments() == null || bid.getPayments().isEmpty())) {
                                 Payment payment = new Payment();
 
@@ -232,9 +235,13 @@ public abstract class BaseTenderCleaner extends BaseCleaner<ParsedTender, CleanT
      * @return included (main) publication or null if none exists
      */
     private Publication getIncludedPublication(final CleanTender cleanTender) {
+        if (cleanTender.getPublications() == null) {
+            return null;
+        }
+        
         return cleanTender.getPublications()
                 .stream()
-                .filter(p -> p.getIsIncluded() != null && p.getIsIncluded())
+                .filter(p -> Boolean.TRUE.equals(p.getIsIncluded()))
                 .findFirst()
                 .orElse(null);
     }

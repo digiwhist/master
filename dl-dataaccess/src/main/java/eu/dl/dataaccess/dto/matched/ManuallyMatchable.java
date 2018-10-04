@@ -7,5 +7,5 @@ public interface ManuallyMatchable {
     /**
      * @return the hash
      */
-    String getHash();
+    String getFullHash();
 }

@@ -1,20 +1,15 @@
 package eu.dl.dataaccess.dto.matched;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-
 import eu.dl.dataaccess.dto.StorableDTO;
 
 /**
  * Represents manual match between subjects.
  * 
  */
-@Entity
-@Table(name = "manual_match")
 public class ManualMatch extends StorableDTO {
     private String groupId;
 
-    private String hash;
+    private String fullHash;
 
     private String flag;
 
@@ -63,24 +58,24 @@ public class ManualMatch extends StorableDTO {
 
 
     /**
-     * Gets the hash.
+     * Gets the full hash.
      *
-     * @return the hash
+     * @return the fullHash
      */
-    public final String getHash() {
-        return hash;
+    public final String getFullHash() {
+        return fullHash;
     }
 
 
     /**
      * Sets the hash.
      *
-     * @param hash
+     * @param fullHash
      *            the new hash
      * @return the manual match
      */
-    public final ManualMatch setHash(final String hash) {
-        this.hash = hash;
+    public final ManualMatch setFullHash(final String fullHash) {
+        this.fullHash = fullHash;
         return this;
     }
 

@@ -70,8 +70,8 @@ public enum TenderIndicatorType {
     TRANSPARENCY_NUMBER_OF_KEY_MISSING_FIELDS,
 
     /**
-     * Transparency - notice and award discrepancies.
+     * Administrative - notice and award discrepancies.
      */
-    TRANSPARENCY_NOTICE_AND_AWARD_DISCREPANCIES
+    ADMINISTRATIVE_NOTICE_AND_AWARD_DISCREPANCIES
 }
 

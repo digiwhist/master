@@ -1,17 +1,12 @@
 package eu.dl.dataaccess.dto.raw;
 
-import java.time.LocalDate;
-
-import javax.persistence.Entity;
-import javax.persistence.Table;
-
 import eu.dl.dataaccess.dto.StorableDTO;
+
+import java.time.LocalDate;
 
 /**
  * Crawler audit record with metadata about crawler runs.
  */
-@Entity
-@Table(name = "crawler_audit_record")
 public final class BasicCrawlerAuditRecord extends StorableDTO implements CrawlerAuditRecord {
 
     private LocalDate lastCrawledDate;

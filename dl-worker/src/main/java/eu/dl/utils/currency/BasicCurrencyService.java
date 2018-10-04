@@ -1,9 +1,11 @@
 package eu.dl.utils.currency;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import eu.dl.core.UnrecoverableException;
+import eu.dl.core.config.Config;
 import eu.dl.dataaccess.dao.ExchangeRatesDAO;
 import eu.dl.dataaccess.dao.jdbc.JdbcExhangeRatesDAO;
 import eu.dl.dataaccess.dto.ExchangeRates;
@@ -38,6 +40,8 @@ public class BasicCurrencyService implements CurrencyService {
     private Map<LocalDate, ExchangeRates> cache;
     
     private static final long RETENTION_PERIOD = 5;
+
+    private static final String API_URL = "http://data.fixer.io/api/";
     
     /**
      * Creates currency service.
@@ -165,7 +169,8 @@ public class BasicCurrencyService implements CurrencyService {
         try {
             ThreadUtils.humanize(2000);
             logger.debug("Querying exchange rates API for {}", date);
-            URL url = new URL("http://api.fixer.io/" + date.format(DateTimeFormatter.ISO_LOCAL_DATE));
+            URL url = new URL(getHistoricalRatesEndpointUrl(date));
+
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "application/json");
@@ -192,6 +197,16 @@ public class BasicCurrencyService implements CurrencyService {
             mapper.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
             mapper.registerModule(new JavaTimeModule());
             mapper.setDateFormat(new SimpleDateFormat("yyyy-MM-dd"));
+            mapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+
+            JsonNode error = mapper.readTree(response).findValue("error");
+            // API return error response
+            if (error != null) {
+                logger.error("Unable to retrieve exchange rates for " + date + " because of API failed with error message "
+                    + error.path("info").textValue());
+                throw new UnrecoverableException("Unable to retrieve exchange rates for " + date);
+            }
+
             ExchangeRates exchangeRates = mapper.readValue(response, ExchangeRates.class);
             
             // in some cases the api does not contain actual rates and returns a nonsense insted
@@ -212,5 +227,15 @@ public class BasicCurrencyService implements CurrencyService {
     public final void updateExchangeRates(final LocalDate date, final ExchangeRates exchangeRates) {
         cache.put(date, exchangeRates);
         dao.save(exchangeRates);
+    }
+
+    /**
+     * @param date
+     *      A date in the past for which historical rates are requested
+     * @return endpoint url
+     */
+    private static String getHistoricalRatesEndpointUrl(final LocalDate date) {
+        String accessKey = Config.getInstance().getParam("currency.api.access_key");
+        return API_URL + date.format(DateTimeFormatter.ISO_LOCAL_DATE) + "?base=EUR&access_key=" + accessKey;
     }
 }

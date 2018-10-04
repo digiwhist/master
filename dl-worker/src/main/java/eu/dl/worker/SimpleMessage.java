@@ -4,8 +4,10 @@
 package eu.dl.worker;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,7 +91,7 @@ public class SimpleMessage implements Message {
     }
 
     @Override
-    public final <T> T getObject(final String key, final Class<T> cls) {
+    public final <T> T getValueAsObject(final String key, final Class<T> cls) {
         if (key == null || cls == null) {
             return null;
         }
@@ -104,6 +106,25 @@ public class SimpleMessage implements Message {
         } catch (IOException ex) {
             logger.error("Unable to create {} instance from json {}", cls.getName(), json, ex);
             throw new UnrecoverableException("Unable to create new instance from message property", ex);
+        }
+    }
+
+    @Override
+    public final <T> List<T> getValueAsList(final String key, final Class<T> cls) {
+        if (key == null || cls == null) {
+            return null;
+        }
+
+        String json = null;
+        try {
+            json = mapper.writeValueAsString(data.get(key));
+            return mapper.readValue(json, TypeFactory.defaultInstance().constructCollectionType(List.class, cls));
+        } catch (JsonProcessingException ex) {
+            logger.error("Unable to create json from {}", data.get(key), ex);
+            throw new UnrecoverableException("Unable to create json from message property", ex);
+        } catch (IOException ex) {
+            logger.error("Unable to create list of {} instances from json {}", cls.getName(), json, ex);
+            throw new UnrecoverableException("Unable to create list from message property", ex);
         }
     }
 }

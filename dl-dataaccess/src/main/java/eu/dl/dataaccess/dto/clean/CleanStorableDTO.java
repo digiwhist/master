@@ -1,14 +1,10 @@
 package eu.dl.dataaccess.dto.clean;
 
-import javax.persistence.MappedSuperclass;
-
 import eu.dl.dataaccess.dto.BaseParsedAndCleanStorableDTO;
 
-// TODO: Auto-generated Javadoc
 /**
  * Common metadata for clean storable objects.
  */
-@MappedSuperclass
 public abstract class CleanStorableDTO extends BaseParsedAndCleanStorableDTO {
 
     /**

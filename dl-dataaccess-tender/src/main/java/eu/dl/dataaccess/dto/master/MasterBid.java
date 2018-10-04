@@ -1,8 +1,5 @@
 package eu.dl.dataaccess.dto.master;
 
-import java.util.List;
-
-import eu.dl.dataaccess.annotation.SystemProperty;
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.generic.Document;
 import eu.dl.dataaccess.dto.generic.Payment;
@@ -11,6 +8,8 @@ import eu.dl.dataaccess.dto.generic.UnitPrice;
 import eu.dl.dataaccess.dto.matched.MatchedBid;
 import eu.dl.dataaccess.dto.matched.StructuredBidId;
 import eu.dl.dataaccess.dto.utils.InitUtils;
+
+import java.util.List;
 
 
 // TODO: Auto-generated Javadoc
@@ -126,6 +125,11 @@ public class MasterBid {
      * Source bid ids. Contains references to bids from which it is mastered.
      */
     private List<StructuredBidId> sourceBidIds;
+
+    /**
+     * Digiwhist price.
+     */
+    private Price digiwhistPrice;
 
     /**
      * Creates empty master bid.
@@ -474,7 +478,6 @@ public class MasterBid {
      *            the robust price
      * @return the master bid
      */
-    @SystemProperty
     public final MasterBid setRobustPrice(final Price robustPrice) {
         this.robustPrice = robustPrice;
         return this;
@@ -602,9 +605,25 @@ public class MasterBid {
      *
      * @return this instance for chaining
      */
-    @SystemProperty
     public final MasterBid setSourceBidIds(final List<StructuredBidId> sourceBidIds) {
         this.sourceBidIds = sourceBidIds;
+        return this;
+    }
+
+    /**
+     * @return digiwhist price
+     */
+    public final Price getDigiwhistPrice() {
+        return digiwhistPrice;
+    }
+
+    /**
+     * @param digiwhistPrice
+     *      digiwhist price to be set
+     * @return this instance for chaining
+     */
+    public final MasterBid setDigiwhistPrice(final Price digiwhistPrice) {
+        this.digiwhistPrice = digiwhistPrice;
         return this;
     }
 }

@@ -3,7 +3,7 @@ package eu.dl.dataaccess.dao;
 import java.util.List;
 import java.util.Map;
 
-import eu.dl.dataaccess.dao.mongo.ApproximateMatchBodyDAO;
+import eu.dl.dataaccess.dto.codetables.BodyType;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 
 /**
@@ -87,4 +87,15 @@ public interface MatchedBodyDAO<T extends MatchedBody>
      * @return found hashes and group ids
      */
     Map<String, String> getHashAndGroupIds();
+
+    /**
+     * Returns list of bodies with the given name and role.
+     *
+     * @param name
+     *          body name
+     * @param role
+     *          body role
+     * @return list of bodies
+     */
+    List<T> getByNameAndRole(String name, BodyType role);
 }

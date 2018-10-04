@@ -25,7 +25,7 @@ public abstract class
     BaseMatchAndMasterPlugin<T extends MasterablePart, W, U extends MasterablePart, X>
         extends BasePlugin implements MasterPlugin<T, W, U> {
     // plugin registry used for mastering of matched nested items (eg. mastering of matched lots inside tenders)
-    protected PluginRegistry<MasterPlugin<U, X, U>> nestedPluginRegistry = new BasicPluginRegistry<>();
+    protected PluginRegistry<MasterPlugin> nestedPluginRegistry = new BasicPluginRegistry<>();
 
     /**
      * Class constructor. Registers merging plugins.
@@ -129,7 +129,7 @@ public abstract class
         for (List<U> matchedList : matchedLists) {
             X masterItem = createEmptyListItemInstance();
             // iterate over all nested mastering plugins and execute them in a proper order
-            for (Map.Entry<String, MasterPlugin<U, X, U>> entry : nestedPluginRegistry.getPlugins().entrySet()) {
+            for (Map.Entry<String, MasterPlugin> entry : nestedPluginRegistry.getPlugins().entrySet()) {
                 MasterPlugin<U, X, U> nestedMasterPlugin = entry.getValue();
                 masterItem = nestedMasterPlugin.master(matchedList, masterItem, matchedList);
             }

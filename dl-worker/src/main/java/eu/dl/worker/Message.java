@@ -1,6 +1,7 @@
 package eu.dl.worker;
 
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Message send between workers to do some work.
@@ -64,7 +65,7 @@ public interface Message {
     String toJson();
 
     /**
-     * Returns JSON object identified by key as a map.
+     * Returns param identified by key as an instance of T class.
      *
      * @param <T>
      *      class of returned object
@@ -74,5 +75,18 @@ public interface Message {
      *      class of the returned object
      * @return instance of the given class
      */
-    <T> T getObject(String key, Class<T> cls);
+    <T> T getValueAsObject(String key, Class<T> cls);
+
+    /**
+     * Return param identified by key as a list of T class instances.
+     *
+     * @param <T>
+     *      class of item of returned list
+     * @param key
+     *            key
+     * @param cls
+     *      class of the returned object
+     * @return value of param
+     */
+    <T> List<T> getValueAsList(String key, Class<T> cls);
 }

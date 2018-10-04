@@ -102,5 +102,9 @@ public enum DocumentType {
     /**
      * Agreement appendix.
      */
-    AGREEMENT_APPENDIX;
+    AGREEMENT_APPENDIX,
+    /**
+     * Other.
+     */
+    OTHER
 }

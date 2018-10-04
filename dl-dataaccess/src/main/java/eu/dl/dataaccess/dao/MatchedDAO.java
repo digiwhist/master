@@ -1,5 +1,6 @@
 package eu.dl.dataaccess.dao;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -18,6 +19,26 @@ public interface MatchedDAO<T> {
      * @return list of objects with the specific group id
      */
     List<T> getByGroupId(String groupId);
+
+    /**
+     * Returns objects with the same ids.
+     *
+     * @param ids
+     *            ids to be searched
+     *
+     * @return list of objects with the specific ids
+     */
+    List<T> getByIds(List<String> ids);
+    
+    /**
+     * Returns objects with the same groupId.
+     *
+     * @param groupIds
+     *            group ids to be searched
+     *
+     * @return list of objects with the specific group ids
+     */
+    List<T> getByGroupIds(Collection<String> groupIds);
 
     /**
      * Returns objects with the same hash which have been stored by the particular version of the matcher.

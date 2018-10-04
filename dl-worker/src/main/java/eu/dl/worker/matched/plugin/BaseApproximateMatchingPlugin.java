@@ -1,6 +1,6 @@
 package eu.dl.worker.matched.plugin;
 
-import eu.dl.dataaccess.dao.mongo.ApproximateMatchBodyDAO;
+import eu.dl.dataaccess.dao.ApproximateMatchBodyDAO;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;

@@ -20,10 +20,13 @@ public final class PlainTextService {
 
     private static final Logger logger = LoggerFactory.getLogger(PlainTextService.class);
 
-    private static final List<String> SUPPORTED_EXTENSIONS = Arrays.asList("doc", "xls", "ppt", "rtf", "pdf", "html",
-        "xhtml", "txt", "vsd",
+    private static final List<String> SUPPORTED_EXTENSIONS = Arrays.asList("pdf", "html", "xhtml", "txt", "vsd", "rtf",
+        // MS Office extensions
+        "doc", "docm", "docx", "dot", "dotm", "dotx", "xls", "xlsm", "xlsx", "ppt", "pptm", "pptx", "xlt", "xltx",
         // OpenDocument extensions
         "odt", "fodt", "ods", "fods", "odp", "fodp", "odg", "fodg");
+
+    private static final int CONTENT_MAX_LENGTH = 500000;
 
     /**
      * Suppress default constructor for noninstantiability.
@@ -51,7 +54,7 @@ public final class PlainTextService {
             try {
                 final Tika parser = new Tika();
                 // disable max string length limit
-                parser.setMaxStringLength(-1);
+                parser.setMaxStringLength(CONTENT_MAX_LENGTH);
                 final String result = parser.parseToString(inputStream);
 
                 // String \n400 is causing problems with Postgres, thus removing

@@ -1,9 +1,5 @@
 package eu.dl.dataaccess.dto.master;
 
-import java.time.LocalDate;
-import java.util.List;
-
-import eu.dl.dataaccess.annotation.SystemProperty;
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
 import eu.dl.dataaccess.dto.generic.Price;
@@ -11,7 +7,9 @@ import eu.dl.dataaccess.dto.matched.MatchedTenderLot;
 import eu.dl.dataaccess.dto.matched.StructuredLotId;
 import eu.dl.dataaccess.dto.utils.InitUtils;
 
-// TODO: Auto-generated Javadoc
+import java.time.LocalDate;
+import java.util.List;
+
 /**
  * Tender lot. Info on individual lot of a contract. It is preferred to have
  * data on lot level, rather than on contract level, as this is more precise.
@@ -266,7 +264,6 @@ public final class MasterTenderLot extends BaseMasterTenderLot<MasterTenderLot> 
      *            the new robust estimated price
      * @return the master tender lot
      */
-    @SystemProperty
     public MasterTenderLot setRobustEstimatedPrice(final Price newRobustEstimatedPrice) {
         this.robustEstimatedPrice = newRobustEstimatedPrice;
         return this;
@@ -503,7 +500,6 @@ public final class MasterTenderLot extends BaseMasterTenderLot<MasterTenderLot> 
      *
      * @return this instance for chaining
      */
-    @SystemProperty
     public MasterTenderLot setSourceLotIds(final List<StructuredLotId> sourceLotIds) {
         this.sourceLotIds = sourceLotIds;
         return this;

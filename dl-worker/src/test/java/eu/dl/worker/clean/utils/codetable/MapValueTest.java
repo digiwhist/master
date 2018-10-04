@@ -63,7 +63,7 @@ public final class MapValueTest {
         assertNull(CodeTableUtils.mapValue("lev123a", mapping));
         assertNull(CodeTableUtils.mapValue("lev123aa", mapping));
         assertNull(CodeTableUtils.mapValue("lev123aaa", mapping));
-        // distance higher the treshold
+        // distance higher the threshold
         assertNull(CodeTableUtils.mapValue("lev123aaaa", mapping));
     }
 

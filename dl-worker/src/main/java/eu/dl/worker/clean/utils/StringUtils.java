@@ -241,6 +241,8 @@ public final class StringUtils {
         regexpsToFix.put("(?i)^(https?)://:www", "$1://www");
         regexpsToFix.put("(?i)^.+(https?)://", "$1://");
         regexpsToFix.put("(?i)^ttps", "https");
+        regexpsToFix.put("(?i)^htpp", "http");
+        regexpsToFix.put("(?i)^(https?):(?<!//)", "$1://");
         regexpsToFix.put("^:", "");
 
         for (Map.Entry<String, String> entry : regexpsToFix.entrySet()) {

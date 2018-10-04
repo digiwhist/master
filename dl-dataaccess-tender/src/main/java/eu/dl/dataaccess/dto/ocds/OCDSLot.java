@@ -95,7 +95,7 @@ public class OCDSLot extends BaseOCDSExtension {
      * @return this instance for chaining
      */
     public final OCDSLot setStatus(final String status) {
-        this.description = status;
+        this.status = status;
         return this;
     }
 

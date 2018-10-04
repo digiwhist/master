@@ -1,13 +1,6 @@
 package eu.dl.dataaccess.dto.clean;
 
-import static eu.dl.dataaccess.utils.ClassUtils.removeNonsenses;
-
-import java.util.List;
-
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.generic.Document;
 import eu.dl.dataaccess.dto.generic.Payment;
@@ -15,7 +8,10 @@ import eu.dl.dataaccess.dto.generic.Price;
 import eu.dl.dataaccess.dto.generic.UnitPrice;
 import eu.dl.dataaccess.utils.ValidationUtils;
 
-// TODO: Auto-generated Javadoc
+import java.util.List;
+
+import static eu.dl.dataaccess.utils.ClassUtils.removeNonsenses;
+
 /**
  * Bid.
  */
@@ -546,7 +542,7 @@ public class CleanBid implements Validable {
     }
 
     @Override
-    @Transient
+    
     @JsonIgnore
     public final CleanBid getValid() {
         setBidders(ValidationUtils.getValid(bidders));

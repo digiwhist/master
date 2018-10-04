@@ -69,7 +69,7 @@ public abstract class BaseWorker implements Worker {
     /**
      * Default maximum number of attempts to resend message to queue when recovery exception is emitted.
      */
-    private static final int RETRY_COUNT_DEFAULT_LIMIT = 4;
+    private static final int RETRY_COUNT_DEFAULT_LIMIT = 1;
 
     /**
      * Environment prefix used to define queue names etc.
@@ -241,7 +241,7 @@ public abstract class BaseWorker implements Worker {
             final Consumer consumer = new DefaultConsumer(channel) {
                 @Override
                 public void handleDelivery(final String consumerTag, final Envelope envelope,
-                        final AMQP.BasicProperties properties, final byte[] body) throws IOException {
+                                           final AMQP.BasicProperties properties, final byte[] body) throws IOException {
                     Message message = MessageFactory.getMessage();
                     try {
                         ThreadContext.put("message_id", UUID.randomUUID().toString());
@@ -388,6 +388,7 @@ public abstract class BaseWorker implements Worker {
         factory.setHost(config.getParam("rabbitmq.host"));
         factory.setUsername(config.getParam("rabbitmq.username"));
         factory.setPassword(config.getParam("rabbitmq.password"));
+//        factory.setPort(5674);
 
         // establish connection
         final Connection connection = factory.newConnection();
@@ -420,6 +421,7 @@ public abstract class BaseWorker implements Worker {
             factory.setHost(config.getParam("rabbitmq.host"));
             factory.setUsername(config.getParam("rabbitmq.username"));
             factory.setPassword(config.getParam("rabbitmq.password"));
+//            factory.setPort(5674);
             logger.info("Initialised outgoing queue host:{} username:{} password:{}", config.getParam("rabbitmq.host"),
                     config.getParam("rabbitmq.username"), config.getParam("rabbitmq.password"));
 

@@ -1,17 +1,14 @@
 package eu.dl.dataaccess.dto;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import java.util.Map;
 
 /**
  * Class that holds plain document data. It is used as the connecting link between document saved with
- * {@link StorageService} and documents ({@link ParsedDocument}, {@link CleanDocument}, ...) objects.
+ * {@link eu.dl.core.storage.StorageService} and documents ({@link eu.dl.dataaccess.dto.parsed.ParsedDocument},
+ * {@link eu.dl.dataaccess.dto.generic.Document}, ...) objects.
  *
  * @author Tomas Mrazek
  */
-@Entity
-@Table(name = "plain_document")
 public class PlainDocument extends StorableDTO {
     /**
      * Plain text of text files.
@@ -39,7 +36,7 @@ public class PlainDocument extends StorableDTO {
     private String hash;
 
     /**
-     * File storage id ({@link StorageService#save(java.io.InputStream)}).
+     * File storage id ({@link eu.dl.core.storage.StorageService#save(java.io.InputStream)}).
      */
     private String storageId;
 
@@ -49,9 +46,13 @@ public class PlainDocument extends StorableDTO {
     private String extension;
 
     /**
+     * List of file response headers.
+     */
+    private Map<String, String> rawHeaders;
+
+    /**
      * @return plain text
      */
-    @Transient
     public final String getPlainText() {
         return plainText;
     }
@@ -69,7 +70,7 @@ public class PlainDocument extends StorableDTO {
     /**
      * @return file content type
      */
-    @Transient
+    
     public final String getContentType() {
         return contentType;
     }
@@ -87,7 +88,7 @@ public class PlainDocument extends StorableDTO {
     /**
      * @return file content length
      */
-    @Transient
+    
     public final Long getContentLength() {
         return contentLength;
     }
@@ -106,7 +107,7 @@ public class PlainDocument extends StorableDTO {
     /**
      * @return name
      */
-    @Transient
+    
     public final String getName() {
         return name;
     }
@@ -124,7 +125,7 @@ public class PlainDocument extends StorableDTO {
     /**
      * @return file storage id
      */
-    @Transient
+    
     public final String getStorageId() {
         return storageId;
     }
@@ -142,7 +143,7 @@ public class PlainDocument extends StorableDTO {
     /**
      * @return hash
      */
-    @Transient
+    
     public final String getHash() {
         return hash;
     }
@@ -160,7 +161,7 @@ public class PlainDocument extends StorableDTO {
     /**
      * @return file extension
      */
-    @Transient
+    
     public final String getExtension() {
         return extension;
     }
@@ -172,6 +173,23 @@ public class PlainDocument extends StorableDTO {
      */
     public final PlainDocument setExtension(final String extension) {
         this.extension = extension;
+        return this;
+    }
+
+    /**
+     * @return list of response headers
+     */
+    public final Map<String, String> getRawHeaders() {
+        return rawHeaders;
+    }
+
+    /**
+     * @param rawHeaders
+     *      header to be set
+     * @return this instance for chaining
+     */
+    public final PlainDocument setRawHeaders(final Map<String, String> rawHeaders) {
+        this.rawHeaders = rawHeaders;
         return this;
     }
 }

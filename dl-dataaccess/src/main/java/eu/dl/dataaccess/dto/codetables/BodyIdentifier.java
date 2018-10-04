@@ -1,19 +1,12 @@
 package eu.dl.dataaccess.dto.codetables;
 
-import javax.persistence.Embeddable;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import eu.dl.dataaccess.dto.clean.Validable;
 import eu.dl.dataaccess.utils.ValidationUtils;
 
 /**
  * Body identifier.
  */
-@Embeddable
 public class BodyIdentifier implements Validable {
     /**
      * Identifier.
@@ -70,7 +63,6 @@ public class BodyIdentifier implements Validable {
     /**
      * @return the scope
      */
-    @Enumerated(EnumType.STRING)
     public final Scope getScope() {
         return scope;
     }
@@ -87,7 +79,6 @@ public class BodyIdentifier implements Validable {
     }
 
     @Override
-    @Transient
     @JsonIgnore
     public final BodyIdentifier getValid() {
         return ValidationUtils.getValid(this, id);

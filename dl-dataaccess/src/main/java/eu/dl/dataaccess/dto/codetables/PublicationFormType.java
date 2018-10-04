@@ -36,4 +36,8 @@ public enum PublicationFormType {
      * Contract Amendment.
      */
     CONTRACT_AMENDMENT,
+    /**
+     * Compiled.
+     */
+    COMPILED
 }

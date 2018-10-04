@@ -1,13 +1,10 @@
 package eu.dl.dataaccess.dto;
 
-import javax.persistence.MappedSuperclass;
-
 import eu.dl.dataaccess.annotation.Transformable;
 
 /**
  * Common metadata properties for parsed and clean objects.
  */
-@MappedSuperclass
 @Transformable
 public abstract class BaseParsedAndCleanStorableDTO extends StorableDTO implements ParsedAndCleanStorableDTO {
 

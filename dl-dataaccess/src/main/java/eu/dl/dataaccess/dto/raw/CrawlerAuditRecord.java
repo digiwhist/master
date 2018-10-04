@@ -43,5 +43,4 @@ public interface CrawlerAuditRecord extends Storable {
      * @return this instance for chaining
      */
     CrawlerAuditRecord setLastCrawledPageNumber(Integer lastCrawledPageNumber);
-
 }

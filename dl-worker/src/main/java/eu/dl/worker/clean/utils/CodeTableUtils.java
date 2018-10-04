@@ -22,7 +22,7 @@ public final class CodeTableUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(CodeTableUtils.class.getName());
 
-    private static final Integer LEVENSHTEIN_TRESHOLD = 4;
+    private static final Integer LEVENSHTEIN_THRESHOLD = 4;
 
     /**
      * Utility classes should not have default constructor.
@@ -87,11 +87,11 @@ public final class CodeTableUtils {
         // try to find the value
         if (tryFuzzyMatch) {
             Enum bestKey = null;
-            Integer bestLDistance = LEVENSHTEIN_TRESHOLD;
+            Integer bestLDistance = LEVENSHTEIN_THRESHOLD;
             Boolean isBestScoreKeySingleOne = true;
             for (Map.Entry<Enum, List<String>> entry : mapping.entrySet()) {
                 Enum key = entry.getKey();
-                Integer bestKeyLDistance = LEVENSHTEIN_TRESHOLD;
+                Integer bestKeyLDistance = LEVENSHTEIN_THRESHOLD;
                 for (String value : entry.getValue()) {
                     // try the simple match(if there is equality)
                     if (inputForCleaning.equalsIgnoreCase(value)) {
@@ -100,7 +100,7 @@ public final class CodeTableUtils {
                     } else {
                         // get Levenshtein distance between strings
                         Integer lDistance = getLevenshteinDistance(inputForCleaning.toLowerCase(), value.toLowerCase());
-                        if (lDistance < LEVENSHTEIN_TRESHOLD) {
+                        if (lDistance < LEVENSHTEIN_THRESHOLD) {
                             // great, the distance is lower then threshold
 
                             // is it better than other ones for this key
@@ -139,7 +139,7 @@ public final class CodeTableUtils {
             }
 
             // check the scores calculated by Levenshtein
-            if (bestLDistance < LEVENSHTEIN_TRESHOLD && bestKey != null) {
+            if (bestLDistance < LEVENSHTEIN_THRESHOLD && bestKey != null) {
                 logger.debug("Key {} selected based on Levensthein distance of {}.", bestKey, bestLDistance);
                 return bestKey;
             }

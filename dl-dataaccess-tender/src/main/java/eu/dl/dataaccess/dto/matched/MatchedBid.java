@@ -9,6 +9,7 @@ import eu.dl.dataaccess.dto.generic.UnitPrice;
 import eu.dl.dataaccess.dto.utils.InitUtils;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -651,5 +652,10 @@ public class MatchedBid implements MasterablePart {
     public final MatchedBid setPublicationDate(final LocalDate newPublicationDate) {
         this.publicationDate = newPublicationDate;
         return this;
+    }
+
+    @Override
+    public final LocalDateTime getCreatedRaw() {
+        return null;
     }
 }

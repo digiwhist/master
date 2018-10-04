@@ -31,7 +31,7 @@ public final class JsoupUtils {
      * @return matched elements or null
      */
     public static Elements select(final String selector, final Element context) {
-        return (context == null ? null : context.select(selector));
+        return (context == null ? null : context.select(selector.trim()));
     }
 
     /**
@@ -376,5 +376,30 @@ public final class JsoupUtils {
      */
     public static String selectNodeName(final Element context) {
         return (context == null ? null : context.nodeName());
+    }
+
+    /**
+     * Returns n-th sibling of the given node.
+     *
+     * @param node
+     *      node whose n-th sibling is looked for
+     * @param n
+     *      number of sibling
+     * @return n-th sibling if exists or null
+     */
+    public static Element getNthSibling(final Element node, final int n) {
+        if (node == null || n < 0) {
+            return null;
+        }
+
+        Element sibling = node;
+        for (int i = 1; i <= n; i++) {
+            sibling = sibling.nextElementSibling();
+            if (sibling == null) {
+                break;
+            }
+        }
+
+        return sibling;
     }
 }

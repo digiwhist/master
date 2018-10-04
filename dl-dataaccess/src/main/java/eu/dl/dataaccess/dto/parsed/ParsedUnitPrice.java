@@ -17,6 +17,11 @@ public class ParsedUnitPrice extends BaseParsedPrice<ParsedUnitPrice> {
     private String unitType;
 
     /**
+     * Description of unit.
+     */
+    private String description;
+
+    /**
      * Gets the unit number.
      *
      * @return the unit number
@@ -55,6 +60,23 @@ public class ParsedUnitPrice extends BaseParsedPrice<ParsedUnitPrice> {
      */
     public final ParsedUnitPrice setUnitType(final String unitType) {
         this.unitType = unitType;
+        return this;
+    }
+
+    /**
+     * @return unit description
+     */
+    public final String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description
+     *      unit description to be set
+     * @return this instance for chaining
+     */
+    public final ParsedUnitPrice setDescription(final String description) {
+        this.description = description;
         return this;
     }
 }

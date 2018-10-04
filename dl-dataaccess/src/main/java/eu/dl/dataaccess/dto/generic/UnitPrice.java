@@ -1,9 +1,6 @@
 package eu.dl.dataaccess.dto.generic;
 
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.clean.Validable;
 import eu.dl.dataaccess.dto.codetables.UnitType;
@@ -24,6 +21,11 @@ public class UnitPrice extends BasePrice<UnitPrice> implements Validable {
      * Unit of price given if it is unit price (e.g. EUR/KG).
      */
     private UnitType unitType;
+
+    /**
+     * Description of unit.
+     */
+    private String description;
 
     /**
      * @return number of units
@@ -60,8 +62,24 @@ public class UnitPrice extends BasePrice<UnitPrice> implements Validable {
         return this;
     }
 
+    /**
+     * @return unit description
+     */
+    public final String getDescription() {
+        return description;
+    }
+
+    /**
+     * @param description
+     *      unit description to be set
+     * @return this instance for chaining
+     */
+    public final UnitPrice setDescription(final String description) {
+        this.description = description;
+        return this;
+    }
+
     @Override
-    @Transient
     @JsonIgnore
     public final UnitPrice getValid() {
         return ValidationUtils.getValid(this, amountWithVat, netAmount, netAmountEur, netAmountNational);

@@ -1,6 +1,5 @@
 package eu.dl.dataaccess.dto.indicator;
 
-import java.util.Map;
 
 import eu.dl.dataaccess.annotation.Transformable;
 
@@ -16,8 +15,6 @@ public class BasicIndicator extends BaseIndicatorDTO implements Indicator {
 	
 	private Double value;
 	
-	private Map<String, Object> metaData;
-
     @Override
     public final String getType() {
         return type;

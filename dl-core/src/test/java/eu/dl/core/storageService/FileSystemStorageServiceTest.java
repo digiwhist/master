@@ -9,7 +9,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +30,7 @@ public class FileSystemStorageServiceTest {
      */
     @Before
     public final void init() {
-        Config.getInstance().setConfigFile(Arrays.asList("unit_test"));
+        Config.getInstance().addConfigFile("unit_test");
         Config config = Config.getInstance();
         String storageServicePath = config.getParam("filesystemstorageservice.path");
         

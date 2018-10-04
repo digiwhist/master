@@ -106,7 +106,7 @@ public abstract class BaseIncrementalPagedSourceHttpCrawler extends BaseIncremen
      * @param currentPageNumber
      *         the currentPageNumber to set
      */
-    private void setCurrentPageNumber(final int currentPageNumber) {
+    protected final void setCurrentPageNumber(final int currentPageNumber) {
         this.currentPageNumber = currentPageNumber;
     }
 

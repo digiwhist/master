@@ -1,17 +1,14 @@
 package eu.dl.dataaccess.dto.generic;
 
-import java.net.URL;
-import java.time.LocalDate;
-
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.clean.Validable;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.utils.ValidationUtils;
+
+import java.net.URL;
+import java.time.LocalDate;
 
 /**
  * Publication. Describes info on contract/notice published on one individual
@@ -451,7 +448,6 @@ public class Publication implements Validable {
     }
 
     @Override
-    @Transient
     @JsonIgnore
     public final Publication getValid() {
         return ValidationUtils.getValid(this, source);

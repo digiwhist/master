@@ -1,16 +1,16 @@
 package eu.dl.worker.raw.downloader;
 
-import java.util.Arrays;
-import java.util.List;
-
 import com.gargoylesoftware.htmlunit.SgmlPage;
 import com.gargoylesoftware.htmlunit.WebClient;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dto.raw.Raw;
 import eu.dl.worker.Message;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * On Click HTTP downloader encapsulates functionality for downloading source
@@ -57,7 +57,7 @@ public abstract class BaseOnClickHttpDownloader<T extends Raw> extends BaseDownl
                 final HtmlElement downloadButton = getDownloadButton(page);
                 if (downloadButton != null) {
                     SgmlPage sourceData = getDownloadButton(page).click();
-                    rawData.setSourceData(sourceData.getWebResponse().getContentAsString("UTF-8"));
+                    rawData.setSourceData(sourceData.getWebResponse().getContentAsString(StandardCharsets.UTF_8));
                     rawData.setSourceUrl(page.getUrl());
                 } else {
                     logger.warn("Download button was not found on {}", sourceDataUrl);
@@ -94,4 +94,8 @@ public abstract class BaseOnClickHttpDownloader<T extends Raw> extends BaseDownl
      * @return clickable element for downloading source data
      */
     public abstract HtmlElement getDownloadButton(HtmlPage page);
+
+    @Override
+    protected final void postProcess(final T raw) {
+    }
 }

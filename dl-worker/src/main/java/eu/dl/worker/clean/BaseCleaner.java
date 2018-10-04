@@ -57,6 +57,10 @@ public abstract class BaseCleaner<T extends Parsable, V extends Cleanable> exten
             V cleanItem = cleanDao.getEmptyInstance();
 
             cleanItem.setPersistentId(parsedItem.getPersistentId());
+
+            // set item processing order
+            cleanItem.setProcessingOrder(parsedItem.getProcessingOrder());
+
             parsedItem = preProcessParsedItem(parsedItem);
             
             cleanItem.setRawObjectId(parsedItem.getRawObjectId());

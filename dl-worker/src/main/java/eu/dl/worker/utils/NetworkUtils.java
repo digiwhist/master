@@ -28,7 +28,7 @@ public class NetworkUtils {
     public static void enableTorForHttp() {
         logger.debug("Starting TOR service");
 
-        NetLayer lowerNetLayer = NetFactory.getInstance().getNetLayerById(NetLayerIDs.TOR);
+        NetLayer lowerNetLayer = NetFactory.getInstance().getNetLayerById(NetLayerIDs.TOR_OVER_TLS_OVER_TCPIP);
 
         // wait until TOR is ready (optional):
         lowerNetLayer.waitUntilReady();

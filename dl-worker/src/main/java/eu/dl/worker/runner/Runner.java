@@ -1,7 +1,6 @@
 package eu.dl.worker.runner;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -52,7 +51,7 @@ final class Runner {
             System.exit(1);
         }
 
-        Config.getInstance().setConfigFile(Arrays.asList(configName));
+        Config.getInstance().addConfigFile(configName);
 
 
         for (String workerName : workerNames) {

@@ -5,10 +5,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -71,24 +70,26 @@ public enum Config {
 
     /**
      * Returns list from configuration assigned to {@code paramName}. The method assumes that value of the parameter
-     * is a string which includes values separated with {@code delimiter}. From each individual value are removed
-     * leading and trailing spaces.
+     * is a string which includes values separated with {@code delimiter}. From each individual value the leading and trailing
+     * spaces are removed.
      *
+     * @param <T>
+     *      required collection class
      * @param paramName
      *      that param name
      * @param delimiter
      *      values delimiter
-     * @param setClass
-     *      required class of the resulting list
-     * @return list of values in case that property exists, otherwise empty list
+     * @param collectionClass
+     *      required class of the resulting collection
+     * @return collection of values in case that property exists, otherwise empty collection
      */
-    public Set getParamValueAsList(final String paramName, final String delimiter,
-        final Class<? extends Set> setClass) {
+    public <T extends Collection> T getParamValueAsList(final String paramName, final String delimiter,
+        final Class<T> collectionClass) {
         
         String value = getParam(paramName);
 
         try {
-            Set list = setClass.newInstance();
+            T list = collectionClass.newInstance();
             
             if (value != null) {
                 list.addAll(Arrays.asList(value.split(delimiter)).stream()
@@ -97,7 +98,7 @@ public enum Config {
 
             return list;
         } catch (IllegalAccessException | InstantiationException e) {
-            throw new RuntimeException("Failure during initiation of config system:", e);
+            throw new RuntimeException("Failure during parsing param as collection:", e);
         }
     }
 
@@ -117,7 +118,37 @@ public enum Config {
      *      name of configuration file.
      */
     public void setConfigFile(final List<String> fileNames) {
-        configFiles = fileNames;
+        if (fileNames != null) {
+            if (configFiles == null) {
+                configFiles = new ArrayList<>();
+            }
+
+            configFiles.addAll(fileNames);
+        }
+    }
+
+    /**
+     * Add file to the list of processed configuration files.
+     *
+     * @param file
+     *      name of configuration file
+     */
+    public void addConfigFile(final String file) {
+        if (file != null) {
+            if (configFiles == null) {
+                configFiles = new ArrayList<>();
+            }
+
+            if (!configFiles.contains(file)) {
+                configFiles.add(file);
+             
+                try {
+                    loadProperties();
+                } catch (Exception e) {
+                    throw new RuntimeException("Failure during initiation of config system:", e);
+                }
+            }
+        }
     }
 
     /**
@@ -148,10 +179,6 @@ public enum Config {
         
         // load properties files from classpath, for each file is necessary to append extension ".properties"
         loadConfigurationFiles(configFiles.stream().map(n -> n + ".properties").collect(Collectors.toList()));
-
-        // load additional property files,
-        Set<String> additionalPropFiles = getParamValueAsList("additionalPropertyFiles", ",", HashSet.class);
-        loadConfigurationFiles(new ArrayList<>(additionalPropFiles));
     }
 
     /**

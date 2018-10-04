@@ -10,6 +10,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Map;
 
 import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
 
@@ -20,12 +22,12 @@ public final class DownloaderUtils {
     private static final Logger logger = LoggerFactory.getLogger(DownloaderUtils.class);
 
     private static final boolean VALIDATE_CERTIFICATES = false;
-    private static final Integer DOWNLOAD_TIMEOUT = 30000;
+    private static final Integer DOWNLOAD_TIMEOUT = 500000;
     /**
      * Maximum bytes to read from the (uncompressed) connection into the body, before the connection is closed, and the
      * input truncated.
      */
-    private static final int MAX_BODY_SIZE = 20000000;
+    private static final int MAX_BODY_SIZE = 50000000;
 
     /**
      * Suppress default constructor for noninstantiability.
@@ -86,7 +88,7 @@ public final class DownloaderUtils {
     }
 
     /**
-     * Executes request with given url and returns HTTP response.
+     * Executes GET request with given url and returns HTTP response.
      *
      * @param url
      *         source data URL
@@ -94,9 +96,23 @@ public final class DownloaderUtils {
      * @return HTTP response
      */
     public static Connection.Response getUrlResponse(final String url) {
+        return getUrlResponse(url, DOWNLOAD_TIMEOUT);
+    }
+
+    /**
+     * Executes GET request with given url and returns HTTP response.
+     *
+     * @param url
+     *         source data URL
+     * @param downloadTimeout
+     *         download timeout
+     *
+     * @return HTTP response
+     */
+    public static Connection.Response getUrlResponse(final String url, final Integer downloadTimeout) {
         try {
             return Jsoup.connect(url)
-                    .timeout(DOWNLOAD_TIMEOUT)
+                    .timeout(downloadTimeout)
                     .validateTLSCertificates(VALIDATE_CERTIFICATES)
                     .ignoreContentType(true)
                     .method(Connection.Method.GET)
@@ -111,4 +127,50 @@ public final class DownloaderUtils {
         }
     }
 
+    /**
+     * Executes HTTP request with given url and returns response.
+     *
+     * @param url
+     *      requested URL
+     * @param method
+     *      request method, if NULL the GET method is used
+     * @param headers
+     *      request headers
+     * @param data
+     *      request payload
+     * @return HTTP response
+     */
+    public static Connection.Response getUrlResponse(final String url, final Connection.Method method, final Map<String, String> headers,
+                                                     final Map<String, String> data) {
+        try {
+            return Jsoup.connect(url)
+                .timeout(DOWNLOAD_TIMEOUT)
+                .validateTLSCertificates(VALIDATE_CERTIFICATES)
+                .ignoreContentType(true)
+                .method(method == null ? Connection.Method.GET : method)
+                .maxBodySize(MAX_BODY_SIZE)
+                .headers(headers == null ? Collections.emptyMap() : headers)
+                .ignoreHttpErrors(true)
+                .data(data == null ? Collections.emptyMap() : data)
+                .execute();        
+        } catch (final IOException ex) {
+            logger.error("Unable to get response for url {}", url, ex);
+            throw new UnrecoverableException("Unable to get response for url", ex);
+        }
+    }
+
+    /**
+     * Executes HTTP request with given url and returns response.
+     *
+     * @param url
+     *      requested URL
+     * @param method
+     *      request method, if NULL the GET method is used
+     * @param headers
+     *      request headers
+     * @return HTTP response
+     */
+    public static Connection.Response getUrlResponse(final String url, final Connection.Method method, final Map<String, String> headers) {
+        return getUrlResponse(url, method, headers, null);
+    }
 }
