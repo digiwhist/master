@@ -66,10 +66,17 @@ public abstract class BaseWorker implements Worker {
      * E.g. 4 means one message can be in queue up to 5 times.
      */
     private int retryCountLimit;
+
     /**
      * Default maximum number of attempts to resend message to queue when recovery exception is emitted.
      */
     private static final int RETRY_COUNT_DEFAULT_LIMIT = 1;
+
+    /**
+     * Newer versions of rabbitmq are significantly slower after sending 100 000 messages.
+     */
+    private static final int MAX_MESSAGES_SENT_BY_EXCHANGE_CONNETION = 100000;
+    private int messagesSentByExchangeConnection;
 
     /**
      * Environment prefix used to define queue names etc.
@@ -431,6 +438,7 @@ public abstract class BaseWorker implements Worker {
 
             outgoingChannel.exchangeDeclare(envPrefix + getOutgoingExchangeName(), "direct", true);
 
+            messagesSentByExchangeConnection = 0;
             logger.info("Connection to outgoing exchange {} established", envPrefix + getOutgoingExchangeName());
         } catch (IOException | TimeoutException ex) {
             logger.error("Unable to establish connection with messaging system - {}", ex);
@@ -460,6 +468,12 @@ public abstract class BaseWorker implements Worker {
         try {
             logger.debug("Message body: {}", StringUtils.abbreviate(message.toJson(), RAW_MESSAGE_LONG));
             logger.trace("Message body: {}", message.toJson());
+
+            messagesSentByExchangeConnection++;
+            if (messagesSentByExchangeConnection > MAX_MESSAGES_SENT_BY_EXCHANGE_CONNETION) {
+                outgoingChannel.abort();
+                connectOutgoingExchange();
+            }
 
             int exceptionsCount = 0;
             while (true) {

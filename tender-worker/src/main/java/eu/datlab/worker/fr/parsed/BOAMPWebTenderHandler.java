@@ -1,13 +1,25 @@
 package eu.datlab.worker.fr.parsed;
 
 import eu.datlab.dataaccess.dto.codetables.PublicationSources;
+import eu.dl.dataaccess.dto.parsed.ParsedAddress;
+import eu.dl.dataaccess.dto.parsed.ParsedAwardCriterion;
+import eu.dl.dataaccess.dto.parsed.ParsedBid;
+import eu.dl.dataaccess.dto.parsed.ParsedBody;
+import eu.dl.dataaccess.dto.parsed.ParsedCPV;
+import eu.dl.dataaccess.dto.parsed.ParsedDocument;
+import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
+import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
 import org.jsoup.select.Elements;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -30,9 +42,9 @@ final class BOAMPWebTenderHandler {
     /**
      * Parses document from the web, where we want only publications information.
      *
-     * @param document document to be parsed
+     * @param document         document to be parsed
      * @param humanReadableUrl HTML page URL
-     * @param parsedTender tender to add data to
+     * @param parsedTender     tender to add data to
      */
     static void parse(final Document document, final String humanReadableUrl, final ParsedTender parsedTender) {
         // get the publication
@@ -93,18 +105,108 @@ final class BOAMPWebTenderHandler {
                         link, publicationDate);
             }
         }
+
+        // Notice
+        parsedTender
+                .setTitle(JsoupUtils.selectText("i:containsOwn(Objet du marché) + *", document))
+                .setDescription(getStringFromtText("Quantité ou étendue :", document))
+                .setDocuments(Arrays.asList(new ParsedDocument()
+                        .setUrl(getStringFromtText(new String[]{
+                                "Adresse internet :",
+                                "Mairie de Plérin."},
+                                document))
+                ))
+                .addCpv(new ParsedCPV()
+                        .setCode(getStringFromtText("Classification CPV", document))
+                        .setIsMain(Boolean.TRUE.toString())
+                )
+                .setAreVariantsAccepted(getStringFromtText("Division en lots", document))
+                .setIsFrameworkAgreement(getStringFromtText("Marché couvert par l'accord sur les marchés publics", document))
+                .setBuyerAssignedId(getStringFromtText("uméro de référence attribué au marché", document))
+                .setEligibilityCriteria(getStringFromtText("Autres renseignements demandé", document))
+                .setEstimatedStartDate(getStringFromtText("Durée du marché ou délai d'exécution", document))
+                .setBidDeadline(getByClass("date-response", document))
+                .setSelectionMethod(getStringFromtText(new String[]{"IV.2.1", "Critères d'attribution"}, document))
+                .setAddressOfImplementation(new ParsedAddress()
+                        .setRawAddress(getStringFromtText("ieu principal de livraison", document))
+                        .addNuts(getStringFromtNode("Code NUTS", document))
+                )
+                .setAwardCriteria(parseAwardCriteria(document));
+
+        // Award
+        final String bidder = getStringFromtText("Nom du titulaire", document);
+
+        if (bidder != null) {
+            final String bidderName = bidder.split(",")[0];
+            parsedTender
+                    .addLot(new ParsedTenderLot()
+                            .addBid(new ParsedBid()
+                                    .addBidder(new ParsedBody()
+                                            .setName(bidderName)
+                                            .setAddress(new ParsedAddress()
+                                                    .setRawAddress(bidder.replace(bidderName + ",", ""))
+                                            )
+                                    )
+                                    .setPrice(new ParsedPrice()
+                                            .setNetAmount(getStringFromtText("Montant", document))
+                                            .setCurrency("EUR")
+                                    )
+                            )
+                    )
+                    .setFinalPrice(new ParsedPrice()
+                            .setNetAmount(getStringFromtText("Montant", document))
+                            .setCurrency("EUR")
+                    );
+        }
+    }
+
+    /**
+     * Parse award criteria.
+     *
+     * @param document document
+     * @return List<ParsedAwardCriterion> or null
+     */
+    private static List<ParsedAwardCriterion> parseAwardCriteria(final Document document) {
+        final List<ParsedAwardCriterion> parsedCriteria = new ArrayList<>();
+
+        final Element header = JsoupUtils.selectFirst("*:containsOwn(Critères d\\'attribution retenu)", document);
+
+        if (header != null) {
+            final List<Node> headerSiblings = header.parent().childNodes();
+
+            boolean nextIsResult = false;
+            for (Node rawSibling : headerSiblings) {
+                final String sibling = textFromNode(rawSibling).trim();
+
+                if (nextIsResult && sibling.startsWith("-")) {
+                    final String[] nameAndWeight = sibling.split(":");
+
+                    parsedCriteria.add(new ParsedAwardCriterion()
+                            .setName(nameAndWeight[0])
+                            .setWeight(nameAndWeight.length > 1 ? nameAndWeight[1] : null)
+                            .setIsPriceRelated(String.valueOf(sibling.contains("prix")))
+                    );
+                }
+
+                if (sibling.contains("Critères d'attribution retenu")) {
+                    nextIsResult = true;
+                }
+            }
+        }
+
+        return parsedCriteria.isEmpty() ? null : parsedCriteria;
     }
 
     /**
      * This method adds publication information to tender. If the publication is already in the list, then the
      * information are merged to the publication. Otherwise new publication is created.
      *
-     * @param parsedTender tender to add data to
-     * @param isIncluded whether the publication is included
-     * @param sourceId publication source ID
-     * @param source publication source
+     * @param parsedTender     tender to add data to
+     * @param isIncluded       whether the publication is included
+     * @param sourceId         publication source ID
+     * @param source           publication source
      * @param humanReadableUrl HTML page URL
-     * @param publicationDate HTML page URL
+     * @param publicationDate  HTML page URL
      */
     private static void addPublicationTo(final ParsedTender parsedTender,
                                          final boolean isIncluded,
@@ -141,4 +243,145 @@ final class BOAMPWebTenderHandler {
                         : publicationDate);
     }
 
+    /**
+     * In element with multiple text nodes, find one by selector and return following.
+     *
+     * @param selector selector
+     * @param element  element
+     *
+     * @return String or null
+     */
+    private static String getStringFromtText(final String selector, final Element element) {
+        if (element == null) {
+            return null;
+        }
+
+        final Element header = JsoupUtils.selectFirst("*:containsOwn(" + escapeSelectorSpecialChars(selector) + ")", element);
+        if (header != null) {
+
+            List<Node> headerSiblings = header.childNodes();
+
+            boolean nextIsResult = false;
+            for (Node rawSibling : headerSiblings) {
+                final String sibling = textFromNode(rawSibling);
+
+                if (nextIsResult && !sibling.trim().isEmpty()) {
+                    return sibling;
+                }
+
+                if (sibling.contains(selector)) {
+                    nextIsResult = true;
+                }
+            }
+
+            headerSiblings = header.parent().childNodes();
+
+            for (Node rawSibling : headerSiblings) {
+                final String sibling = textFromNode(rawSibling);
+
+                if (nextIsResult && !sibling.trim().isEmpty()) {
+                    return sibling;
+                }
+
+                if (sibling.contains(selector)) {
+                    nextIsResult = true;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * In element with multiple text nodes, find one by selector and return following.
+     *
+     * @param selectors selectors
+     * @param element  element
+     *
+     * @return String or null
+     */
+    private static String getStringFromtText(final String[] selectors, final Element element) {
+        if (element == null) {
+            return null;
+        }
+
+        for (String selector : selectors) {
+            final String result = getStringFromtText(selector, element);
+
+            if (result != null) {
+                return result;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Escape selector special characters.
+     *
+     * @param selector selector
+     *
+     * @return String
+     */
+    private static String escapeSelectorSpecialChars(final String selector) {
+        return selector.replace("'", "\\'");
+    }
+
+    /**
+     * Get text value from node.
+     *
+     * @param node node
+     * @return String
+     */
+    private static String textFromNode(final Node node) {
+        if (node instanceof Element) {
+            return  ((Element) node).text();
+        } else {
+            return node.toString();
+        }
+    }
+
+    /**
+     * Parse by Id.
+     *
+     * @param selector selector
+     * @param element  element
+     * @return String
+     */
+    private static String getByClass(final String selector, final Element element) {
+        if (element == null) {
+            return null;
+        }
+
+        return JsoupUtils.selectText("*." + selector, element);
+    }
+
+    /**
+     * In element with multiple text nodes, find one by selector and return following.
+     *
+     * @param selector selector
+     * @param element  element
+     *
+     * @return String or null
+     */
+    private static String getStringFromtNode(final String selector, final Element element) {
+        if (element == null) {
+            return null;
+        }
+
+        final Element header = JsoupUtils.selectFirst("*:containsOwn(" + escapeSelectorSpecialChars(selector) + ")", element);
+        if (header != null) {
+            final List<Node> headerSiblings = header.childNodes();
+
+            for (Node rawSibling : headerSiblings) {
+                final String node = textFromNode(rawSibling);
+
+                if (node.contains(selector)) {
+                    return node;
+                }
+            }
+        }
+
+        return null;
+    }
 }

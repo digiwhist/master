@@ -12,6 +12,8 @@ import eu.dl.worker.clean.plugin.LotPlugin;
 import eu.dl.worker.clean.plugin.PricePlugin;
 import eu.dl.worker.clean.plugin.PublicationPlugin;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -26,10 +28,20 @@ import java.util.Map;
 public class APATenderCleaner extends BaseDatlabTenderCleaner {
     private static final String VERSION = "1";
 
-    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance(new Locale("ro"));
+    private static final Locale LOCALE = new Locale("ro");
+
+    private static final NumberFormat NUMBER_FORMAT;
+    static {
+        DecimalFormatSymbols formatSymbols = new DecimalFormatSymbols(LOCALE);
+        formatSymbols.setDecimalSeparator('.');
+        formatSymbols.setGroupingSeparator(',');
+        NUMBER_FORMAT = new DecimalFormat("#,##0.###", formatSymbols);
+    }
 
     private static final List<DateTimeFormatter> DATE_FORMATTERS = Arrays.asList(
-            DateTimeFormatter.ofPattern("uuuu-MM-dd hh:mm:ss"));
+        DateTimeFormatter.ofPattern("uuuu-MM-dd hh:mm:ss[.SSS]"),
+        DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss[.SSSSSSSSS]")
+    );
 
     @SuppressWarnings("unchecked")
     @Override

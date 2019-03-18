@@ -5,8 +5,10 @@ import eu.datlab.worker.fr.BOAMPTenderUtils;
 import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
 import eu.dl.dataaccess.dto.codetables.BuyerType;
+import eu.dl.dataaccess.dto.codetables.SelectionMethod;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
 import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
+import eu.dl.dataaccess.dto.parsed.ParsedAwardCriterion;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.clean.plugin.AddressPlugin;
 import eu.dl.worker.clean.plugin.AwardCriteriaPlugin;
@@ -17,6 +19,7 @@ import eu.dl.worker.clean.plugin.DateTimePlugin;
 import eu.dl.worker.clean.plugin.LotPlugin;
 import eu.dl.worker.clean.plugin.PricePlugin;
 import eu.dl.worker.clean.plugin.PublicationPlugin;
+import eu.dl.worker.clean.plugin.SelectionMethodPlugin;
 import eu.dl.worker.clean.plugin.TenderProcedureTypePlugin;
 import eu.dl.worker.clean.plugin.TenderSupplyTypePlugin;
 
@@ -226,6 +229,39 @@ public class BOAMPTenderCleaner extends BaseDatlabTenderCleaner {
 
     @Override
     protected final ParsedTender preProcessParsedItem(final ParsedTender parsedItem) {
+
+        // remove non-digit from criterion weight
+        if (parsedItem.getAwardCriteria() != null) {
+            for (ParsedAwardCriterion criterion : parsedItem.getAwardCriteria()) {
+                if (criterion.getWeight() != null) {
+                    criterion.setWeight(criterion.getWeight().replaceAll("\\D", ""));
+                }
+            }
+        }
+
+        // normalize bid deadline
+        if (parsedItem.getBidDeadline() != null) {
+            parsedItem.setBidDeadline(parsedItem.getBidDeadline().replaceAll(".*:", ""));
+        }
+
+        // clean boolean from framework agreement
+        if (parsedItem.getIsFrameworkAgreement() != null) {
+            if (parsedItem.getIsFrameworkAgreement().trim().contains("oui")) {
+                parsedItem.setIsFrameworkAgreement(Boolean.TRUE.toString());
+            } else if (parsedItem.getIsFrameworkAgreement().trim().contains("non")) {
+                parsedItem.setIsFrameworkAgreement(Boolean.FALSE.toString());
+            }
+        }
+
+        // clean boolean from variants accepted
+        if (parsedItem.getAreVariantsAccepted() != null) {
+            if (parsedItem.getAreVariantsAccepted().trim().contains("oui")) {
+                parsedItem.setAreVariantsAccepted(Boolean.TRUE.toString());
+            } else if (parsedItem.getAreVariantsAccepted().trim().contains("non")) {
+                parsedItem.setAreVariantsAccepted(Boolean.FALSE.toString());
+            }
+        }
+
         return parsedItem;
     }
 
@@ -250,7 +286,22 @@ public class BOAMPTenderCleaner extends BaseDatlabTenderCleaner {
                         new PublicationPlugin(NUMBER_FORMATS, DATE_FORMATTERS, BOAMPTenderUtils.FORM_TYPE_MAPPING))
                 .registerPlugin("procedureType", new TenderProcedureTypePlugin(getProcedureTypeMapping(), null))
                 .registerPlugin("prices", new PricePlugin(NUMBER_FORMATS))
+                .registerPlugin("selectionMethod", new SelectionMethodPlugin(selectionMethodMapping()))
                 .registerPlugin("corrections", new CorrigendumPlugin(NUMBER_FORMATS, DATE_FORMATTERS));
+    }
+
+    /**
+     * @return selection Method mapping for cleaning process
+     */
+    private Map<Enum, List<String>> selectionMethodMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(SelectionMethod.MEAT, Arrays.asList(
+                "Offre économiquement la plus avantageuse appréciée en fonction des critères énoncés ci-dessous.",
+                "Offre économiquement la plus avantageuse appréciée en fonction des critères énoncés dans le cahier des charg" +
+                        "es (règlement de la consultation, lettre d'invitation ou document descriptif)."));
+
+        return mapping;
     }
 
     /**

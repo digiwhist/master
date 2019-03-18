@@ -1,18 +1,17 @@
 package eu.dl.dataaccess.dto.clean;
 
-import static eu.dl.dataaccess.utils.ClassUtils.removeNonsenses;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import eu.dl.dataaccess.annotation.Transformable;
+import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
+import eu.dl.dataaccess.dto.generic.Amendment;
+import eu.dl.dataaccess.dto.generic.Price;
+import eu.dl.dataaccess.utils.ValidationUtils;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import eu.dl.dataaccess.annotation.Transformable;
-import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
-import eu.dl.dataaccess.dto.generic.Price;
-import eu.dl.dataaccess.utils.ValidationUtils;
+import static eu.dl.dataaccess.utils.ClassUtils.removeNonsenses;
 
 /**
  * Tender lot. Info on individual lot of a contract. It is preferred to have
@@ -97,6 +96,11 @@ public final class CleanTenderLot extends BaseCleanTenderLot<CleanTenderLot> imp
      * Lot id. This one must be unique within superior tender object.
      */
     private String lotId;
+
+    /**
+     * Amendment to tender/lot.
+     */
+    private List<Amendment> amendments;
 
     /**
      * Gets the contract number.
@@ -449,6 +453,42 @@ public final class CleanTenderLot extends BaseCleanTenderLot<CleanTenderLot> imp
 
         // for CleanTenderLot is not necessary to check whether is empty, we assume that each lot has at least one
         // not null parameter.
+        return this;
+    }
+
+    /**
+     * @return amendment.
+     */
+    public List<Amendment> getAmendments() {
+        return amendments;
+    }
+
+    /**
+     * @param newAmendments amendments
+     * @return instance of {@code T} class for chaining
+     */
+    public CleanTenderLot setAmendments(final List<Amendment> newAmendments) {
+        this.amendments = newAmendments;
+        return this;
+    }
+
+    /**
+     * Adds amendment to the list of amendments or create a new list with given amendment if none
+     * exists.
+     *
+     * @param amendment
+     *            new amendment to be added
+     *
+     * @return this instance for chaining
+     */
+    public CleanTenderLot addAmendment(final Amendment amendment) {
+        if (amendment != null) {
+            if (getAmendments() == null) {
+                setAmendments(new ArrayList<>());
+            }
+            this.amendments.add(amendment);
+        }
+
         return this;
     }
 }

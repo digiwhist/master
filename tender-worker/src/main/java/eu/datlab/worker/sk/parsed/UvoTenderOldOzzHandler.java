@@ -80,6 +80,9 @@ final class UvoTenderOldOzzHandler {
                                     "div:has(span:containsOwn(Počet predložených ponúk)) + div",
                                     "div:containsOwn(očet prijatých ponúk) span",
                                     "div:has(span:containsOwn(očet uchádzačov, ktorí predložil)) + div > span"}))
+                            .setValidBidsCount(getFirstValueFromElement(lot, new String[]{
+                                    "div:has(span:containsOwn(Počet predložených ponúk)) + div + div + div",
+                                    "div:has(span:containsOwn(očet uchádzačov, ktorí predložil)) + div + div + div > span"}))
                             .setElectronicBidsCount(getFirstValueFromElement(lot,
                                     "div:containsOwn(ponúk prijatých elektronickou) span"))
                             .addBid(parsedBid(lot))

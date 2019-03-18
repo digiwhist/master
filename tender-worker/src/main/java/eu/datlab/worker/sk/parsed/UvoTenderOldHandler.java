@@ -178,6 +178,7 @@ class UvoTenderOldHandler {
                 .setDocumentsPayable(parseIfTenderDocumentsPayable(document))
                 .setDocumentsPrice(parseDocumentsPrice(document))
                 .setBidDeadline(parseTenderBidDeadline(document))
+                .setAwardDecisionDate(parseAwardDecisionDate(document))
                 .setAwardDeadline(parseAwardDeadline(document))
                 .setEligibleBidLanguages(parseTenderEligibleBidLanguages(document))
                 .setAppealBodyName(parseTenderAppealBodyName(document))
@@ -185,6 +186,7 @@ class UvoTenderOldHandler {
                         .setProgramme(parseFundingProgramme(document))
                         .setIsEuFund(parseIsEUFunded(document)))
                 .addPublications(parseRelatedPublications(document))
+                .setNpwpReasons(parseNpwpReasons(document))
                 .setMediationBodyName(parseMediationBodyName(document));
 
         //         parse form specific attributes
@@ -204,6 +206,36 @@ class UvoTenderOldHandler {
         }
 
         return new ArrayList<>(Arrays.asList(parsedTender));
+    }
+
+    /**
+     * Parse decision date.
+     *
+     * @param document document
+     * @return String
+     */
+    private String parseAwardDecisionDate(final Document document) {
+        return getFirstValueFromElement(document, new String[]{
+                "div.subtitle:contains(DÁTUM ROZHODNUTIA O ZADAN) + div",
+                "div.subtitle:contains(átum uzatvorenia zml) + div"});
+    }
+
+    /**
+     * Parse NPWP reasons.
+     *
+     * @param document document
+     * @return List<String>
+     */
+    private List<String> parseNpwpReasons(final Document document) {
+        final List<String> parsedReasons = new ArrayList<>();
+
+        Elements rawReasons = document.select(IN_PART_IV + "span:containsOwn(dôvodnenie výberu rokovacie) + span");
+
+        for (Element rawReason : rawReasons) {
+            parsedReasons.add(rawReason.text());
+        }
+
+        return parsedReasons;
     }
 
     /**
@@ -252,13 +284,14 @@ class UvoTenderOldHandler {
     private String parseIsFrameworkAgreement(final Document document) {
         String frameworkAgreement = getFirstValueFromElement(document, new String[]{
                 IN_PART_II + "div:has(span:containsOwn(Informácie o verejnej zákazke)) + div",
-                IN_PART_II + "div:has(span:containsOwn(nformácie o rámcovej dohode)) + div"});
+                IN_PART_II + "div:has(span:containsOwn(nformácie o rámcovej dohode)) + div",
+                IN_PART_II + "span:containsOwn(Uzatvorenie rámcovej dohody)"});
 
         if (frameworkAgreement == null) {
             return null;
         } else {
             return String.valueOf(frameworkAgreement.toLowerCase()
-                    .contains("uzavretie rámcovej dohody".toLowerCase()));
+                    .contains("rámcovej dohody".toLowerCase()));
         }
     }
 
@@ -327,6 +360,7 @@ class UvoTenderOldHandler {
     private String parseIsEUFunded(final Document document) {
         return getTrueOrFalseFromElement(document, new String[]{
                 IN_PART_VI + "div:containsOwn(financovaného z fondov Európskej únie) > span",
+                IN_PART_VI + "div.subtitle:contains(financovaného z fondov) + div",
                 IN_PART_VI + "div:containsOwn(yplňte) > span"});
     }
 
@@ -806,7 +840,8 @@ class UvoTenderOldHandler {
     private String parseTenderSupplyType(final Document document) {
         String supplyType = getFirstValueFromElement(document, new String[]{
                 "div.notice > div:has(strong:containsOwn(Druh zákazky:))",
-                "div.notice div:containsOwn(Druh zákazky) > span"});
+                "div.notice div:containsOwn(Druh zákazky) > span",
+                "div:has(span:containsOwn(Druh zákazky a miesto uskutočňov)) ~ div"});
 
         if (supplyType == null) {
             return null;
@@ -1102,14 +1137,16 @@ class UvoTenderOldHandler {
                     return null;
                 }
 
-                final String criterionName = criterionParts[0].trim();
+                final String criterionName = criterionParts[0].trim().replaceAll("^.\\. Časť č\\. .:", "");
                 String criterionWeight = null;
                 if (criterionParts.length > 1) {
-                    criterionWeight = criterionParts[1].trim();
+                    criterionWeight = criterionParts[criterionParts.length - 1].trim();
                 }
 
                 parsedAwardCriteria.add(
-                        new ParsedAwardCriterion().setName(criterionName).setWeight(criterionWeight));
+                        new ParsedAwardCriterion()
+                                .setName(criterionName)
+                                .setWeight(criterionWeight));
             }
         } else {
             firstLine = document.select(IN_PART_IV + "div:has(span.code:matchesOwn(IV.1.1[\\.\\)]))").first();
@@ -1136,7 +1173,7 @@ class UvoTenderOldHandler {
                     }
 
                     parsedAwardCriteria.add(new ParsedAwardCriterion()
-                            .setName(names.get(i))
+                            .setName(names.get(i).replaceAll("^.\\. Časť č\\. .:", ""))
                             .setWeight(weight));
                 }
             }

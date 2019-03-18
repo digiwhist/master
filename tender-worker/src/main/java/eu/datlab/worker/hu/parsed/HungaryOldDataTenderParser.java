@@ -4,10 +4,12 @@ import eu.datlab.dataaccess.dto.codetables.PublicationSources;
 import eu.datlab.worker.parser.BaseDatlabTenderParser;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
+import eu.dl.dataaccess.dto.codetables.SelectionMethod;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedBid;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedCPV;
+import eu.dl.dataaccess.dto.parsed.ParsedFunding;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
@@ -16,6 +18,7 @@ import eu.dl.dataaccess.dto.raw.RawData;
 
 import java.io.IOException;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -151,7 +154,7 @@ public class HungaryOldDataTenderParser extends BaseDatlabTenderParser {
      * @return parsed tender
      */
     private static ParsedTender parseRecord(final CSVRecord record) {
-        return new ParsedTender()
+        ParsedTender tender = new ParsedTender()
                 .addPublication(new ParsedPublication()
                         .setIsIncluded(true)
                         .setSourceId(record.get("eh_iktsz"))
@@ -171,12 +174,13 @@ public class HungaryOldDataTenderParser extends BaseDatlabTenderParser {
                         .setBuyerType(record.get("eh_ajk_tip"))
                         .addMainActivity(record.get("eh_ajk_tev")))
                 .addLot(new ParsedTenderLot()
-                        .setLotNumber(record.get("eh_er_id"))
+                        .setLotNumber(record.get("eh_szszam"))
+                        .setTitle(record.get("eh_sznev"))
                         .setContractNumber(record.get("eh_szszam"))
                         .setEstimatedCompletionDate(record.get("af_szido_bef1"))
                         .setEstimatedStartDate(record.get("af_szido_kezd1"))
                         .addBid(new ParsedBid()
-                                .setIsSubcontracted(record.get("eh_alvall_fv"))
+                                .setIsSubcontracted(isEnabled(record.get("eh_alvall")).toString())
                                 .setIsWinning(Boolean.TRUE.toString())
                                 .addBidder(parseBody(record, "eh_ny_"))
                                 .setIsConsortium(isEnabled(record.get("eh_ny_konz")).toString())
@@ -185,11 +189,27 @@ public class HungaryOldDataTenderParser extends BaseDatlabTenderParser {
                 .addCpv(parseTenderMainCpv(record))
                 .setBidDeadline(record.get("af_hatido1"))
                 .setEstimatedPrice(parsePrice(record, "eh_b_s_"))
-                .setIsElectronicAuction(record.get("eh_earlejtes_fv"))
+                .setIsElectronicAuction(isEnabled(record.get("eh_earlejtes_fv")).toString())
                 .setIsFrameworkAgreement(record.get("eh_keret"))
                 .setBidDeadline(record.get("af_hatido1"))
                 .setSelectionMethod(record.get("eh_bsz_le"))
-                .setFinalPrice(parsePrice(record, "eh_k_s_"));
+                .setFinalPrice(parsePrice(record, "eh_k_s_"))
+                .setEstimatedDurationInDays(record.get("af_szido_nap1"))
+                .setContractSignatureDate(record.get("szt_szkotes_dt1"));
+
+        String targy = record.get("eh_targy");
+        tender.setIsDps(Boolean.valueOf("3".equals(targy)).toString());
+        if (tender.getIsFrameworkAgreement() == null) {
+            tender.setIsDps(Boolean.valueOf(Arrays.asList("1", "2").contains(targy)).toString());
+        }
+
+        tender.addFunding(new ParsedFunding().setIsEuFund(isEnabled(record.get("eh_eu")).toString()));
+
+        if (tender.getSelectionMethod() == null && isEnabled(record.get("eh_bsz_la"))) {
+            tender.setSelectionMethod(SelectionMethod.LOWEST_PRICE.name());
+        }
+
+        return tender;
     }
 
     @Override

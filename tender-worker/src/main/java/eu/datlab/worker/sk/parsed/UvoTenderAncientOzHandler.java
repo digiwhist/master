@@ -111,13 +111,18 @@ final class UvoTenderAncientOzHandler {
         Element root = document.select("tr > td:has(span.nadpis:containsOwn(PRÍLOHA))").first();
 
         if (root == null) {
-            return null;
+            root = document;
         }
 
         List<Element> lotFirstLines = root.select(
                 "tr:not(:has(table)):has(td:has" + "(span:containsOwn(Poradové číslo časti)))");
 
-        if (lotFirstLines == null || lotFirstLines.isEmpty()) {
+        if (lotFirstLines.isEmpty()) {
+            lotFirstLines = root.select(
+                    "tr:not(:has(table)):has(td:has" + "(span:containsOwn(Časť č)))");
+        }
+
+        if (lotFirstLines.isEmpty()) {
             return Arrays.asList(root);
         }
 

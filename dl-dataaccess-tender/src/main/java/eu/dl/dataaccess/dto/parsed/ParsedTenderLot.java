@@ -90,10 +90,14 @@ public final class ParsedTenderLot extends BaseParsedTenderLot<ParsedTenderLot> 
     /**
      * @return the contractNumber
      */
-
     public String getContractNumber() {
         return contractNumber;
     }
+
+    /**
+     * Amendments to tender/lot.
+     */
+    private List<ParsedAmendment> amendments;
 
     /**
      * @param contractNumber
@@ -101,7 +105,6 @@ public final class ParsedTenderLot extends BaseParsedTenderLot<ParsedTenderLot> 
      *
      * @return this instance for for chaining
      */
-
     public ParsedTenderLot setContractNumber(final String contractNumber) {
         this.contractNumber = contractNumber;
         return this;
@@ -110,7 +113,6 @@ public final class ParsedTenderLot extends BaseParsedTenderLot<ParsedTenderLot> 
     /**
      * @return the lotNumber
      */
-
     public String getLotNumber() {
         return lotNumber;
     }
@@ -121,7 +123,6 @@ public final class ParsedTenderLot extends BaseParsedTenderLot<ParsedTenderLot> 
      *
      * @return this instance for for chaining
      */
-
     public ParsedTenderLot setLotNumber(final String lotNumber) {
         this.lotNumber = lotNumber;
         return this;
@@ -130,7 +131,6 @@ public final class ParsedTenderLot extends BaseParsedTenderLot<ParsedTenderLot> 
     /**
      * @return the positionOnPage
      */
-
     public String getPositionOnPage() {
         return positionOnPage;
     }
@@ -141,7 +141,6 @@ public final class ParsedTenderLot extends BaseParsedTenderLot<ParsedTenderLot> 
      *
      * @return this instance for for chaining
      */
-
     public ParsedTenderLot setPositionOnPage(final String positionOnPage) {
         this.positionOnPage = positionOnPage;
         return this;
@@ -150,7 +149,6 @@ public final class ParsedTenderLot extends BaseParsedTenderLot<ParsedTenderLot> 
     /**
      * @return the status
      */
-
     public String getStatus() {
         return status;
     }
@@ -161,7 +159,6 @@ public final class ParsedTenderLot extends BaseParsedTenderLot<ParsedTenderLot> 
      *
      * @return this instance for for chaining
      */
-
     public ParsedTenderLot setStatus(final String status) {
         this.status = status;
         return this;
@@ -407,6 +404,42 @@ public final class ParsedTenderLot extends BaseParsedTenderLot<ParsedTenderLot> 
      */
     public ParsedTenderLot setLotId(final String lotId) {
         this.lotId = lotId;
+        return this;
+    }
+
+    /**
+     * @return amendment.
+     */
+    public List<ParsedAmendment> getAmendments() {
+        return amendments;
+    }
+
+    /**
+     * @param newAmendments amendments
+     * @return instance of {@code T} class for chaining
+     */
+    public ParsedTenderLot setAmendments(final List<ParsedAmendment> newAmendments) {
+        this.amendments = newAmendments;
+        return this;
+    }
+
+    /**
+     * Adds amendment to the list of amendments or create a new list with given amendment if none
+     * exists.
+     *
+     * @param amendment
+     *            new amendment to be added
+     *
+     * @return this instance for chaining
+     */
+    public ParsedTenderLot addAmendment(final ParsedAmendment amendment) {
+        if (amendment != null) {
+            if (getAmendments() == null) {
+                setAmendments(new ArrayList<>());
+            }
+            this.amendments.add(amendment);
+        }
+
         return this;
     }
 }

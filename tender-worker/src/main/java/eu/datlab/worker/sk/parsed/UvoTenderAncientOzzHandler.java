@@ -39,7 +39,6 @@ final class UvoTenderAncientOzzHandler {
      *
      * @param parsedTender tender to add data to
      * @param document     document to parse data from
-     *
      * @return ParsedBasicTender with data added
      */
     public static ParsedTender parse(final ParsedTender parsedTender, final Document document) {
@@ -73,14 +72,28 @@ final class UvoTenderAncientOzzHandler {
                 "tr:has(td.kod:matchesOwn(^II\\.2\\.1[\\.\\)])) ~ tr:matches(Hodnota) + tr + tr"
         };
 
-        return parsePrice(document, vatSelectors, priceSelectors, currencySelectors, vatAmountSelectors);
+        ParsedPrice result = parsePrice(document, vatSelectors, priceSelectors, currencySelectors, vatAmountSelectors);
+
+        if (result == null) {
+            Element minAmount = document.selectFirst("span:containsOwn(Najnižšia ponuka) ~ span.hodnota");
+            Element maxAmount = document.selectFirst("span:containsOwn(najvyššia ponuka) ~ span.hodnota");
+            Element currency = document.selectFirst("span:containsOwn(najvyššia ponuka) ~ span.hodnota + span.hodnota");
+
+            if (minAmount != null || maxAmount != null) {
+                result = new ParsedPrice()
+                        .setMinNetAmount(minAmount == null ? null : minAmount.text())
+                        .setMaxNetAmount(maxAmount == null ? null : maxAmount.text())
+                        .setCurrency(currency == null ? null : currency.text());
+            }
+        }
+
+        return result;
     }
 
     /**
      * Parse tender lots from element.
      *
      * @param document element to parse from
-     *
      * @return List<ParsedBasicTenderLot> or null
      */
     private static List<ParsedTenderLot> parseLots(final Document document) {
@@ -165,8 +178,10 @@ final class UvoTenderAncientOzzHandler {
                                 "span.hodnota"))
                         .setCity(getFirstValueFromElement(lot, "td.hodnota:containsOwn" +
                                 "(Mesto/obec:) span.hodnota"))
-                        .setCountry(getFirstValueFromElement(lot, "td.hodnota:containsOwn(Štát:) " +
-                                "span.hodnota"))
+                        .setCountry(getFirstValueFromElement(lot, new String[]{
+                                "td.hodnota:containsOwn(Štát:) span.hodnota",
+                                "span:containsOwn(Slovensko)"
+                        }))
                         .setRawAddress(getFirstValueFromElement(lot,
                                 "table.table tr:has(td:containsOwn(IČO)) + tr"))
                         .setUrl(getFirstValueFromElement(lot, "span:containsOwn(\\(URL\\)) ~ span" +
@@ -176,7 +191,7 @@ final class UvoTenderAncientOzzHandler {
                 .setEmail(getFirstValueFromElement(lot, "td.hodnota:containsOwn(E-mail:) span" +
                         ".hodnota"));
 
-        final String bodyId = getFirstValueFromElement(lot, new String[] {
+        final String bodyId = getFirstValueFromElement(lot, new String[]{
                 "td.hodnota:containsOwn(IČO:) span.hodnota",
                 "td.hodnota:containsOwn(Vnútroštátne identifikačné číslo:) span.hodnota"});
 
@@ -199,7 +214,6 @@ final class UvoTenderAncientOzzHandler {
      * Parse estimated price.
      *
      * @param lot lot to be parsed from
-     *
      * @return ParsedPrice or null
      */
     private static ParsedPrice parseEstimatedPrice(final Element lot) {
@@ -222,7 +236,6 @@ final class UvoTenderAncientOzzHandler {
      * Create element for each lot in OZZ form.
      *
      * @param document element to be parsed from
-     *
      * @return List<Element>
      */
     private static List<Element> getOzzLotsSubsections(final Element document) {
@@ -233,7 +246,7 @@ final class UvoTenderAncientOzzHandler {
         }
 
         List<Element> lotFirstLines = root.select(
-                "tr:not(:has(table)):has(td:has(span:containsOwn(Zmluva k časti číslo:)))");
+                "tr:not(:has(table)):has(td:has(span:containsOwn(mluva k)))");
 
         if (lotFirstLines == null || lotFirstLines.isEmpty()) {
             return Arrays.asList(root);

@@ -1,23 +1,24 @@
 package eu.datlab.server;
 
 import eu.datlab.dataaccess.dao.DAOFactory;
-import eu.dl.dataaccess.dao.MasterTenderOpentenderDAO;
 import eu.datlab.dataaccess.dao.ZIndexIndicatorDAO;
 import eu.datlab.dataaccess.dto.zindex.ZIndexIndicator;
+import eu.dl.dataaccess.dao.CleanTenderDAO;
+import eu.dl.dataaccess.dao.MasterBodyDAO;
+import eu.dl.dataaccess.dao.MasterTenderOpentenderDAO;
+import eu.dl.dataaccess.dao.TransactionUtils;
+import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.master.MasterBid;
 import eu.dl.dataaccess.dto.master.MasterBody;
+import eu.dl.dataaccess.dto.master.MasterTender;
 import eu.dl.dataaccess.dto.master.MasterTenderLot;
 import eu.dl.dataaccess.dto.utils.OCDSUtils;
 import eu.dl.dataaccess.utils.PopulateUtils;
-import eu.dl.dataaccess.dao.CleanTenderDAO;
-import eu.dl.dataaccess.dao.MasterBodyDAO;
-import eu.dl.dataaccess.dao.TransactionUtils;
-import eu.dl.dataaccess.dto.clean.CleanTender;
-import eu.dl.dataaccess.dto.master.MasterTender;
 import eu.dl.server.BaseServer;
 import eu.dl.server.JsonTransformer;
 import eu.dl.server.exceptions.NotFoundException;
 import eu.dl.server.exceptions.ParameterFormattingException;
+import org.json.JSONObject;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -184,6 +185,21 @@ public final class TenderApi extends BaseServer {
                 }
             }
 
+            return result;
+        }, new JsonTransformer());
+
+        get("/protected/master_tender_count", "application/json", (request, response) -> {
+            LocalDateTime timestamp = getDate(request.queryParams("timestamp"));
+            String country = request.queryParams("country");
+            String source = request.queryParams("source");
+
+            transactionUtils.begin();
+
+            Integer count = masterDao.getModifiedAfterCount(timestamp, source, country);
+            JSONObject result = new JSONObject();
+
+            result.put("count", count);
+            transactionUtils.commit();
             return result;
         }, new JsonTransformer());
     }

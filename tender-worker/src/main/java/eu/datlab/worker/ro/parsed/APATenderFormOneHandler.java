@@ -51,6 +51,8 @@ public final class APATenderFormOneHandler {
             DATA_ANUNT, TIP_INCHEIERE_CONTRACT, NUMAR_CONTRACT, DATA_CONTRACT, TITLU_CONTRACT, VALOARE, MONEDA,
             VALOARE_RON, VALOARE_EUR, CPV_CODE_ID, CPV_CODE};
 
+    private static final CSVFormat CSV_FORMAT = CSVFormat.newFormat('^').withHeader(CSV_HEADER).withIgnoreEmptyLines(true);
+
     /**
      * Suppress default constructor for noninstantiability.
      */
@@ -64,52 +66,56 @@ public final class APATenderFormOneHandler {
      * @return List<ParsedTender>
      */
     public static List<ParsedTender> parse(final RawData raw, final Logger logger) {
-        final CSVParser csvParser;
         try {
             final List<ParsedTender> parsedTenders = new ArrayList<>();
-            csvParser = CSVParser.parse(raw.getSourceData(),
-                    CSVFormat.newFormat('^').withHeader(CSV_HEADER).withSkipHeaderRecord(true));
-            final List<CSVRecord> tenders = csvParser.getRecords();
 
-            for (CSVRecord tender : tenders) {
-                parsedTenders.add(new ParsedTender()
+            APACSVReader reader = new APACSVReader(raw.getSourceData(), CSV_HEADER.length);
+            reader.readLine(); // skip header
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                CSVParser csvParser = CSVParser.parse(line, CSV_FORMAT);
+
+                for (CSVRecord tender : csvParser) {
+                    parsedTenders.add(new ParsedTender()
                         .addLot(new ParsedTenderLot()
-                                .addBid(new ParsedBid()
-                                        .addBidder(new ParsedBody()
-                                                .setName(tender.get(CASTIGATOR))
-                                                .addBodyId(new BodyIdentifier()
-                                                        .setId(tender.get(CASTIGATOR_CUI))
-                                                        .setType(BodyIdentifier.Type.ORGANIZATION_ID)
-                                                        .setScope(BodyIdentifier.Scope.RO))
-                                                .setAddress(new ParsedAddress()
-                                                        .setCountry(tender.get(CASTIGATOR_TARA))
-                                                        .setCity(tender.get(CASTIGATOR_LOCALITATE))
-                                                        .setRawAddress(tender.get(CASTIGATOR_ADRESA))))
-                                        .setIsWinning(Boolean.TRUE.toString())
-                                        .setPrice(new ParsedPrice()
-                                                .setNetAmount(tender.get(VALOARE))
-                                                .setCurrency(tender.get(MONEDA))
-                                                .setNetAmountEur(tender.get(VALOARE_EUR))))
-                                .setContractSignatureDate(tender.get(DATA_CONTRACT)))
+                            .addBid(new ParsedBid()
+                                .addBidder(new ParsedBody()
+                                    .setName(tender.get(CASTIGATOR))
+                                    .addBodyId(new BodyIdentifier()
+                                        .setId(tender.get(CASTIGATOR_CUI))
+                                        .setType(BodyIdentifier.Type.ORGANIZATION_ID)
+                                        .setScope(BodyIdentifier.Scope.RO))
+                                    .setAddress(new ParsedAddress()
+                                        .setCountry(tender.get(CASTIGATOR_TARA))
+                                        .setCity(tender.get(CASTIGATOR_LOCALITATE))
+                                        .setRawAddress(tender.get(CASTIGATOR_ADRESA))))
+                                .setIsWinning(Boolean.TRUE.toString())
+                                .setPrice(new ParsedPrice()
+                                    .setNetAmount(tender.get(VALOARE))
+                                    .setCurrency(tender.get(MONEDA))
+                                    .setNetAmountEur(tender.get(VALOARE_EUR))))
+                            .setContractSignatureDate(tender.get(DATA_CONTRACT)))
                         .setNationalProcedureType(tender.get(TIP_PROCEDURA))
                         .setProcedureType(tender.get(TIP_PROCEDURA))
                         .addBuyer(new ParsedBody()
-                                .setName(tender.get(AUTORITATE_CONTRACTANTA))
-                                .addBodyId(new BodyIdentifier()
-                                        .setId(tender.get(AUTORITATE_CONTRACTANTA_CU))
-                                        .setType(BodyIdentifier.Type.ORGANIZATION_ID)
-                                        .setScope(BodyIdentifier.Scope.RO)))
+                            .setName(tender.get(AUTORITATE_CONTRACTANTA))
+                            .addBodyId(new BodyIdentifier()
+                                .setId(tender.get(AUTORITATE_CONTRACTANTA_CU))
+                                .setType(BodyIdentifier.Type.ORGANIZATION_ID)
+                                .setScope(BodyIdentifier.Scope.RO)))
                         .setBuyerAssignedId(tender.get(NUMAR_CONTRACT))
                         .addPublication(new ParsedPublication()
-                                .setBuyerAssignedId(tender.get(NUMAR_ANUNT))
-                                .setPublicationDate(tender.get(DATA_ANUNT))
-                                .setIsIncluded(true)
-                                .setFormType("OUTRIGHT_AWARD")
-                                .setSource(PublicationSources.RO_APA))
+                            .setBuyerAssignedId(tender.get(NUMAR_ANUNT))
+                            .setPublicationDate(tender.get(DATA_ANUNT))
+                            .setIsIncluded(true)
+                            .setFormType("OUTRIGHT_AWARD")
+                            .setSource(PublicationSources.RO_APA))
                         .setTitle(tender.get(TITLU_CONTRACT))
                         .addCpv(new ParsedCPV()
-                                .setIsMain(Boolean.TRUE.toString())
-                                .setCode(tender.get(CPV_CODE))));
+                            .setIsMain(Boolean.TRUE.toString())
+                            .setCode(tender.get(CPV_CODE))));
+                }
             }
 
             return parsedTenders;

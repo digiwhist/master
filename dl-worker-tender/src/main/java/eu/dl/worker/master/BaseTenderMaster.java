@@ -2,6 +2,7 @@ package eu.dl.worker.master;
 
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
+import eu.dl.dataaccess.dto.generic.Amendment;
 import eu.dl.dataaccess.dto.generic.BasePrice;
 import eu.dl.dataaccess.dto.generic.Payment;
 import eu.dl.dataaccess.dto.generic.Publication;
@@ -72,6 +73,8 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
 
         // add publication dates to TenderParts where needed i.e. Document
         populatePublicationDates(preprocessedData);
+        // add publication source ids to Amendments
+        populateSourceIds(preprocessedData);
 
         if (preprocessedData.size() > NUMBER_OF_PUBLICATIONS) {
             return preprocessedData.subList(0, NUMBER_OF_PUBLICATIONS-1);
@@ -153,6 +156,28 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
                 for (MasterablePart part : parts) {
                     if (part != null) {
                         part.setPublicationDate(publicationDate);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Add tender ids to Amendments.
+     *
+     * @param items items to be populated
+     */
+    private void populateSourceIds(final List<T> items) {
+        for (T item : items) {
+            String sourceId = DTOUtils.getPublicationSourceId(item);
+            if (sourceId != null) {
+                if (item.getLots() != null) {
+                    for (MatchedTenderLot lot : item.getLots()) {
+                        if (lot.getAmendments() != null) {
+                            for (Amendment amendment : lot.getAmendments()) {
+                                amendment.setSourceId(sourceId);
+                            }
+                        }
                     }
                 }
             }

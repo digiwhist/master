@@ -45,6 +45,7 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
         setMaxBidsCount(cleanTender.getMaxBidsCount());
         setSupplyType(cleanTender.getSupplyType());
         setSize(cleanTender.getSize());
+        setSizeNational(cleanTender.getSizeNational());
         setBidDeadline(cleanTender.getBidDeadline());
         setDocumentsDeadline(cleanTender.getDocumentsDeadline());
         setDocumentsPayable(cleanTender.getDocumentsPayable());
@@ -180,6 +181,11 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      * Tender size (below/above the threshold).
      */
     private TenderSize size;
+
+    /**
+     * Tender size (below/above the threshold).
+     */
+    private String sizeNational;
 
     /**
      * Date until which bids need to be submitted (do not confuse with
@@ -596,7 +602,6 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      *
      * @return the size
      */
-    
     public final TenderSize getSize() {
         return size;
     }
@@ -611,6 +616,24 @@ public class MatchedTender extends BaseMatchedTenderLot<MatchedTender> implement
      */
     public final MatchedTender setSize(final TenderSize newSize) {
         this.size = newSize;
+        return this;
+    }
+
+    /**
+     * @return the size national
+     */
+    public final String getSizeNational() {
+        return sizeNational;
+    }
+
+    /**
+     * @param newSizeNational
+     *         the size to set
+     *
+     * @return this instance for chaining
+     */
+    public final MatchedTender setSizeNational(final String newSizeNational) {
+        this.sizeNational = newSizeNational;
         return this;
     }
 

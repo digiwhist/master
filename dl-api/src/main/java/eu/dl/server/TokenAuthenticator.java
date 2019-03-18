@@ -31,6 +31,11 @@ public class TokenAuthenticator implements Authenticator {
     public final void validate(final Credentials credentials, final WebContext context) throws HttpAction, CredentialsException {
         try {
             String token = ((TokenCredentials) credentials).getToken();
+            if (token == null || token.isEmpty()) {
+                logger.error("Unable to authenticate, no token provided");
+                throw new CredentialsException("No token provided");
+            }
+
             Jws<Claims> jwsToken = Jwts.parser().setSigningKey(config.getParam("authentication.apiSecurityKey")).parseClaimsJws(token);
 
             Claims claims = jwsToken.getBody();

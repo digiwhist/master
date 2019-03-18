@@ -1,5 +1,6 @@
 package eu.datlab.worker.cz.parsed;
 
+import eu.dl.dataaccess.dto.parsed.ParsedAmendment;
 import eu.dl.dataaccess.dto.parsed.ParsedBid;
 import eu.dl.dataaccess.dto.parsed.ParsedCPV;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
@@ -12,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+
+import static eu.datlab.worker.cz.parsed.VVZTenderParser.getSectionV;
 
 /**
  * Handler for parsing form F20 - Modification notice.
@@ -42,8 +45,8 @@ final class VVZFormF20Handler extends VVZEuFormsHandler {
         final Element sectionI = VVZTenderParser.getSectionI(form);
         final Element sectionII = VVZTenderParser.getSectionII(form);
         final Element sectionIV = VVZTenderParser.getSectionIV(form);
+        final Element sectionV = getSectionV(form);
         final Element sectionVI = VVZTenderParser.getSectionVI(form);
-        final Element sectionVII = getSectionVII(form);
 
         // parse info about publication of related original form that is being corrected
         tender.addPublication(VVZTenderParser.parseRelatedOriginalPublicationFromHeader(form));
@@ -58,8 +61,25 @@ final class VVZFormF20Handler extends VVZEuFormsHandler {
         // subsection II.1.1
         parsedTender.setTitle(VVZTenderParser.parseTenderTitle(sectionII));
 
+        // subsection II.1.2
+        parsedTender.setCpvs(parseCPVs(sectionII));
+
         // subsection II.1.3
         parsedTender.setSupplyType(VVZTenderParser.parseSupplyType(sectionII));
+
+        // subsection II.2.3
+        parsedTender.setAddressOfImplementation(parseAddressOfImplementation(sectionII));
+
+        // subsection II.2.4
+        parsedTender.setDescription(VVZTenderParser.parseLotDescription(sectionII));
+
+        // subsection II.2.7
+        parsedTender.setEstimatedDurationInMonths(parseLotEstimatedDurationInMonths(sectionII))
+                .setEstimatedDurationInDays(parseLotEstimatedDurationInDays(sectionII))
+                .setEstimatedStartDate(parseLotEstimatedStartDate(sectionII))
+                .setEstimatedCompletionDate(parseLotEstimatedCompletionDate(sectionII));
+        parsedTender.setExcessiveFrameworkAgreementJustification(
+                parseExcessiveFrameworkAgreementJustification(sectionII));
 
         // subsection II.2.13
         parsedTender.addFunding(VVZTenderParser.parseEuFunding(sectionII));
@@ -68,6 +88,11 @@ final class VVZFormF20Handler extends VVZEuFormsHandler {
 
         // subsection IV.2.1
         parsedTender.addPublication(parsePreviousTedPublication(sectionIV));
+
+        // SECTION V
+
+        // subsection V.2.4
+        parsedTender.setFinalPrice(parseTenderFinalPrice(sectionV));
 
         // SECTION V and VII.1.6 and VII.1.7
         parsedTender.addLot(parseLotAward(form));
@@ -82,31 +107,6 @@ final class VVZFormF20Handler extends VVZEuFormsHandler {
 
         // subsection VI.4.2
         parsedTender.setMediationBodyName(parseMediationBodyName(sectionVI));
-
-        // SECTION VII
-
-        // subsection VII.1.1
-        parsedTender.setCpvs(parseCPVs(sectionVII));
-
-        // subsection VII.1.3
-        parsedTender.setAddressOfImplementation(parseAddressOfImplementation(sectionVII));
-
-        // VII.1.4
-        parsedTender.setDescription(VVZTenderParser.parseLotDescription(sectionVII));
-
-        // VII.1.5
-        parsedTender.setEstimatedDurationInMonths(parseLotEstimatedDurationInMonths(sectionVII))
-                .setEstimatedDurationInDays(parseLotEstimatedDurationInDays(sectionVII))
-                .setEstimatedStartDate(parseLotEstimatedStartDate(sectionVII))
-                .setEstimatedCompletionDate(parseLotEstimatedCompletionDate(sectionVII));
-        parsedTender.setExcessiveFrameworkAgreementJustification(
-                parseExcessiveFrameworkAgreementJustification(sectionVII));
-
-        // VII.2.2
-        parsedTender = parseModificationReasonInfo(sectionVII, parsedTender);
-
-        // VII.2.3
-        parsedTender.setFinalPrice(parseTenderNewFinalPrice(sectionVII));
 
         return parsedTender;
     }
@@ -157,6 +157,7 @@ final class VVZFormF20Handler extends VVZEuFormsHandler {
      */
     private static ParsedTenderLot parseLotAward(final Document form) {
         final Element lotHtml = VVZTenderParser.getLotsAwardsHtmls(form).first();
+        final Element sectionV = getSectionV(form);
         final Element sectionVII = getSectionVII(form);
 
         ParsedTenderLot parsedLot = new ParsedTenderLot();
@@ -172,8 +173,37 @@ final class VVZFormF20Handler extends VVZEuFormsHandler {
         // subsection V.2.1)
         parsedLot.setContractSignatureDate(VVZTenderParser.parseLotAwardContractSignatureDate(lotHtml));
 
-        // parse bid info (VII.1.6, VII.1.7)
-        parsedLot.addBid(parseLotAwardWinningBid(sectionVII));
+        // parse bid info (V.2.2 V.2.3, V.2.4)
+        parsedLot.addBid(parseLotAwardWinningBid(sectionV));
+
+        // SECTION VII
+        ParsedAmendment parsedAmendment = new ParsedAmendment();
+
+        // subsection VII.1.1
+        parsedAmendment.setCpvs(parseCPVs(sectionVII));
+
+        // subsection VII.1.3
+        parsedAmendment.setAddressOfImplementation(parseAddressOfImplementation(sectionVII));
+
+        // VII.1.4
+        parsedAmendment.setDescription(VVZTenderParser.parseLotDescription(sectionVII));
+
+        // VII.1.5
+        parsedAmendment.setEstimatedDurationInMonths(parseLotEstimatedDurationInMonths(sectionVII))
+                .setEstimatedDurationInDays(parseLotEstimatedDurationInDays(sectionVII))
+                .setEstimatedStartDate(parseLotEstimatedStartDate(sectionVII))
+                .setEstimatedCompletionDate(parseLotEstimatedCompletionDate(sectionVII));
+        parsedAmendment.setExcessiveFrameworkAgreementJustification(
+                parseExcessiveFrameworkAgreementJustification(sectionVII));
+
+        // VII.2.2
+        parsedAmendment = parseModificationReasonInfo(sectionVII, parsedAmendment);
+
+        // VII.2.3
+        parsedAmendment.setOriginalPrice(parseTenderOriginalFinalPrice(sectionVII));
+        parsedAmendment.setUpdatedPrice(parseTenderNewFinalPrice(sectionVII));
+
+        parsedLot.addAmendment(parsedAmendment);
 
         return parsedLot;
     }
@@ -189,16 +219,35 @@ final class VVZFormF20Handler extends VVZEuFormsHandler {
     private static ParsedBid parseLotAwardWinningBid(final Element lotAwardHtml) {
         ParsedBid winningBid = new ParsedBid().setIsWinning(Boolean.TRUE.toString());
 
-        // subsection VII.1.6)
+        // subsection V.2.4)
         winningBid.setPrice(parseLotAwardBidPrice(lotAwardHtml));
 
-        // subsection VII.1.7)
+        // subsection V.2.3)
         winningBid.setBidders(VVZTenderParser.parseLotAwardWinners(lotAwardHtml));
 
-        // subsection VII.1.6-7)
+        // subsection V.2.2)
         winningBid.setIsConsortium(VVZTenderParser.parseLotAwardBidIsConsortium(lotAwardHtml));
 
         return winningBid;
+    }
+
+    /**
+     * Parses tender new final price.
+     *
+     * @param sectionV
+     *         section VII html
+     *
+     * @return tender new final price
+     */
+    private static ParsedPrice parseTenderFinalPrice(final Element sectionV) {
+        final String netAmount = VVZTenderParserUtils.getFieldValue(sectionV, ".*\\.Total\\.ValueFrom$");
+        final String currency = VVZTenderParserUtils.getSelectedOptionValue(sectionV,
+                ".*\\.ValueTotalAfter\\.Currency$");
+
+        if (StringUtils.isNotEmpty(netAmount)) {
+            return new ParsedPrice().setNetAmount(netAmount).setCurrency(currency);
+        }
+        return null;
     }
 
     // ---------------------------------
@@ -216,7 +265,7 @@ final class VVZFormF20Handler extends VVZEuFormsHandler {
     private static List<ParsedCPV> parseCPVs(final Element root) {
         //final List<ParsedCPV> parsedCPVs = new ArrayList<>();
 
-        final Element mainCpvDiv = root.select("div#Modification_CpvMain").first();
+        final Element mainCpvDiv = root.select("div#Contract_CpvMain, div#Modification_CpvMain").first();
         //final Elements cpvDivs = root.select("div[model~=.*CpvAdditionalList\\[\\d+\\]$]");
 
         return VVZTenderParser.parseCPVCodes(mainCpvDiv);
@@ -240,8 +289,8 @@ final class VVZFormF20Handler extends VVZEuFormsHandler {
      * @return winning bid price
      */
     private static ParsedPrice parseLotAwardBidPrice(final Element lotHtml) {
-        final String netAmount = VVZTenderParserUtils.getFieldValue(lotHtml, ".*\\.ValueTotal\\.ValueFrom$");
-        final String currency = VVZTenderParserUtils.getSelectedOptionValue(lotHtml, ".*\\.ValueTotal\\.Currency$");
+        final String netAmount = VVZTenderParserUtils.getFieldValue(lotHtml, ".*\\.Total\\.ValueFrom$");
+        final String currency = VVZTenderParserUtils.getSelectedOptionValue(lotHtml, ".*\\.Currency$");
 
         if (StringUtils.isNotEmpty(netAmount)) {
             return new ParsedPrice().setNetAmount(netAmount).setCurrency(currency);
@@ -258,12 +307,12 @@ final class VVZFormF20Handler extends VVZEuFormsHandler {
      *
      * @param sectionVII
      *         section VII html
-     * @param tender
+     * @param amendment
      *         tender to be updated
      *
      * @return tender with parsed modification reason and description
      */
-    private static ParsedTender parseModificationReasonInfo(final Element sectionVII, final ParsedTender tender) {
+    private static ParsedAmendment parseModificationReasonInfo(final Element sectionVII, final ParsedAmendment amendment) {
         final String modificationReason = VVZTenderParserUtils.getCheckedInputValue(sectionVII, ".*\\.ModifyReason$");
 
         if (modificationReason != null) {
@@ -278,10 +327,23 @@ final class VVZFormF20Handler extends VVZEuFormsHandler {
                 default:
                     break;
             }
-            tender.setModificationReason(modificationReason)
+            amendment.setModificationReason(modificationReason)
+                    .setModificationShortDescription(parseModificationReasonShortDescription(sectionVII))
                     .setModificationReasonDescription(modificationReasonDescription);
         }
-        return tender;
+        return amendment;
+    }
+
+    /**
+     * Parses modification reason description for all.
+     *
+     * @param sectionVII
+     *         section VII html
+     *
+     * @return modification reason description for unforseen circumstances reason
+     */
+    private static String parseModificationReasonShortDescription(final Element sectionVII) {
+        return VVZTenderParserUtils.getFieldValue(sectionVII, ".*\\.ModifyShortDescr$");
     }
 
     /**
@@ -311,6 +373,25 @@ final class VVZFormF20Handler extends VVZEuFormsHandler {
     // ---------------------------------
     // SUBSECTION VII.2.3)
     // ---------------------------------
+
+    /**
+     * Parses tender new final price.
+     *
+     * @param sectionVII
+     *         section VII html
+     *
+     * @return tender new final price
+     */
+    private static ParsedPrice parseTenderOriginalFinalPrice(final Element sectionVII) {
+        final String netAmount = VVZTenderParserUtils.getFieldValue(sectionVII, ".*\\.ValueTotalBefore\\.ValueFrom$");
+        final String currency = VVZTenderParserUtils.getSelectedOptionValue(sectionVII,
+                ".*\\.ValueTotalAfter\\.Currency$");
+
+        if (StringUtils.isNotEmpty(netAmount)) {
+            return new ParsedPrice().setNetAmount(netAmount).setCurrency(currency);
+        }
+        return null;
+    }
 
     /**
      * Parses tender new final price.

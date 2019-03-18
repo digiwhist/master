@@ -9,11 +9,16 @@ import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.codetables.SelectionMethod;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
 import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
+import eu.dl.dataaccess.dto.parsed.ParsedBid;
+import eu.dl.dataaccess.dto.parsed.ParsedFunding;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
+import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.clean.plugin.AddressPlugin;
+import eu.dl.worker.clean.plugin.AwardCriteriaPlugin;
 import eu.dl.worker.clean.plugin.BodyPlugin;
 import eu.dl.worker.clean.plugin.DatePlugin;
 import eu.dl.worker.clean.plugin.DateTimePlugin;
+import eu.dl.worker.clean.plugin.FundingsPlugin;
 import eu.dl.worker.clean.plugin.IntegerPlugin;
 import eu.dl.worker.clean.plugin.LotPlugin;
 import eu.dl.worker.clean.plugin.PricePlugin;
@@ -30,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -38,7 +44,7 @@ import java.util.Map;
 public class KHTenderCleaner extends BaseDatlabTenderCleaner {
     private static final String VERSION = "1.0";
 
-    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance();
+    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance(Locale.GERMAN);
 
     private static final List<DateTimeFormatter> DATE_FORMATTERS = Arrays.asList(
             DateTimeFormatter.ofPattern("uuuu.MM.dd"),
@@ -77,6 +83,8 @@ public class KHTenderCleaner extends BaseDatlabTenderCleaner {
                 .registerPlugin("procedureType",
                         new TenderProcedureTypePlugin(procedureTypeMapping(), acceleratedProcedures()))
                 .registerPlugin("selectionMethod", new SelectionMethodPlugin(selectionMethodMapping()))
+                .registerPlugin("fundings", new FundingsPlugin(NUMBER_FORMAT))
+                .registerPlugin("awardCriteria", new AwardCriteriaPlugin(NUMBER_FORMAT))
                 .registerPlugin("supplyType", new TenderSupplyTypePlugin(supplyTypeMapping()));
     }
 
@@ -85,8 +93,10 @@ public class KHTenderCleaner extends BaseDatlabTenderCleaner {
      */
     private Map<Enum, List<String>> selectionMethodMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
-        mapping.put(SelectionMethod.MEAT, Arrays.asList("Az összességében legelőnyösebb ajánlat az alábbiak szerint"));
-        mapping.put(SelectionMethod.LOWEST_PRICE, Arrays.asList("Ár – Súlyszám:"));
+        mapping.put(SelectionMethod.MEAT, Arrays.asList("Az összességében legelőnyösebb ajánlat az alábbiak szerint",
+                "1 2. Jótállás időtartama (120 hónap kötelező jótálláson felül maximum további 60 hónap) 30 2 3. Műszaki" +
+                        " és pénzügyi ütemterv kidolgozottsága 20"));
+        mapping.put(SelectionMethod.LOWEST_PRICE, Arrays.asList("Ár – Súlyszám:", "A legalacsonyabb összegű ellenszolgáltatás"));
         return mapping;
     }
 
@@ -113,6 +123,7 @@ public class KHTenderCleaner extends BaseDatlabTenderCleaner {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
         mapping.put(BuyerType.PUBLIC_BODY, Arrays.asList("Közjogi intézmény"));
+        mapping.put(BuyerType.REGIONAL_AGENCY, Arrays.asList("Regionális/helyi szintű"));
 
         return mapping;
     }
@@ -134,6 +145,24 @@ public class KHTenderCleaner extends BaseDatlabTenderCleaner {
         parsedItem.setHasLots(toBooleanString(parsedItem.getHasLots()));
         parsedItem.setHasOptions(toBooleanString(parsedItem.getHasOptions()));
         parsedItem.setAreVariantsAccepted(toBooleanString(parsedItem.getAreVariantsAccepted()));
+        parsedItem.setIsAwarded(toBooleanString(parsedItem.getIsAwarded()));
+        parsedItem.setIsElectronicAuction(toBooleanString(parsedItem.getIsElectronicAuction()));
+        if (parsedItem.getFundings() != null && !parsedItem.getFundings().isEmpty()) {
+            for (ParsedFunding funding : parsedItem.getFundings()) {
+                funding.setIsEuFund(toBooleanString(funding.getIsEuFund()));
+            }
+        }
+
+        if (parsedItem.getLots() != null) {
+            for (ParsedTenderLot lot : parsedItem.getLots()) {
+                if (lot.getBids() != null) {
+                    for (ParsedBid bid : lot.getBids()) {
+                        bid.setIsSubcontracted(toBooleanString(bid.getIsSubcontracted()));
+                        bid.setIsConsortium(toBooleanString(bid.getIsConsortium()));
+                    }
+                }
+            }
+        }
 
         return parsedItem;
     }
@@ -145,7 +174,9 @@ public class KHTenderCleaner extends BaseDatlabTenderCleaner {
         final Map<Enum, List<String>> mapping = new HashMap<>();
         mapping.put(TenderSupplyType.SERVICES, Arrays.asList("Szolgáltatásmegrendelés", "Szolgáltatás megrendelés", "Szolgáltatás"));
         mapping.put(TenderSupplyType.WORKS, Arrays.asList("Építési beruházás", "Építési beruházás Kivitelezés",
-                "Építési beruházás Tervezés és kivitelezés"));
+                "Építési beruházás Tervezés és kivitelezés",
+                "Eljárást megindító felhívás Közbeszerzési Értesítőben történt közzététele nélkül odaítélt szerződés az alább felsor" +
+                        "olt esetekben A Kbt. 115. § szerinti nyílt eljárás"));
         mapping.put(TenderSupplyType.SUPPLIES, Arrays.asList("Árubeszerzés", "Árubeszerzés Adásvétel"));
 
 
@@ -211,7 +242,7 @@ public class KHTenderCleaner extends BaseDatlabTenderCleaner {
      */
     private Map<Enum, List<String>> countryMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
-        mapping.put(CountryCode.HU, Arrays.asList("HU", "Magyarorszag", "Magyarország"));
+        mapping.put(CountryCode.HU, Arrays.asList("HU", "Magyarorszag", "Magyarország", "Magyar"));
         mapping.put(CountryCode.AT, Arrays.asList("AT"));
         mapping.put(CountryCode.BE, Arrays.asList("BE"));
         mapping.put(CountryCode.BG, Arrays.asList("BG"));

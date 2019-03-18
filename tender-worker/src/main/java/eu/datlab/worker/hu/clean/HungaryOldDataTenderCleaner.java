@@ -204,7 +204,7 @@ public class HungaryOldDataTenderCleaner extends BaseDatlabTenderCleaner {
      */
     private Map<Enum, List<String>> getSelectionMethodMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
-        mapping.put(SelectionMethod.LOWEST_PRICE, Arrays.asList("0"));
+        mapping.put(SelectionMethod.LOWEST_PRICE, Arrays.asList("0", SelectionMethod.LOWEST_PRICE.name()));
         mapping.put(SelectionMethod.MEAT,
                 Arrays.asList("1"));
 

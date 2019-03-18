@@ -12,6 +12,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getFirstValueFromElement;
+import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getTrueOrFalseFromElement;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.parsePrice;
 
 import java.util.ArrayList;
@@ -37,7 +38,6 @@ final class UvoTenderNewOzzHandler {
      *
      * @param parsedTender tender to add data to
      * @param document     document to parse data from
-     *
      * @return ParsedBasicTender with data added
      */
     public static ParsedTender parse(final ParsedTender parsedTender, final Document document) {
@@ -50,7 +50,6 @@ final class UvoTenderNewOzzHandler {
      * Parse tender lots from element.
      *
      * @param document element to parse from
-     *
      * @return List<ParsedBasicTenderLot> or null
      */
     private static List<ParsedTenderLot> parseLots(final Document document) {
@@ -65,19 +64,24 @@ final class UvoTenderNewOzzHandler {
         int positionOnPage = 1;
         for (Element lot : lots) {
             parsedLots.add(
-                new ParsedTenderLot()
-                    .setPositionOnPage(String.valueOf(positionOnPage++))
-                    .setLotNumber(parseLotNumber(lot))
-                    .setTitle(getFirstValueFromElement(lot, "div:containsOwn(Názov:) > span"))
-                    .setAwardDecisionDate(getFirstValueFromElement(lot, "div:has(span:containsOwn(Dátum uzatvorenia zmluvy)) + div"))
-                    .setBidsCount(parseBidCount(lot))
-                    .setElectronicBidsCount(getFirstValueFromElement(lot, "div:containsOwn(ponúk prijatých elektronickou) span"))
-                    .addBid(parsedBid(lot))
-                    .setIsAwarded(parseIsLotAwarded(lot))
-                    .setEstimatedPrice(parsePrice(lot,
-                        "div:containsOwn(Hodnota):matches(odhadovaná|predpokladaná) > span + span + span",
-                        "div:containsOwn(Hodnota):matches(odhadovaná|predpokladaná) > span",
-                        "div:containsOwn(Hodnota):matches(odhadovaná|predpokladaná) > span + span", null)));
+                    new ParsedTenderLot()
+                            .setPositionOnPage(String.valueOf(positionOnPage++))
+                            .setLotNumber(parseLotNumber(lot))
+                            .setTitle(getFirstValueFromElement(lot, "div:containsOwn(Názov:) > span"))
+                            .setAwardDecisionDate(getFirstValueFromElement(lot, "div:has(span:containsOwn(Dátum uzatvorenia " +
+                                    "zmluvy)) + div"))
+                            .setBidsCount(parseBidCount(lot))
+                            .setSmeBidsCount(getFirstValueFromElement(lot, "span:containsOwn(ponúk doručených od malých) + span"))
+                            .setOtherEuMemberStatesCompaniesBidsCount(getFirstValueFromElement(lot, "div:containsOwn(ponúk do" +
+                                    "ručených od uchádzačov z iných členských) > span"))
+                            .setElectronicBidsCount(getFirstValueFromElement(lot, "div:containsOwn(elektronick) span"))
+                            .setNonEuMemberStatesCompaniesBidsCount(getFirstValueFromElement(lot, "div:containsOwn(nie sú členm) span"))
+                            .addBid(parsedBid(lot))
+                            .setIsAwarded(parseIsLotAwarded(lot))
+                            .setEstimatedPrice(parsePrice(lot,
+                                    "div:containsOwn(Hodnota):matches(odhadovaná|predpokladaná) > span + span + span",
+                                    "div:containsOwn(Hodnota):matches(odhadovaná|predpokladaná) > span",
+                                    "div:containsOwn(Hodnota):matches(odhadovaná|predpokladaná) > span + span", null)));
         }
 
         return parsedLots.isEmpty() ? null : parsedLots;
@@ -129,21 +133,21 @@ final class UvoTenderNewOzzHandler {
      */
     private static ParsedBid parsedBid(final Element lot) {
         ParsedBid parsedBid = new ParsedBid()
-            .addBidder(parseBidder(lot))
-            .setIsSubcontracted(getFirstValueFromElement(lot, "div:containsOwn(predpoklad subdodávok) > span"))
-            .setIsWinning(String.valueOf(true))
-            .setPrice(parsePrice(lot,
-                new String[] {"div:containsOwn(Hodnota):not(:matches(odhadovaná|predpokladaná|edna)) > span + span + span",
-                "span:containsOwn(Celková hodnota zákazky/časti) + span + span + span",
-                "div:containsOwn(Celková hodnota zákazky/časti) + div > span + span + span"},
-                new String[] {"div:containsOwn(Hodnota):not(:matches(odhadovaná|predpokladaná|edna)) > span",
-                "span:containsOwn(Celková hodnota zákazky/časti) + span",
-                "div:containsOwn(Celková hodnota zákazky/časti) + div > span"},
-                new String[] {"div:containsOwn(Hodnota):not(:matches(odhadovaná|predpokladaná|edna)) > span + span",
-                "span:containsOwn(Celková hodnota zákazky/časti) + span + span",
-                "div:containsOwn(Celková hodnota zákazky/časti) + div > span + span"},
-                null));
-        
+                .addBidder(parseBidder(lot))
+                .setIsSubcontracted(getFirstValueFromElement(lot, "div:containsOwn(predpoklad subdodávok) > span"))
+                .setIsWinning(String.valueOf(true))
+                .setPrice(parsePrice(lot,
+                        new String[]{"div:containsOwn(Hodnota):not(:matches(odhadovaná|predpokladaná|edna)) > span + span + span",
+                                "span:containsOwn(Celková hodnota zákazky/časti) + span + span + span",
+                                "div:containsOwn(Celková hodnota zákazky/časti) + div > span + span + span"},
+                        new String[]{"div:containsOwn(Hodnota):not(:matches(odhadovaná|predpokladaná|edna)) > span",
+                                "span:containsOwn(Celková hodnota zákazky/časti) + span",
+                                "div:containsOwn(Celková hodnota zákazky/časti) + div > span"},
+                        new String[]{"div:containsOwn(Hodnota):not(:matches(odhadovaná|predpokladaná|edna)) > span + span",
+                                "span:containsOwn(Celková hodnota zákazky/časti) + span + span",
+                                "div:containsOwn(Celková hodnota zákazky/časti) + div > span + span"},
+                        null));
+
         if (parsedBid.getBidders() == null && parsedBid.getPrice() == null) {
             return null;
         } else {
@@ -163,6 +167,7 @@ final class UvoTenderNewOzzHandler {
                         "div.contactSelectList > span.titleValue > span",
                         "div.contactSelectList > span.titleValue"}))
                 .setAddress(parseRawAddress(lot))
+                .setIsSme(getTrueOrFalseFromElement(lot, "div:containsOwn(Dodávateľom je MS) > span"))
                 .setPhone(getFirstValueFromElement(lot, "span:containsOwn(Telefón:) + " +
                         "span"))
                 .setEmail(getFirstValueFromElement(lot, "span:containsOwn(Email) + span"));
@@ -191,7 +196,6 @@ final class UvoTenderNewOzzHandler {
      * Parse lot number or lot.
      *
      * @param lot lot to parse from
-     *
      * @return String or null
      */
     private static String parseLotNumber(final Element lot) {
@@ -204,24 +208,32 @@ final class UvoTenderNewOzzHandler {
      * Parse raw address of bidder from document.
      *
      * @param lot lot to be parsed
-     *
      * @return String or Null
      */
     private static ParsedAddress parseRawAddress(final Element lot) {
-        Element element = lot.select("div.ContactSelectList > span.titleValue").first();
+        Element element = lot.selectFirst("div.ContactSelectList > span.titleValue > text");
+
+        if (element == null) {
+            element = lot.selectFirst("div.ContactSelectList > span.titleValue");
+        }
 
         if (element == null) {
             return null;
         }
 
-        return new ParsedAddress().setRawAddress(element.ownText());
+        Element nuts = lot.selectFirst("span:containsOwn(Kód NUTS:) + span");
+        Element country = lot.selectFirst("span:containsOwn(Slovensko)");
+
+        return nuts == null ? null : new ParsedAddress()
+                .addNuts(nuts.ownText())
+                .setCountry(country == null ? null : country.ownText())
+                .setRawAddress(element.ownText());
     }
 
     /**
      * Parse final price value from document.
      *
      * @param document document to be parsed
-     *
      * @return String or Null
      */
     private static ParsedPrice parseFinalPrice(final Document document) {
@@ -248,17 +260,24 @@ final class UvoTenderNewOzzHandler {
      * Create element for each lot in OZZ form.
      *
      * @param document element to be parsed from
-     *
      * @return List<Element>
      */
     private static List<Element> getOzzLotsSubsections(final Element document) {
-        Element root = document.select("legend:matchesOwn(ODDIEL V(:|.)) + div").first();
+        Element root = document.select("fieldset:has(legend:matchesOwn(ODDIEL V(:|.)))").first();
+
+        if (root == null) {
+            root = document.select("legend:matchesOwn(ODDIEL V(:|.)) + div").first();
+        }
 
         if (root == null) {
             return null;
         }
 
-        List<Element> lotFirstLines = root.select("span:containsOwn(Časť:)");
+        List<Element> lotFirstLines = root.select("div:has(span:containsOwn(Časť:)), fieldset > span:containsOwn(Časť:)");
+
+        if (lotFirstLines == null || lotFirstLines.isEmpty()) {
+            lotFirstLines = root.select("span:containsOwn(Časť:)");
+        }
 
         if (lotFirstLines == null || lotFirstLines.isEmpty()) {
             return Arrays.asList(root);

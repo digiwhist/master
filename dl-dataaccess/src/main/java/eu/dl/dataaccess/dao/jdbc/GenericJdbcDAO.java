@@ -590,6 +590,43 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
         }
     }
 
+    @Override
+    public final Integer getModifiedAfterCount(final LocalDateTime timestamp,
+                                          final String createdBy,
+                                          final String countryCode) {
+        try {
+            String query = "SELECT count(*) as total FROM " + getTableWithSchema() + " WHERE modified > ? ";
+
+            if (createdBy!= null && !createdBy.isEmpty()) {
+                query = query + " AND createdby = '" + sanitize(createdBy) + "' ";
+            }
+
+            if (countryCode!= null && !countryCode.isEmpty()) {
+                query = query + " AND data ->> 'country' = '" + sanitize(countryCode) + "' ";
+            }
+
+            PreparedStatement statement = connection.prepareStatement(query);
+
+            statement.setTimestamp(1, Timestamp.valueOf(timestamp));
+
+            ResultSet rs = statement.executeQuery();
+
+            Integer count = 0;
+
+            while (rs.next()) {
+                count = rs.getInt("total");
+            }
+
+            rs.close();
+            statement.close();
+
+            return count;
+        } catch (Exception e) {
+            logger.error("Unable to perform query, because of of {}", e);
+            throw new UnrecoverableException("Unable to perform query.", e);
+        }
+    }
+
     /**
      * Creates item from result set.
      *

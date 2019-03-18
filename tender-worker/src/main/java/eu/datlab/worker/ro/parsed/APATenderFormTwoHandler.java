@@ -75,6 +75,8 @@ public final class APATenderFormTwoHandler {
             MONEDA_VALOARE_ESTIMATA_PARTICIPARE, FONDURI_COMUNITARE, TIP_FINANTARE, TIP_LEGISLATIE_ID, FOND_EUROPEAN,
             CONTRACT_PERIODIC, DEPOZITE_GARANTII, MODALITATI_FINANTARE};
 
+    private static final CSVFormat CSV_FORMAT = CSVFormat.newFormat('^').withHeader(CSV_HEADER).withIgnoreEmptyLines(true);
+
     /**
      * Suppress default constructor for noninstantiability.
      */
@@ -88,74 +90,78 @@ public final class APATenderFormTwoHandler {
      * @return List<ParsedTender>
      */
     public static List<ParsedTender> parse(final RawData raw, final Logger logger) {
-        final CSVParser csvParser;
         try {
             final List<ParsedTender> parsedTenders = new ArrayList<>();
-            csvParser = CSVParser.parse(raw.getSourceData(),
-                    CSVFormat.newFormat('^').withHeader(CSV_HEADER).withSkipHeaderRecord(true));
-            final List<CSVRecord> tenders = csvParser.getRecords();
 
-            for (CSVRecord tender : tenders) {
-                parsedTenders.add(new ParsedTender()
+            APACSVReader reader = new APACSVReader(raw.getSourceData(), CSV_HEADER.length);
+            reader.readLine(); // skip header
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                CSVParser csvParser = CSVParser.parse(line, CSV_FORMAT);
+
+                for (CSVRecord tender : csvParser) {
+                    parsedTenders.add(new ParsedTender()
                         .addLot(new ParsedTenderLot()
-                                .setBidsCount(tender.get(NUMAR_OFERTE_PRIMITE))
-                                .addBid(new ParsedBid()
-                                        .addBidder(new ParsedBody()
-                                                .setName(tender.get(CASTIGATOR))
-                                                .addBodyId(new BodyIdentifier()
-                                                        .setId(tender.get(CASTIGATOR_CUI))
-                                                        .setType(BodyIdentifier.Type.ORGANIZATION_ID)
-                                                        .setScope(BodyIdentifier.Scope.RO))
-                                                .setAddress(new ParsedAddress()
-                                                        .setCountry(tender.get(CASTIGATOR_TARA))
-                                                        .setCity(tender.get(CASTIGATOR_LOCALITATE))
-                                                        .setRawAddress(tender.get(CASTIGATOR_ADRESA))))
-                                        .setIsWinning(Boolean.TRUE.toString())
-                                        .setIsSubcontracted(tender.get(SUBCONTRACTAT))
-                                        .setPrice(new ParsedPrice()
-                                                .setNetAmount(tender.get(VALOARE))
-                                                .setCurrency(tender.get(MONEDA))
-                                                .setNetAmountEur(tender.get(VALOARE_EUR))))
-                                .setContractSignatureDate(tender.get(DATA_CONTRACT)))
+                            .setBidsCount(tender.get(NUMAR_OFERTE_PRIMITE))
+                            .addBid(new ParsedBid()
+                                .addBidder(new ParsedBody()
+                                    .setName(tender.get(CASTIGATOR))
+                                    .addBodyId(new BodyIdentifier()
+                                        .setId(tender.get(CASTIGATOR_CUI))
+                                        .setType(BodyIdentifier.Type.ORGANIZATION_ID)
+                                        .setScope(BodyIdentifier.Scope.RO))
+                                    .setAddress(new ParsedAddress()
+                                        .setCountry(tender.get(CASTIGATOR_TARA))
+                                        .setCity(tender.get(CASTIGATOR_LOCALITATE))
+                                        .setRawAddress(tender.get(CASTIGATOR_ADRESA))))
+                                .setIsWinning(Boolean.TRUE.toString())
+                                .setIsSubcontracted(tender.get(SUBCONTRACTAT))
+                                .setPrice(new ParsedPrice()
+                                    .setNetAmount(tender.get(VALOARE))
+                                    .setCurrency(tender.get(MONEDA))
+                                    .setNetAmountEur(tender.get(VALOARE_EUR))))
+                            .setContractSignatureDate(tender.get(DATA_CONTRACT)))
                         .setEstimatedPrice(new ParsedPrice()
-                                .setNetAmount(tender.get(VALOARE_ESTIMATA_PARTICIPARE))
-                                .setCurrency(tender.get(MONEDA_VALOARE_ESTIMATA_PARTICIPARE))
+                            .setNetAmount(tender.get(VALOARE_ESTIMATA_PARTICIPARE))
+                            .setCurrency(tender.get(MONEDA_VALOARE_ESTIMATA_PARTICIPARE))
                         )
                         .setNationalProcedureType(tender.get(TIP_PROCEDURA))
                         .setProcedureType(tender.get(TIP_PROCEDURA))
                         .addBuyer(new ParsedBody()
-                                .setName(tender.get(AUTORITATE_CONTRACTANTA))
-                                .setBuyerType(tender.get(TIP_AC))
-                                .addMainActivity(tender.get(TIP_ACTIVITATE_AC))
-                                .addBodyId(new BodyIdentifier()
-                                        .setId(tender.get(AUTORITATE_CONTRACTANTA_CUI))
-                                        .setType(BodyIdentifier.Type.ORGANIZATION_ID)
-                                        .setScope(BodyIdentifier.Scope.RO)))
+                            .setName(tender.get(AUTORITATE_CONTRACTANTA))
+                            .setBuyerType(tender.get(TIP_AC))
+                            .addMainActivity(tender.get(TIP_ACTIVITATE_AC))
+                            .addBodyId(new BodyIdentifier()
+                                .setId(tender.get(AUTORITATE_CONTRACTANTA_CUI))
+                                .setType(BodyIdentifier.Type.ORGANIZATION_ID)
+                                .setScope(BodyIdentifier.Scope.RO)))
                         .setBuyerAssignedId(tender.get(NUMAR_CONTRACT))
                         .setSupplyType(tender.get(TIP_CONTRACT))
                         .addPublication(new ParsedPublication()
-                                .setBuyerAssignedId(tender.get(NUMAR_ANUNT_ATRIBUIRE))
-                                .setPublicationDate(tender.get(DATA_ANUNT_ATRIBUIRE))
-                                .setSourceFormType("CONTRACT_AWARD")
-                                .setIsIncluded(true)
-                                .setSource(PublicationSources.RO_APA))
+                            .setBuyerAssignedId(tender.get(NUMAR_ANUNT_ATRIBUIRE))
+                            .setPublicationDate(tender.get(DATA_ANUNT_ATRIBUIRE))
+                            .setSourceFormType("CONTRACT_AWARD")
+                            .setIsIncluded(true)
+                            .setSource(PublicationSources.RO_APA))
                         .addPublication(new ParsedPublication()
-                                .setBuyerAssignedId(tender.get(NUMAR_ANUNT_PARTICIPARE))
-                                .setPublicationDate(tender.get(DATA_ANUNT_PARTICIPARE))
-                                .setFormType("CONTRACT_NOTICE")
-                                .setIsIncluded(false)
-                                .setSource(PublicationSources.RO_APA))
+                            .setBuyerAssignedId(tender.get(NUMAR_ANUNT_PARTICIPARE))
+                            .setPublicationDate(tender.get(DATA_ANUNT_PARTICIPARE))
+                            .setFormType("CONTRACT_NOTICE")
+                            .setIsIncluded(false)
+                            .setSource(PublicationSources.RO_APA))
                         .addFunding(new ParsedFunding()
-                                .setIsEuFund(tender.get(FOND_EUROPEAN))
-                                .setSource(tender.get(MODALITATI_FINANTARE))
-                                .setProgramme(tender.get(TIP_FINANTARE)))
+                            .setIsEuFund(tender.get(FOND_EUROPEAN))
+                            .setSource(tender.get(MODALITATI_FINANTARE))
+                            .setProgramme(tender.get(TIP_FINANTARE)))
                         .setDeposits(tender.get(DEPOZITE_GARANTII))
                         .setTitle(tender.get(TITLU_CONTRACT))
                         .setIsFrameworkAgreement(tender.get(TIP_INCHEIERE_CONTRACT))
                         .setIsElectronicAuction(tender.get(CU_LICITATIE_ELECTRONICA))
                         .addCpv(new ParsedCPV()
-                                .setIsMain(Boolean.TRUE.toString())
-                                .setCode(tender.get(CPV_CODE))));
+                            .setIsMain(Boolean.TRUE.toString())
+                            .setCode(tender.get(CPV_CODE))));
+                }
             }
 
             return parsedTenders;

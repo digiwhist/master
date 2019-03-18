@@ -132,7 +132,8 @@ public class TedCSVTenderParser extends BaseDatlabTenderParser {
             .setAwardCriteria(parseAwardCritera(record))
             .setIsElectronicAuction(TedCSVTenderParserUtils.parseBoolean(record, "b_electronic_auction"))
             .setFundings(parseFundings(record))
-            .setSelectionMethod(parseSelectionMethod(record));
+            .setSelectionMethod(parseSelectionMethod(record))
+            .setCountry(record.get("iso_country_code"));
         
         return parsedTender;
     }

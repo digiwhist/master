@@ -3,6 +3,7 @@ package eu.dl.dataaccess.dto.matched;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import eu.dl.dataaccess.dto.clean.CleanTenderLot;
 import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
+import eu.dl.dataaccess.dto.generic.Amendment;
 import eu.dl.dataaccess.dto.generic.Price;
 import eu.dl.dataaccess.dto.utils.InitUtils;
 
@@ -105,6 +106,11 @@ public final class MatchedTenderLot extends BaseMatchedTenderLot<MatchedTenderLo
     private LocalDate publicationDate;
 
     /**
+     * Amendment to tender/lot.
+     */
+    private List<Amendment> amendments;
+
+    /**
      * Creates empty matched tender lot.
      */
     public MatchedTenderLot() {
@@ -134,6 +140,7 @@ public final class MatchedTenderLot extends BaseMatchedTenderLot<MatchedTenderLo
         setNonEuMemberStatesCompaniesBidsCount(cleanLot.getNonEuMemberStatesCompaniesBidsCount());
         setForeignCompaniesBidsCount(cleanLot.getForeignCompaniesBidsCount());
         setLotId(cleanLot.getLotId());
+        setAmendments(cleanLot.getAmendments());
 
         // shared in a lot and a tender
         setTitle(cleanLot.getTitle());
@@ -564,6 +571,42 @@ public final class MatchedTenderLot extends BaseMatchedTenderLot<MatchedTenderLo
      */
     public MatchedTenderLot setPublicationDate(final LocalDate newPublicationDate) {
         this.publicationDate = newPublicationDate;
+        return this;
+    }
+
+    /**
+     * @return amendment.
+     */
+    public List<Amendment> getAmendments() {
+        return amendments;
+    }
+
+    /**
+     * @param newAmendments amendments
+     * @return instance of {@code T} class for chaining
+     */
+    public MatchedTenderLot setAmendments(final List<Amendment> newAmendments) {
+        this.amendments = newAmendments;
+        return this;
+    }
+
+    /**
+     * Adds amendment to the list of amendments or create a new list with given amendment if none
+     * exists.
+     *
+     * @param amendment
+     *            new amendment to be added
+     *
+     * @return this instance for chaining
+     */
+    public MatchedTenderLot addAmendment(final Amendment amendment) {
+        if (amendment != null) {
+            if (getAmendments() == null) {
+                setAmendments(new ArrayList<>());
+            }
+            this.amendments.add(amendment);
+        }
+
         return this;
     }
 }

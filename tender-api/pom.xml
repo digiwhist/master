@@ -35,6 +35,12 @@
 			<version>2.9.6</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.json</groupId>
+			<artifactId>json</artifactId>
+			<version>20180813</version>
+		</dependency>
+
 		<!-- LOGGING -->
 		<dependency>
 			<groupId>biz.paluch.logging</groupId>

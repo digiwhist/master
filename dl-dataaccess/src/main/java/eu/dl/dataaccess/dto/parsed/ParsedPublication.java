@@ -131,7 +131,6 @@ public class ParsedPublication {
      *
      * @return the source id
      */
-
     public final String getSourceId() {
         return sourceId;
     }
@@ -154,7 +153,6 @@ public class ParsedPublication {
      *
      * @return the source tender id
      */
-
     public final String getSourceTenderId() {
         return sourceTenderId;
     }

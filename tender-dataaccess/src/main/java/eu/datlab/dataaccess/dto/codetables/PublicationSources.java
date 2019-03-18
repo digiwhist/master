@@ -161,4 +161,14 @@ public final class PublicationSources {
      * Uganda.
      */
     public static final String UG_GPP = "http://gpp.ppda.go.ug/";
+
+    /**
+     * Indonesia.
+     */
+    public static final String ID_LPSE = "http://inaproc.id/lpse/";
+
+    /**
+     * South Africa.
+     */
+    public static final String ZA_ETENDERS = "http://www.etenders.gov.za";
 }

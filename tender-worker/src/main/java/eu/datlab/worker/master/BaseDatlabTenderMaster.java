@@ -36,7 +36,6 @@ import eu.dl.worker.master.plugin.generic.comparators.StringComparator;
 import eu.dl.worker.master.plugin.generic.converter.TenderConverter;
 import eu.dl.worker.master.plugin.specific.AwardCriteriaPlugin;
 import eu.dl.worker.master.plugin.specific.FundingsPlugin;
-import eu.dl.worker.master.plugin.specific.RobustPricePlugin;
 
 import java.util.Arrays;
 
@@ -65,7 +64,7 @@ public abstract class BaseDatlabTenderMaster extends BaseTenderMaster<MatchedTen
         MasterPlugin p = new ModusPlugin<>(Arrays.asList("buyerAssignedId", "title", "titleEnglish",
             "procedureType", "nationalProcedureType", "isAcceleratedProcedure",
             "acceleratedProcedureJustification", "description", "descriptionEnglish", "maxBidsCount",
-            "supplyType", "size", "furtherInformationProvider",
+            "supplyType", "size", "sizeNational", "furtherInformationProvider",
             "specificationsProvider", "bidsRecipient", "specificationsCreator", "appealBodyName",
             "mediationBodyName", "maxFrameworkAgreementParticipants", "estimatedDurationInMonths",
             "estimatedDurationInDays", "estimatedDurationInYears", "envisagedCandidatesCount",
@@ -77,7 +76,7 @@ public abstract class BaseDatlabTenderMaster extends BaseTenderMaster<MatchedTen
                         "estimatedStartDate", "estimatedCompletionDate", "awardDecisionDate",
                         "contractSignatureDate", "limitedCandidatesCountCriteria", "selectionMethod",
                         "cancellationDate", "cancellationReason", "isWholeTenderCancelled", "enquiryDeadline",
-                        "awardDeadline", "bidDeadline"), new TenderConverter()))
+                        "awardDeadline", "bidDeadline", "isAwarded"), new TenderConverter()))
                 .registerPlugin("LOR", new LogicalORPlugin<>(Arrays.asList("documentsPayable",
                         "isDocumentsAccessRestricted", "isCentralProcurement", "isJointProcurement", "isOnBehalfOf",
                         "hasLots", "areVariantsAccepted", "hasOptions", "isCoveredByGpa", "isFrameworkAgreement",
@@ -96,8 +95,7 @@ public abstract class BaseDatlabTenderMaster extends BaseTenderMaster<MatchedTen
                         "cancellationReason", "isWholeTenderCancelled")))
                 .registerPlugin("Address", new AddressPlugin<>(Arrays.asList("documentsLocation",
                         "addressOfImplementation")))
-                .registerPlugin("Documents", new TenderDocumentPlugin())
-                .registerPlugin("RobustPrice", new RobustPricePlugin());
+                .registerPlugin("Documents", new TenderDocumentPlugin());
 
         // register Longest plugin in loop for each mastered value
         for (String s : new String[]{"deposits", "eligibilityCriteria", "personalRequirements", "economicRequirements",
@@ -151,7 +149,7 @@ public abstract class BaseDatlabTenderMaster extends BaseTenderMaster<MatchedTen
                 new CallForTenderIndicatorPlugin();
         indicatorPluginRegistry.registerPlugin(
                 priorInformationNoticePlugin.getType(), priorInformationNoticePlugin);
-        
+
         ProcedureTypeIndicatorPlugin procedureTypePlugin =
                 new ProcedureTypeIndicatorPlugin();
         indicatorPluginRegistry.registerPlugin(

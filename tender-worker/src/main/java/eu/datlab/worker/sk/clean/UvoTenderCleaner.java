@@ -2,6 +2,7 @@ package eu.datlab.worker.sk.clean;
 
 import eu.datlab.worker.clean.BaseDatlabTenderCleaner;
 import eu.dl.dataaccess.dto.clean.CleanTender;
+import eu.dl.dataaccess.dto.clean.CleanTenderLot;
 import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
 import eu.dl.dataaccess.dto.codetables.BuyerType;
 import eu.dl.dataaccess.dto.codetables.CountryCode;
@@ -176,13 +177,15 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
     private Map<Enum, List<String>> selectionMethodMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
         mapping.put(SelectionMethod.MEAT, Arrays.asList(
-                "Ekonomicky najvýhodnejšia ponuka z hľadiska",
+                "Ekonomicky najvýhodnejšia ponuka z hľadiska", "Ekonomicky najvýhodnejšia ponuka .",
                 "Ekonomicky najvýhodnejšia ponuka z hľadiska kritérií uvedených ďalej (kritériá na vyhodnotenie ponúk" +
                         " je potrebné uviesť s ich relatívnou váhou alebo v zostupnom poradí dôležitosti, ak nemožno " +
                         "z preukázateľných dôvodov uviesť ich relatívnu váhu). Kritériá sú stanovené v súťažných podk" +
-                        "ladoch v kritériách na vyhodnotenie ponúk s ich relatívnou váhou", "Nižšie uvedené kritéria"));
+                        "ladoch v kritériách na vyhodnotenie ponúk s ich relatívnou váhou", "Nižšie uvedené kritéria",
+                "Kritériá kvality", "Cena nie je jediným kritériom výberu a všetky kritériá sú uvedené len v súťažných podkladoch"
+                ));
         mapping.put(SelectionMethod.LOWEST_PRICE, Arrays.asList("Najnižšia cena.", "Najnižšia cena",
-                "Najnižšia cena za celú koncesiu.",
+                "Najnižšia cena za celú koncesiu.", "Cena", "Kritéria kvality: Nie",
                 "Elektronická aukcia bude realizovaná certifikovaným systémom na uskutočnenie elektronickej aukcie EV" +
                         "OB portáli www.verejneaukcie.sk, kritériom je najnižšia cena za predmet obstarávania. Podrob" +
                         "né informácie sú uvedené v súťažných podkladoch. Elektronická aukcia sa uskutoční v súlade s" +
@@ -204,6 +207,15 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
                 && cleanTender.getPublications().get(0).getFormType().equals(PublicationFormType.CONTRACT_CANCELLATION)
                 && cleanTender.getCancellationDate() == null) {
             cleanTender.setCancellationDate(cleanTender.getPublications().get(0).getPublicationDate());
+        }
+
+        // validBidsCount is invalidBidsCount, recalculating here
+        if (cleanTender.getLots() != null) {
+            for (CleanTenderLot lot : cleanTender.getLots()) {
+                if (lot.getBidsCount() != null && lot.getValidBidsCount() != null) {
+                    lot.setValidBidsCount(lot.getBidsCount() - lot.getValidBidsCount());
+                }
+            }
         }
 
         return cleanTender;
@@ -308,7 +320,8 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
         mapping.put(BuyerActivityType.WATER, Arrays.asList("Vodárenstvo"));
         mapping.put(BuyerActivityType.DEFENCE, Arrays.asList("Obrana"));
         mapping.put(BuyerActivityType.SOCIAL_PROTECTION, Arrays.asList("Sociálna starostlivosť"));
-        mapping.put(BuyerActivityType.PUBLIC_ORDER_AND_SAFETY, Arrays.asList("Verejný poriadok a bezpečnosť"));
+        mapping.put(BuyerActivityType.PUBLIC_ORDER_AND_SAFETY, Arrays.asList("Verejný poriadok a bezpečnosť",
+                "Verejný poriadok a bezpečnosť"));
         mapping.put(BuyerActivityType.URBAN_TRANSPORT, Arrays.asList("Služby mestskej železničnej, električkovej, " +
                 "trolejbusovej alebo autobusovej dopravy"));
         mapping.put(BuyerActivityType.RAILWAY, Arrays.asList("Služby železničnej dopravy"));

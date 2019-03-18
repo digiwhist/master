@@ -146,6 +146,7 @@ final class UvoTenderNewHandler {
                                 .setType(BodyIdentifier.Type.ORGANIZATION_ID)
                                 .setScope(BodyIdentifier.Scope.SK))
                         .setAddress(new ParsedAddress().setRawAddress(parseBuyerRawAddress(document))
+                                .addNuts(getFirstValueFromElement(document, "span:containsOwn(Kód NUTS:) + span"))
                                 .setCountry(parseBuyerCountry(document))
                                 .setUrl(parseBuyerWebAddress(document)))
                         .setContactPoint(parseBuyerContactPoint(document))
@@ -178,6 +179,7 @@ final class UvoTenderNewHandler {
                 .addPublications(parseRelatedPublications(document))
                 .setEligibleBidLanguages(parseTenderEligibleBidLanguages(document))
                 .setMediationBodyName(parseMediationBodyName(document))
+                .setAwardDecisionDate(parseAwardDecisionDate(document))
                 .setAppealBodyName(parseAppealBodyName(document));
 
         //         parse form specific attributes
@@ -197,6 +199,18 @@ final class UvoTenderNewHandler {
         }
 
         return new ArrayList<>(Arrays.asList(parsedTender));
+    }
+
+    /**
+     * Parse decision date.
+     *
+     * @param document document
+     * @return String
+     */
+    private String parseAwardDecisionDate(final Document document) {
+        return getFirstValueFromElement(document, new String[]{
+                "div.subtitle:contains(DÁTUM ROZHODNUTIA O ZADAN) + div",
+                "div.subtitle:contains(átum uzatvorenia zml) + div"});
     }
 
 
@@ -251,7 +265,7 @@ final class UvoTenderNewHandler {
      */
     private String parseIsFrameworkAgreement(final Document document) {
         return getTrueOrFalseFromElement(document,
-                IN_PART_IV + "div:containsOwn(Oznámenie zahŕňa uzavretie rámcovej dohody) > span");
+                IN_PART_IV + "div:containsOwn(zahŕňa uzavretie rámcovej dohody) > span");
     }
 
     /**
@@ -677,8 +691,12 @@ final class UvoTenderNewHandler {
         return getFirstValueFromElement(document, new String[]{
                 IN_PART_IV + "span:matchesOwn((nomicky najvýhodnejšia ponuka z hľadiska|ajnižšia cena|ižšie uvedené " +
                         "kritéri)):not(:matchesOwn(-|%|ritérium)):not(:matchesOwn(^\\d))",
+                "div:containsOwn(Kritéria kvality)",
                 IN_PART_II + "span:matchesOwn(ižšie uvedené kritéri):not(:matchesOwn(-|%|ritérium))" +
-                        ":not(:matchesOwn(^\\d))"});
+                        ":not(:matchesOwn(^\\d))",
+                "div:containsOwn(Kritériá kvality)",
+                "div.subtitle:contains(Kritériá na vyhodnotenie ponúk) + div"
+        });
     }
 
     /**
@@ -945,12 +963,23 @@ final class UvoTenderNewHandler {
             return null;
         }
 
-        if (!subsection.text().contains("Nižšie uvedené kritéria")) {
-            return Arrays.asList(new ParsedAwardCriterion().setName(
-                    getFirstValueFromElement(subsection, "div.radioButtonList")));
-        } else {
-            final List<ParsedAwardCriterion> result = new ArrayList<>();
+        final List<ParsedAwardCriterion> result = new ArrayList<>();
 
+        if (!subsection.text().contains("Nižšie uvedené kritéria")) {
+            final Elements weights = subsection.select("div:contains(Relatívna váh)");
+
+            for (Element weightElement : weights) {
+                final Element name = weightElement.previousElementSibling();
+                final Element weight = weightElement.selectFirst("span");
+
+                result.add(new ParsedAwardCriterion()
+                        .setName(name == null ? null : name.text().replace("Názov:", ""))
+                        .setWeight(weight == null ? null : weight.text())
+                );
+            }
+
+            return result;
+        } else {
             for (Element criterion : getCriteriaSubsections(subsection)) {
                 final String name = getFirstOwnValueFromElement(criterion, "div:containsOwn(Názov) > span");
 
@@ -961,8 +990,23 @@ final class UvoTenderNewHandler {
                 }
             }
 
-            return result.isEmpty() ? null : result;
+            if (!result.isEmpty()) {
+                return result;
+            }
         }
+
+        final Element anotherPossibleAward = document.selectFirst("span:containsOwn(Náklady/Cena) + span");
+
+        if (anotherPossibleAward != null) {
+            result.add(new ParsedAwardCriterion()
+                    .setName(anotherPossibleAward.text())
+                    .setWeight("100")
+            );
+
+            return result;
+        }
+
+        return null;
     }
 
     /**

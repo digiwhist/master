@@ -1,9 +1,10 @@
 package eu.dl.worker.clean.utils;
 
-import eu.dl.worker.utils.ArrayUtils;
 import eu.dl.dataaccess.dto.clean.CleanTenderLot;
 import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
+import eu.dl.worker.utils.ArrayUtils;
+
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -101,7 +102,9 @@ public final class LotUtils {
             .setStatus((TenderLotStatus) CodeTableUtils.mapValue(parsedLot.getStatus(), statusMapping))
             .setTitle(StringUtils.cleanShortString(parsedLot.getTitle()))
             .setTitleEnglish(StringUtils.cleanShortString(parsedLot.getTitleEnglish()))
-            .setValidBidsCount(NumberUtils.cleanInteger(parsedLot.getValidBidsCount(), numberFormat));
+            .setValidBidsCount(NumberUtils.cleanInteger(parsedLot.getValidBidsCount(), numberFormat))
+            .setAmendments(ArrayUtils.walk(parsedLot.getAmendments(),
+                    (parsedAmendment) -> AmendmentUtils.cleanAmendment(parsedAmendment, numberFormat, formatter, country)));
     }
 
     /**

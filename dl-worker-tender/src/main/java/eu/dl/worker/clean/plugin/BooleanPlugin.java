@@ -91,6 +91,12 @@ public class BooleanPlugin extends BaseCleaningPlugin<ParsedTender, CleanTender>
         logger.debug("Cleaned isDocumentsAccessRestricted for parsed tender {}, clean value \"{}\"",
                 parsedTender.getId(), isDocumentsAccessRestricted);
 
+        final Boolean isAwarded = StringUtils.cleanBoolean(
+                parsedTender.getIsAwarded());
+        cleanTender.setIsAwarded(isAwarded);
+        logger.debug("Cleaned isAwarded for parsed tender {}, clean value \"{}\"",
+                parsedTender.getId(), isAwarded);
+
         return cleanTender;
     }
 }

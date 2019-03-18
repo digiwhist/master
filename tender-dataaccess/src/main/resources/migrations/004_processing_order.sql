@@ -1,6 +1,5 @@
 SET search_path TO tender_development;
 
-update raw_data set data = data || jsonb_build_object('processingOrder', created) where modifiedby =
 CREATE INDEX raw_data_processingorder_idx ON raw_data ((data->>'processingOrder'));
 CREATE INDEX parsed_tender_processingorder_idx ON raw_data ((data->>'processingOrder'));
 CREATE INDEX clean_tender_processingorder_idx ON raw_data ((data->>'processingOrder'));

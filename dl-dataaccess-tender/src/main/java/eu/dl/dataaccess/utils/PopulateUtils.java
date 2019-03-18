@@ -209,6 +209,10 @@ public class PopulateUtils {
         List<String> docIds = new ArrayList<>();
 
         for (MasterTender t : tenders) {
+            if (t == null) {
+                continue;
+            }
+
             // tender documents
             if (t.getDocuments() != null) {
                 t.getDocuments().stream()

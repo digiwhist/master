@@ -8,6 +8,7 @@ import eu.dl.dataaccess.dto.parsed.ParsedAwardCriterion;
 import eu.dl.dataaccess.dto.parsed.ParsedBid;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedCPV;
+import eu.dl.dataaccess.dto.parsed.ParsedFunding;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
@@ -137,6 +138,8 @@ public class KHTenderParser extends BaseDatlabTenderParser {
                 .setAddressOfImplementation(new ParsedAddress()
                         .setRawAddress(getDivUnderDiv("A teljesítés helye:", part2))
                         .addNuts(getValueMultipleWays("NUTS-kód", part2)))
+                .setEstimatedDurationInDays(JsoupUtils.selectText("div:contains(A (tervezett) időtartam " +
+                        "hónapban):contains(vagy napban) > span + span", part2))
                 .setDescription(getValueMultipleWays(new String[]{
                         "A szerződés vagy a beszerzés(ek) rövid meghatározá",
                         "II.1.4\\) Rövid meghatározás:"}, part2))
@@ -147,8 +150,13 @@ public class KHTenderParser extends BaseDatlabTenderParser {
                 .setFinalPrice(parseFinalPrice(part2))
                 .setBuyerAssignedId(getValueMultipleWays("Hivatkozási szám", part2))
                 .setAwardCriteria(parseAwardCriteria(document))
+                .setContractSignatureDate(getValueMultipleWays("rződés megkötésének dátuma", document))
+                .setIsAwarded(getValueMultipleWays(new String[]{
+                        "szajánlat-tételi lehetőség esetén az adott rész vonatko",
+                        "rész odaítélésre került"}, document))
                 .addPublication(parsePreviousPublication(part3))
                 .addPublication(parseTedPublication(part3))
+                .addNpwpReason(getValueMultipleWays("rdetmény nélküli tárgyalásos eljárás, valamin", document))
                 .setPersonalRequirements(JsoupUtils.selectText(
                         "div:contains(ajánlattevő/részvételre jelentkező személyes helyzeté) + div + div", part3))
                 .setEconomicRequirements(
@@ -165,10 +173,10 @@ public class KHTenderParser extends BaseDatlabTenderParser {
                 .setSelectionMethod(
                         getCheckedValue("IV.2.1\\) Bírálati szempontok", "IV.2.2\\) Elektronikus árlejtésre vona",
                                 part4))
-                .setIsElectronicAuction(getValueMultipleWays("Elektronikus árlejtést alkalmaztak", part4))
-                .setLots(parseLots(partLots));
+                .setIsElectronicAuction(getValueMultipleWays("Elektronikus árlejtést alkalmaztak", form))
+                .setLots(parseLots(document));
 
-        parsedTender = additionalParsing(parsedTender, part1, part2, part4);
+        additionalParsing(parsedTender, part1, part2, part4, form);
 
         return new ArrayList<>(Collections.singletonList(parsedTender));
     }
@@ -177,14 +185,13 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      * Additional parsing.
      *
      * @param parsedTender parsed tender
-     * @param part1 part from which to parse
-     * @param part2 part from which to parse
-     * @param part4 part from which to parse
-     *
-     * @return parsedTender
+     * @param part1        part from which to parse
+     * @param part2        part from which to parse
+     * @param part4        part from which to parse
+     * @param form         part from which to parse
      */
-    private ParsedTender additionalParsing(final ParsedTender parsedTender, final Element part1, final Element part2,
-                                           final Element part4) {
+    private void additionalParsing(final ParsedTender parsedTender, final Element part1, final Element part2,
+                                   final Element part4, final Document form) {
 
         // below is additional parsing of stuff in unusual places
         if (parsedTender.getTitle() == null) {
@@ -222,6 +229,11 @@ public class KHTenderParser extends BaseDatlabTenderParser {
                     part2));
         }
 
+        if (parsedTender.getSelectionMethod() == null) {
+            parsedTender.setSelectionMethod(JsoupUtils.selectText("span:contains(x) + span:" +
+                    "containsOwn(egalacsonyabb összegű ellensz)", form));
+        }
+
         if (parsedTender.getEligibleBidLanguages() == null || parsedTender.getEligibleBidLanguages().isEmpty()) {
             final String bidLanguages = getSecondValueMultipleWays("Az EU következő hivatalos nyelve", part4);
 
@@ -229,10 +241,36 @@ public class KHTenderParser extends BaseDatlabTenderParser {
                 for (String bidLanguage : bidLanguages.trim().split(" ")) {
                     parsedTender.addEligibleBidLanguage(bidLanguage);
                 }
+
+
             }
         }
 
-        return parsedTender;
+        Element funding = form.selectFirst("div:containsOwn(eszerzés európai uniós alapokból finanszírozott projekttel és/" +
+                "vagy programmal kapc) > span");
+
+        if (funding == null) {
+            funding = form.selectFirst("div:containsOwn(ődés európai uniós alapokból finanszírozott pr) > span");
+        }
+
+        if (funding != null) {
+            parsedTender.addFunding(new ParsedFunding()
+                    .setIsEuFund(funding.text()));
+        } else {
+            final String fundingText = getDivUnderDiv(new String[]{
+                    "ződés európai uniós alapokból finanszírozott projekttel és/vagy progra",
+                    "rződés eu-alapokból finanszírozott projekttel és/vagy programmal ka"}, form);
+
+            if (fundingText != null) {
+                parsedTender.addFunding(new ParsedFunding()
+                        .setIsEuFund(fundingText));
+            }
+        }
+
+        if (parsedTender.getEligibleBidLanguages() == null || parsedTender.getEligibleBidLanguages().isEmpty()
+                || parsedTender.getEligibleBidLanguages().get(0).equals("")) {
+            parsedTender.addEligibleBidLanguage(JsoupUtils.selectText("div:contains(Egyéb:) + div span + span", form));
+        }
     }
 
 
@@ -240,7 +278,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      * Parse checked buyer type.
      *
      * @param part1 part from which to parse
-     *
      * @return String or null
      */
     private String parseBuyerType(final Element part1) {
@@ -255,7 +292,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      * Parse previous publication.
      *
      * @param part3 document to parse from
-     *
      * @return ParsedPublication or null
      */
     private ParsedPublication parsePreviousPublication(final Element part3) {
@@ -283,7 +319,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      * Parse ted publication.
      *
      * @param part3 document to parse from
-     *
      * @return ParsedPublication or null
      */
     private ParsedPublication parseTedPublication(final Element part3) {
@@ -311,7 +346,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      * Parse award criteria.
      *
      * @param element data to parse from
-     *
      * @return List<ParsedAwardCriterion> or null
      */
     private List<ParsedAwardCriterion> parseAwardCriteria(final Element element) {
@@ -325,20 +359,26 @@ public class KHTenderParser extends BaseDatlabTenderParser {
         final List<ParsedAwardCriterion> result = new ArrayList<>();
 
         if (criteria.isEmpty()) {
+            Element endElement = element.select("span > div > div > div:has(div:containsOwn(II.2.11\\) Opciókra vonatkozó inform)" +
+                    ")").first();
+            if (endElement == null) {
+                endElement = element.select("span > div > div > div:has(div:containsOwn(II.2.6\\))" +
+                        ")").first();
+            }
+
             Element criteriaPart = ParserUtils.getSubsectionOfElements(
                     element.select(
                             "span > div > div > div:has(div:containsOwn(II.2.5\\) Értékelési szempontok))").first(),
-                    element.select("span > div > div > div:has(div:containsOwn(II.2.11\\) Opciókra vonatkozó inform)" +
-                            ")").first());
+                    endElement);
 
             if (criteriaPart != null) {
                 result.add(new ParsedAwardCriterion()
-                        .setName(JsoupUtils.selectOwnText("div:containsOwn(Minőségi kritérium) > span + span",
+                        .setName(JsoupUtils.selectOwnText("div:containsOwn(Minőségi) > span + span",
                                 criteriaPart))
                         .setWeight(getValueMultipleWays("Minőségi kritérium", criteriaPart)));
 
                 result.add(new ParsedAwardCriterion()
-                        .setName(JsoupUtils.selectOwnText("div:containsOwn(Ár – Súlys)", criteriaPart))
+                        .setName(JsoupUtils.selectOwnText("div:containsOwn(Ár)", criteriaPart))
                         .setWeight(
                                 JsoupUtils.selectOwnText("div:containsOwn(Ár – Súlys) > span + span", criteriaPart)));
             }
@@ -357,7 +397,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      * Parse lots.
      *
      * @param partLots element to parse from
-     *
      * @return List<ParsedTenderLot> or null
      */
     private List<ParsedTenderLot> parseLots(final Element partLots) {
@@ -365,23 +404,29 @@ public class KHTenderParser extends BaseDatlabTenderParser {
             return null;
         }
 
-        final Elements lotFirstLines = partLots.select("div > div:has(div > div:contains(A szerződés száma))");
-
+        Elements lotFirstLines = partLots.select("div > div > *:containsOwn(A szerződés száma)");
         final Elements lotsDivided = new Elements();
+        if (lotFirstLines.isEmpty()) {
+            lotFirstLines = partLots.select("div > div:has(div > div:contains(A szerződés száma))");
 
-        // No lots to parse found
-        if (lotFirstLines == null || lotFirstLines.isEmpty()) {
-            return null;
+            // No lots to parse found
+            if (lotFirstLines == null || lotFirstLines.isEmpty()) {
+                return null;
 
-            // more lots to parse, divide them into elements and parse one by one
-        } else {
-            for (int iterator = 0; iterator < lotFirstLines.size(); iterator++) {
-                if ((iterator + 1) != lotFirstLines.size()) {
-                    lotsDivided.add(ParserUtils.getSubsectionOfElements(lotFirstLines.get(iterator),
-                            lotFirstLines.get(iterator + 1)));
-                } else {
-                    lotsDivided.add(ParserUtils.getSubsectionOfElements(lotFirstLines.get(iterator), null));
+                // more lots to parse, divide them into elements and parse one by one
+            } else {
+                for (int iterator = 0; iterator < lotFirstLines.size(); iterator++) {
+                    if ((iterator + 1) != lotFirstLines.size()) {
+                        lotsDivided.add(ParserUtils.getSubsectionOfElements(lotFirstLines.get(iterator),
+                                lotFirstLines.get(iterator + 1)));
+                    } else {
+                        lotsDivided.add(ParserUtils.getSubsectionOfElements(lotFirstLines.get(iterator), null));
+                    }
                 }
+            }
+        } else {
+            for (Element line : lotFirstLines) {
+                lotsDivided.add(line.parent().parent().parent());
             }
         }
 
@@ -389,35 +434,53 @@ public class KHTenderParser extends BaseDatlabTenderParser {
 
         int positionOnPage = 1;
         for (Element lot : lotsDivided) {
+            String lotTitle = JsoupUtils.selectText("div > div:contains(A szerződés száma:) span + span" +
+                    " + span", lot);
+            if (lotTitle == null) {
+                JsoupUtils.selectText("div > div:contains(Elnevezés) span + span" +
+                        " + span", lot);
+            }
+
             ParsedTenderLot parsedTenderLot = new ParsedTenderLot()
                     .setPositionOnPage(String.valueOf(positionOnPage++))
                     .setContractNumber(getValueMultipleWays("A szerződés száma:", lot))
                     .setLotNumber(getSecondValueMultipleWays("Rész száma:", lot))
-                    .setTitle(JsoupUtils.selectText("div > div:contains(A szerződés száma:) span + span" +
-                            " + span", lot))
+                    .setTitle(lotTitle)
                     .setIsAwarded(getValueMultipleWays("zerződés/rész odaítélésre ker", lot))
                     .setAwardDecisionDate(getValueMultipleWays("A szerződés megkötésének dátuma:", lot))
                     .setBidsCount(getValueMultipleWays("A beérkezett ajánlatok szám", lot))
                     .setElectronicBidsCount(getValueMultipleWays("Elektronikus úton beérkezett ajánlatok száma", lot))
+                    .setOtherEuMemberStatesCompaniesBidsCount(getValueMultipleWays("Más EU-tagállamok ajánlattevői", lot))
+                    .setNonEuMemberStatesCompaniesBidsCount(getValueMultipleWays("Nem EU-tagállamok ajánlatte", lot))
                     .setCpvs(parseCpvs(lot))
                     .setEstimatedPrice(new ParsedPrice()
                             .setNetAmount(getValueMultipleWays(new String[]{
+                                    "szerződés/rész eredetileg becsült összértéke",
+                                    "rződés eredetileg becsült összér",
                                     "A szerződés eredetileg becsült összé",
-                                    "A szerződés/rész végleges összértéke:"}, lot))
+                                    "A szerződés/rész végleges összértéke:",
+                                    "beszerzés végleges összért"}, lot))
                             .setCurrency(getSecondValueMultipleWays("A szerződés eredetileg becsült összé", lot)))
                     .addBid(new ParsedBid()
                             .setIsWinning(Boolean.TRUE.toString())
+                            .setIsSubcontracted(getValueMultipleWays("igénybevétele a szerződéshez", lot))
                             .setPrice(new ParsedPrice()
-                                    .setNetAmount(getValueMultipleWays("A szerződés végleges összért", lot))
+                                    .setNetAmount(getValueMultipleWays(new String[] {
+                                            "A szerződés végleges összért",
+                                            "szerződés/rész végleges összé"}, lot))
                                     .setCurrency(getSecondValueMultipleWays("A szerződés végleges összért", lot))
                             )
                             .setIsConsortium(
-                                    getValueMultipleWays("A szerződést gazdasági szereplők csoportosulása nyer", lot))
+                                    getValueMultipleWays(new String[]{
+                                            "A szerződést gazdasági szereplők csoportosulása nyer",
+                                            "rződést közös ajánlattevők csoportja nye"}, lot))
                             .addBidder(new ParsedBody()
                                     .setName(getValueMultipleWays("Hivatalos név:", lot))
                                     .setAddress(new ParsedAddress()
                                             .setStreet(getValueMultipleWays("Postai cím:", lot))
-                                            .setCity(getValueMultipleWays("Város:", lot))
+                                            .setCity(getValueMultipleWays(new String[]{
+                                                    "Község:",
+                                                    "Város:"}, lot))
                                             .setPostcode(getValueMultipleWays("ostai irányítószám:", lot))
                                             .setCountry(getValueMultipleWays("Ország:", lot))
                                             .addNuts(getValueMultipleWays("NUTS-kód", lot))
@@ -445,7 +508,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      * Parse final price.
      *
      * @param part2 element to parse from
-     *
      * @return ParsedPriceor null
      */
     private ParsedPrice parseFinalPrice(final Element part2) {
@@ -474,7 +536,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      * Parse cpvs.
      *
      * @param part2 element to parse from
-     *
      * @return List<ParsedCPV> or null
      */
     private List<ParsedCPV> parseCpvs(final Element part2) {
@@ -525,7 +586,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      *
      * @param selector selector by which result is found
      * @param element  element to parse from
-     *
      * @return value of span or div
      */
     private static String getValueMultipleWays(final String selector, final Element element) {
@@ -551,7 +611,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      *
      * @param selectors selector by which div is found
      * @param element   element to parse from
-     *
      * @return value of span
      */
     private static String getValueMultipleWays(final String[] selectors, final Element element) {
@@ -571,7 +630,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      *
      * @param selector selector by which result is found
      * @param element  element to parse from
-     *
      * @return value of span or div
      */
     private static String getSecondValueMultipleWays(final String selector, final Element element) {
@@ -597,7 +655,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      *
      * @param selector selector by which div is found
      * @param element  element to parse from
-     *
      * @return value of span
      */
     private static String getDivUnderDiv(final String selector, final Element element) {
@@ -609,7 +666,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      *
      * @param selectors selector by which div is found
      * @param element   element to parse from
-     *
      * @return value of span
      */
     private static String getDivUnderDiv(final String[] selectors, final Element element) {
@@ -630,7 +686,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      * @param firstLine from which line to look for checked value
      * @param lastLine  to which line to look for checked value
      * @param element   element to search in
-     *
      * @return String or null
      */
     private String getCheckedValue(final String firstLine, final String lastLine, final Element element) {
@@ -665,7 +720,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
      *
      * @param selector selector by which div is found
      * @param element  element to parse from
-     *
      * @return value of span
      */
     private static String getTdUnderTh(final String selector, final Element element) {

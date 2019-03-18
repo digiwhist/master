@@ -12,6 +12,7 @@ import eu.dl.worker.master.plugin.generic.LastPublishedPlugin;
 import eu.dl.worker.master.plugin.generic.LastValuePlugin;
 import eu.dl.worker.master.plugin.generic.LogicalORPlugin;
 import eu.dl.worker.master.plugin.generic.ModusPlugin;
+import eu.dl.worker.master.plugin.generic.UnionPlugin;
 import eu.dl.worker.master.plugin.generic.comparators.StringComparator;
 import eu.dl.worker.master.plugin.generic.converter.TenderConverter;
 import eu.dl.worker.master.plugin.specific.AwardCriteriaPlugin;
@@ -40,11 +41,11 @@ public abstract class BaseDatlabTenderLotPlugin extends BaseTenderLotPlugin<Matc
                         "estimatedDurationInYears", "maxFrameworkAgreementParticipants",
                         "envisagedCandidatesCount", "envisagedMinCandidatesCount",
                         "envisagedMaxCandidatesCount", "bidsCount", "validBidsCount", "electronicBidsCount",
-                        "foreignCompaniesBidsCount"),
+                        "foreignCompaniesBidsCount", "lotNumber"),
                         new TenderConverter()))
                 .registerPlugin("LNN", new LastPublishedPlugin<>(Arrays.asList("awardDecisionDate",
                         "contractSignatureDate", "completionDate", "cancellationDate", "cancellationReason",
-                        "selectionMethod", "limitedCandidatesCountCriteria", "status"), new TenderConverter()))
+                        "selectionMethod", "limitedCandidatesCountCriteria", "status", "isAwarded"), new TenderConverter()))
                 .registerPlugin("LOR", new LogicalORPlugin<>(Arrays.asList(
                         "isElectronicAuction", "isFrameworkAgreement", "isDps", "isCoveredByGpa",
                         "areVariantsAccepted", "hasOptions")))
@@ -54,6 +55,7 @@ public abstract class BaseDatlabTenderLotPlugin extends BaseTenderLotPlugin<Matc
                 .registerPlugin("Bids", new TenderBidPlugin())
                 .registerPlugin("Funding", new FundingsPlugin<>())
                 .registerPlugin("Address", new AddressPlugin<>(Arrays.asList("addressOfImplementation")))
+                .registerPlugin("Union", new UnionPlugin<>(Arrays.asList("amendments"), new TenderConverter()))
                 .registerPlugin("Status", new LotStatusPlugin<>());
 
         // register Longest plugin in loop for each mastered value

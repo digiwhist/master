@@ -2,6 +2,7 @@ package eu.datlab.dataaccess.dao.jdbc;
 
 import java.util.List;
 
+import eu.dl.dataaccess.dao.jdbc.JdbcMatchedBodyDAO;
 import org.apache.commons.lang3.tuple.Pair;
 
 import eu.datlab.dataaccess.dao.CleanBudgetItemDAO;

@@ -59,7 +59,8 @@ public final class DocumentUtils {
             .setTitle(StringUtils.cleanShortString(parsedDocument.getTitle()))
             .setType((DocumentType) CodeTableUtils.mapValue(parsedDocument.getType(), typeMapping))
             .setUrl(StringUtils.cleanURL(parsedDocument.getUrl(), URLSchemeType.HTTP))
-            .setPlainDocumentId(parsedDocument.getPlainDocumentId());
+            .setPlainDocumentId(parsedDocument.getPlainDocumentId())
+            .setVersion(StringUtils.cleanShortString(parsedDocument.getVersion()));
     }
 
     /**

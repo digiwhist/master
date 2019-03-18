@@ -151,6 +151,7 @@ final class UvoTenderAncientHandler {
      */
     private String parseIsFrameworkAgreement(final Document document) {
         String frameworkAgreement = getFirstValueFromElement(document, new String[]{
+                IN_PART_II + "span.nazov:containsOwn(rmácie o rámcovej dohode alebo dynamickom náku) ~ span.hodnota",
                 IN_PART_II + "span:matchesOwn((verejnej zákazke|Oznámenie zahŕňa)) ~ span.hodnota",
                 IN_PART_II + "tr:has(span:matchesOwn((verejnej zákazke|Oznámenie zahŕňa))) + tr span.hodnota"});
 
@@ -158,7 +159,7 @@ final class UvoTenderAncientHandler {
             return null;
         } else {
             return String.valueOf(frameworkAgreement.toLowerCase()
-                    .contains("Vypracovanie rámcovej dohody".toLowerCase()));
+                    .contains("rámcovej dohody".toLowerCase()));
         }
     }
 
@@ -255,8 +256,9 @@ final class UvoTenderAncientHandler {
      * @return return parsed value if tender is EU funded
      */
     private String parseIsEUFunded(final Document document) {
-        return getTrueOrFalseFromElement(document, IN_PART_VI + "span:containsOwn(programu financovaného z fondov) ~ " +
-                "span.hodnota");
+        return getTrueOrFalseFromElement(document, new String[]{
+                IN_PART_VI + "span:containsOwn(programu financovaného z) ~ span.hodnota",
+                IN_PART_VI + "span:containsOwn(programu financovaného z) ~ span.hodnota"});
     }
 
     /**
@@ -408,6 +410,10 @@ final class UvoTenderAncientHandler {
                         "slovník)");
 
         if (cpvCodesString == null) {
+            cpvCodesString = getFirstValueFromElement(document, "span:containsOwn(Doplňujúce predmety)");
+        }
+
+        if (cpvCodesString == null) {
             return null;
         }
 
@@ -437,6 +443,10 @@ final class UvoTenderAncientHandler {
         String mainCpv = getFirstValueFromElement(document,
                 IN_PART_II + "tr:has(td.kod:matchesOwn(^II\\.1\\.(6|5|4|3)[\\.\\)])) + tr span.hodnota:containsOwn" + ""
                         + "(Hlavný slovník) + span.hodnota");
+
+        if (mainCpv == null) {
+            mainCpv = getFirstValueFromElement(document, "span:containsOwn(Hlavný slovník:) + span");
+        }
 
         if (mainCpv == null) {
             return null;
@@ -675,8 +685,11 @@ final class UvoTenderAncientHandler {
      * @return String or Null
      */
     private String parseTenderSelectionMethod(final Document document) {
-        return getFirstValueFromElement(document, IN_PART_IV + "span:matchesOwn((nomicky najvýhodnejšia ponuka z " +
-                "hľadiska|ajnižšia cena)):not(:matchesOwn(-|%|ritérium)):not(:matchesOwn(^\\d))");
+        return getFirstValueFromElement(document, new String[]{
+                IN_PART_IV + "span:matchesOwn((nomicky najvýhodnejšia ponuka z " +
+                "hľadiska|ajnižšia cena)):not(:matchesOwn(-|%|ritérium)):not(:matchesOwn(^\\d))",
+                IN_PART_IV + "span:containsOwn(Ekonomicky najvýhodnejšia ponuka)"
+        });
     }
 
     /**
@@ -701,9 +714,12 @@ final class UvoTenderAncientHandler {
      */
     private String parseTenderTitle(final Document document) {
         return getFirstValueFromElement(document,
-                new String[]{IN_PART_II + "span.nazov:matchesOwn(Názov (zákazky|súťaže|pridelený zákazke)) ~ span"
-                        + ".hodnota", IN_PART_II + "tr:has(span.nazov:matchesOwn(Názov (zákazky|súťaže|pridelený "
-                        + "zákazke)))" + " + tr span.hodnota"});
+                new String[]{
+                        IN_PART_II + "span.nazov:matchesOwn(Názov (zákazky|súťaže|pridelený zákazke)) ~ span.hodnota",
+                        IN_PART_II + "tr:has(span.nazov:matchesOwn(Názov (zákazky|súťaže|pridelený zákazke))) + tr span.hodnota",
+                        IN_PART_II + "span:containsOwn(NÁZOV PRIDELENÝ) ~ span.hodnota",
+                        IN_PART_II + "span:containsOwn(NÁZOV ZÁKAZKY) ~ span.hodnota"
+                });
     }
 
     /**

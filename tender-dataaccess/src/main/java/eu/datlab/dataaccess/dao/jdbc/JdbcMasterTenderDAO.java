@@ -40,11 +40,11 @@ public class JdbcMasterTenderDAO extends GenericJdbcDAO<MasterTender> implements
             }
 
             if (countryCode!= null && !countryCode.isEmpty()) {
-                query = query + " AND data @> '{\"country\":\"" + sanitize(countryCode) + "\"}'";
+                query = query + " AND data->>'country' = '" + sanitize(countryCode) + "'";
             }
 
             if (opentender) {
-                query = query + " AND data @> '{\"metaData\":{\"opentender\":true}}'";
+                query = query + " AND data->'metaData'->>'opentender' = 'true'";
             }
 
             query = query + " ORDER BY modified ASC LIMIT ? OFFSET ?";

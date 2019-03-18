@@ -2,12 +2,14 @@ package eu.dl.dataaccess.dto.master;
 
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
+import eu.dl.dataaccess.dto.generic.Amendment;
 import eu.dl.dataaccess.dto.generic.Price;
 import eu.dl.dataaccess.dto.matched.MatchedTenderLot;
 import eu.dl.dataaccess.dto.matched.StructuredLotId;
 import eu.dl.dataaccess.dto.utils.InitUtils;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -100,6 +102,11 @@ public final class MasterTenderLot extends BaseMasterTenderLot<MasterTenderLot> 
     private List<StructuredLotId> sourceLotIds;
 
     /**
+     * Amendment to tender/lot.
+     */
+    private List<Amendment> amendments;
+
+    /**
      * Creates empty master tender lot.
      */
     public MasterTenderLot() {
@@ -128,6 +135,8 @@ public final class MasterTenderLot extends BaseMasterTenderLot<MasterTenderLot> 
         setNonEuMemberStatesCompaniesBidsCount(matchedLot.getNonEuMemberStatesCompaniesBidsCount());
         setForeignCompaniesBidsCount(matchedLot.getForeignCompaniesBidsCount());
         setLotId(matchedLot.getLotId());
+        setAmendments(matchedLot.getAmendments());
+
 
         // shared in a lot and a tender
         setTitle(matchedLot.getTitle());
@@ -502,6 +511,40 @@ public final class MasterTenderLot extends BaseMasterTenderLot<MasterTenderLot> 
      */
     public MasterTenderLot setSourceLotIds(final List<StructuredLotId> sourceLotIds) {
         this.sourceLotIds = sourceLotIds;
+        return this;
+    }
+
+    /**
+     * @return amendments
+     */
+    public List<Amendment> getAmendments() {
+        return amendments;
+    }
+
+    /**
+     * Set amendments.
+     * @param amendments amendments
+     * @return amendments
+     */
+    public MasterTenderLot setAmendments(final List<Amendment> amendments) {
+        this.amendments = amendments;
+        return this;
+    }
+
+    /**
+     * Set amendments.
+     * @param amendment amendments
+     * @return amendments
+     */
+    public MasterTenderLot addAmendment(final Amendment amendment) {
+        if (amendment != null) {
+            if (this.amendments == null) {
+                this.amendments = new ArrayList<>();
+            }
+
+            this.amendments.add(amendment);
+        }
+
         return this;
     }
 }

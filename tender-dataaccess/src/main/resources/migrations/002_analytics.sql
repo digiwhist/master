@@ -90,7 +90,17 @@ CREATE TABLE clean_tender_analytics
   analytics_created_time timestamp without time zone,
   main_cpv_first boolean,
   is_winning boolean,
-  tender_id_vestnik text
+  tender_id_vestnik text,
+  award_decision_date date,
+  lot_array_index integer,
+  bid_array_index integer,
+  amendments_count integer,
+  amendment_date_last date,
+  updated_price double precision,
+  updated_completion_date date,
+  updated_duration_days integer,
+  payments_sum double precision,
+  last_payment_year integer
 )
 WITH (
   OIDS=FALSE
@@ -337,7 +347,16 @@ CREATE TABLE master_tender_analytics
   tender_country text,
   tender_digiwhist_price double precision,
   bid_digiwhist_price double precision,
-  currency text
+  currency text,
+  award_decision_date date,
+  lot_array_index integer,
+  bid_array_index integer,
+  amendments_count integer,
+  updated_price double precision,
+  updated_completion_date date,
+  updated_duration_days integer,
+  payments_sum double precision,
+  last_payment_year integer
 )
 WITH (
   OIDS=FALSE

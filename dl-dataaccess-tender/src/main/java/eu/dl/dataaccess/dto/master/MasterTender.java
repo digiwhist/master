@@ -1,12 +1,5 @@
 package eu.dl.dataaccess.dto.master;
 
-import java.net.URL;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
-
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.codetables.NpwpReason;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
@@ -18,6 +11,12 @@ import eu.dl.dataaccess.dto.generic.Document;
 import eu.dl.dataaccess.dto.generic.Price;
 import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.indicator.Indicator;
+
+import java.net.URL;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -73,6 +72,11 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      * Tender size (below/above the threshold).
      */
     private TenderSize size;
+
+    /**
+     * Tender size (below/above the threshold).
+     */
+    private String sizeNational;
 
     /**
      * Date until which bids need to be submitted (do not confuse with
@@ -510,6 +514,24 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      */
     public final MasterTender setSize(final TenderSize newSize) {
         this.size = newSize;
+        return this;
+    }
+
+    /**
+     * @return the size national
+     */
+    public final String getSizeNational() {
+        return sizeNational;
+    }
+
+    /**
+     * @param newSizeNational
+     *         the size to set
+     *
+     * @return this instance for chaining
+     */
+    public final MasterTender setSizeNational(final String newSizeNational) {
+        this.sizeNational = newSizeNational;
         return this;
     }
 

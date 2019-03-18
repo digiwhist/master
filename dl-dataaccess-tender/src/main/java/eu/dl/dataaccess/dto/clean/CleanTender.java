@@ -70,6 +70,11 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
     private TenderSize size;
 
     /**
+     * Tender size national.
+     */
+    private String sizeNational;
+
+    /**
      * Date until which bids need to be submitted (do not confuse with
      * application deadline for Restricted procedure type).
      */
@@ -461,6 +466,25 @@ public class CleanTender extends BaseCleanTenderLot<CleanTender> implements Clea
      */
     public final CleanTender setSize(final TenderSize newSize) {
         this.size = newSize;
+        return this;
+    }
+
+    /**
+     * @return the size national
+     */
+
+    public final String getSizeNational() {
+        return sizeNational;
+    }
+
+    /**
+     * @param newSizeNational
+     *         the size to set
+     *
+     * @return this instance for chaining
+     */
+    public final CleanTender setSizeNational(final String newSizeNational) {
+        this.sizeNational = newSizeNational;
         return this;
     }
 

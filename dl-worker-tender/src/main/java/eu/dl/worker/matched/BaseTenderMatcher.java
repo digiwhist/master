@@ -14,6 +14,8 @@ import eu.dl.dataaccess.dto.matched.MatchedTender;
 import eu.dl.dataaccess.dto.matched.MatchedTenderLot;
 import eu.dl.dataaccess.utils.BodyUtils;
 import eu.dl.dataaccess.utils.WeightedHash;
+import eu.dl.core.cache.Cache;
+import eu.dl.core.cache.CacheFactory;
 import eu.dl.worker.Message;
 import eu.dl.worker.MessageFactory;
 import eu.dl.worker.matched.plugin.ApproximateMatchingEtalonPlugin;
@@ -27,8 +29,6 @@ import eu.dl.worker.utils.BasicPluginRegistry;
 import eu.dl.worker.utils.PluginRegistry;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.ThreadContext;
-import org.cache2k.Cache;
-import org.cache2k.Cache2kBuilder;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -98,17 +98,11 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
 
     private final ManualMatchingPlugin<MatchedBody> manualBodyMatchingPlugin;
 
-    protected final Cache<String, String> bodyHashCache = new Cache2kBuilder<String, String>() {}
-    		.name("bodyHashCache")
-    		.eternal(true)
-    		.entryCapacity(90000000)
-    		.build();
+    protected Cache hashCache;
 
-    	protected final Cache<String, Boolean> groupEtalonCache = new Cache2kBuilder<String, Boolean>() {}
-    		.name("groupEtalonCache")
-    		.eternal(true)
-    		.entryCapacity(90000000)
-    		.build();
+    private Boolean cacheEnabled = false;
+
+    private String hashCachePrefix = "hash::";
 
     /**
      * Default constructor.
@@ -135,8 +129,18 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
         registerCommonTenderPlugins();
         registerTenderPlugins();
 
-        populateBodyHashCache();
-        populateEtalonCache();
+        if (config.getParam("cache.enabled") != null && config.getParam("cache.enabled").equals("true")) {
+            this.cacheEnabled = true;
+            hashCache = CacheFactory.getCache(this.getClass().getSimpleName().concat("::"));
+
+            String repopulate = hashCache.get(hashCachePrefix.concat("repopulate"));
+
+            if (repopulate == null || repopulate.equals("true")) {
+                populateBodyHashCache();
+                populateEtalonCache();
+                hashCache.put(hashCachePrefix.concat("repopulate"), "false");
+            }
+        }
 
         manualBodyMatchingPlugin = new ManualMatchingPlugin<MatchedBody>(manualMatchDao, "body");
     }
@@ -279,27 +283,16 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
                 continue;
             }
 
+            generateHashes(body);
+
+            if (body.getHash() == null) {
+                continue;
+            }
+
             HashMap<String, Object> metaData = new HashMap<String, Object>();
             if (body.getMetaData() != null) {
                 metaData = body.getMetaData();
             }
-
-            // generate body hash
-            String mainBodyHash = generateBodyHash(body);
-
-            if (mainBodyHash == null) {
-                logger.error("Unable to generate body hash. Body is skipped.");
-                continue;
-            }
-
-            logger.debug("Calculated hash {} for body {}.", mainBodyHash, body.getName());
-            body.setHash(mainBodyHash);
-
-            String fullHash = generateBodyFullHash(body);
-            logger.debug("Calculated full hash {} for body {}.", fullHash, body.getName());
-            body.setFullHash(fullHash);
-
-            body.setAlternativeHashes(generateAlternativeBodyHashes(body));
 
             // search by manual matching plugin first
             long pluginStartTime = System.currentTimeMillis();
@@ -319,14 +312,17 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
                 metaData.put("matchingData", manualMatchingResult.getMetaData());
             } else {
 
-                // search for potential matches in cache
-                pluginStartTime = System.currentTimeMillis();
-                String matchedByHashGroupId = findByHashes(body);
-                pluginEndTime = System.currentTimeMillis();
+                String matchedByHashGroupId = null;
+                if (this.cacheEnabled) {
+                    // search for potential matches in cache
+                    pluginStartTime = System.currentTimeMillis();
+                    matchedByHashGroupId = findByHashes(body);
+                    pluginEndTime = System.currentTimeMillis();
 
-                logMatchingData(pluginStartTime, pluginEndTime, "HASH");
+                    logMatchingData(pluginStartTime, pluginEndTime, "HASH");
 
-                matchingTimes.put("HASH", pluginEndTime - pluginStartTime);
+                    matchingTimes.put("HASH", pluginEndTime - pluginStartTime);
+                }
 
                 if (matchedByHashGroupId != null) {
                     // the same hash found, storing into the same group
@@ -352,13 +348,15 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
                             metaData.put("matchingData", matchingResult.getMetaData());
                             matched = true;
 
-                            // save results to cache
-                            if (matchingResult.getMatchedBy().equals(ExactMatchingEtalonPlugin.MATCHED_BY)
-                                    || matchingResult.getMatchedBy().equals(ApproximateMatchingEtalonPlugin.MATCHED_BY)) {
-                                groupEtalonCache.put(matchingResult.getGroupId(), true);
-                                putToCache(matchingResult.getGroupId(), matchingResult.getMatchedBody());
-                            } else {
-                                groupEtalonCache.put(matchingResult.getGroupId(), false);
+                            if (this.cacheEnabled) {
+                                // save results to cache
+                                if (matchingResult.getMatchedBy().equals(ExactMatchingEtalonPlugin.MATCHED_BY)
+                                        || matchingResult.getMatchedBy().equals(ApproximateMatchingEtalonPlugin.MATCHED_BY)) {
+                                    hashCache.put(hashCachePrefix.concat(matchingResult.getGroupId()), "true");
+                                    putToCache(hashCachePrefix.concat(matchingResult.getGroupId()), matchingResult.getMatchedBody());
+                                } else {
+                                    hashCache.put(matchingResult.getGroupId(), "false");
+                                }
                             }
 
                             // end the plugin loop
@@ -368,7 +366,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
 
                     // not matched by any of our plugins, store as a new item
                     if (!matched) {
-                        body.setGroupId("group_" + getSourceId() + "_body_" + mainBodyHash);
+                        body.setGroupId("group_" + getSourceId() + "_body_" + body.getHash());
                         metaData.put("matchedBy", UNMATCHED);
                     }
                 }
@@ -377,7 +375,9 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
             logger.debug("Body with hash '{}' matched by '{}' with group id '{}'", body.getHash(), body.getMatchedBy(),
                     body.getGroupId());
 
-            putToCache(body.getGroupId(), body);
+            if (this.cacheEnabled) {
+                putToCache(body.getGroupId(), body);
+            }
 
             // save the result
             body.setCleanObjectId(cleanTender.getId());
@@ -418,6 +418,29 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
 
 
     /**
+     * Generate body hashes.
+     *
+     * @param body hashes to be generated
+     */
+    private void generateHashes(final MatchedBody body) {
+        // generate body hash
+        String mainBodyHash = generateBodyHash(body);
+
+        if (mainBodyHash == null) {
+            logger.error("Unable to generate body hash. Body is skipped.");
+            return;
+        }
+
+        logger.debug("Calculated hash {} for body {}.", mainBodyHash, body.getName());
+        body.setHash(mainBodyHash);
+
+        String fullHash = generateBodyFullHash(body);
+        logger.debug("Calculated full hash {} for body {}.", fullHash, body.getName());
+        body.setFullHash(fullHash);
+        body.setAlternativeHashes(generateAlternativeBodyHashes(body));
+    }
+
+    /**
      * Puts values with matching result to cache.
      *
      * @param groupId the group id where the body was stored
@@ -425,15 +448,15 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
      */
     private void putToCache(final String groupId, final MatchedBody body) {
     	if (body.getHash() != null) {
-    		bodyHashCache.put(body.getHash(), groupId);
+    		hashCache.put(hashCachePrefix.concat(body.getHash()), groupId);
     	}
 
         if (body.getFullHash() != null) {
-            bodyHashCache.put(body.getFullHash(), groupId);
+            hashCache.put(hashCachePrefix.concat(body.getFullHash()), groupId);
         }
 
     	for (WeightedHash hash : body.getAlternativeHashes()) {
-    		bodyHashCache.put(hash.getHash(), groupId);
+    		hashCache.put(hashCachePrefix.concat(hash.getHash()), groupId);
     	}
 	}
 
@@ -445,7 +468,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
      */
     private String findByHashes(final MatchedBody body) {
     		// check first, whether there is not the "same"(in the sense of the equal hash) body
-        String groupId = bodyHashCache.peek(body.getHash());
+        String groupId = hashCache.get(hashCachePrefix.concat(body.getHash()));
         if (groupId != null) {
         		return groupId;
     		}
@@ -459,12 +482,12 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
                 .thenComparing(Comparator.comparing(WeightedHash::getHash)));
 
         for (WeightedHash hash : alternativeHashes) {
-            groupId = bodyHashCache.peek(hash.getHash());
+            groupId = hashCache.get(hashCachePrefix.concat(hash.getHash()));
 
             if (groupId != null) {
-            		Boolean isEtalonGroup = groupEtalonCache.peek(groupId);
+            		String isEtalonGroup = hashCache.get(hashCachePrefix.concat(groupId));
 
-            		if (isEtalonGroup != null && isEtalonGroup) {
+            		if (isEtalonGroup != null && isEtalonGroup.equals("true")) {
     					// etalon wins, no need to wait
     					return groupId;
             		}
@@ -721,12 +744,12 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
      * Populates body hash cache with already matched results.
      */
     private void populateBodyHashCache() {
-    		logger.info("Populating body hash cache.");
+        logger.info("Populating body hash cache.");
 		Map<String, String> hashes = matchedBodyDao.getHashAndGroupIds();
 		for (Map.Entry<String, String> entry : hashes.entrySet()) {
-			String value = bodyHashCache.get(entry.getKey());
+			String value = hashCache.get(hashCachePrefix.concat(entry.getKey()));
 			if (value == null) {
-				bodyHashCache.put(entry.getKey(), entry.getValue());
+				hashCache.put(hashCachePrefix.concat(entry.getKey()), entry.getValue());
 			}
 		}
 		logger.info("Body hash cache populated.");
@@ -736,10 +759,10 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
      * Populates body hash cache with already matched results.
      */
     private void populateEtalonCache() {
-    		logger.info("Populating etalon cache.");
-	    	List<String> list = matchedBodyDao.getEtalonGroupIds();
+        logger.info("Populating etalon cache.");
+        List<String> list = matchedBodyDao.getEtalonGroupIds();
 		for (String groupId : list) {
-			groupEtalonCache.put(groupId, true);
+			hashCache.put(hashCachePrefix.concat(groupId), "true");
 		}
 		logger.info("Etalon cache populated.");
 	}
@@ -755,6 +778,6 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
         long executionTime = pluginEndTime - pluginStartTime;
         ThreadContext.put("matching_time", new Long(executionTime).toString());
         ThreadContext.put("matching_plugin_name", "manual");
-        logger.error("Execution of body match plugin {} took {} ms.", "manual", executionTime);
+        logger.error("Execution of body match plugin {} took {} ms.", pluginName, executionTime);
     }
 }

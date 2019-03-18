@@ -39,6 +39,7 @@ public class TenderSizePlugin extends BaseCleaningPlugin<ParsedTender, CleanTend
     @Override
     public final CleanTender clean(final ParsedTender parsedTender, final CleanTender cleanTender) {        
         logger.debug("Cleaning size for parsed tender {} starts", parsedTender.getId());
+        cleanTender.setSizeNational(parsedTender.getSize());
         cleanTender.setSize(TenderSizeUtils.cleanSize(parsedTender.getSize(), tenderSizeMapping));
         logger.debug("Cleaning size for parsed tender {} finished", parsedTender.getId());
         

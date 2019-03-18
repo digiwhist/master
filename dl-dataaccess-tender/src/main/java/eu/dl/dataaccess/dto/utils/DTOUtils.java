@@ -261,4 +261,26 @@ public final class DTOUtils {
         }
         return false;
     }
+
+    /**
+     * Method gets publication source id of the matched tender.
+     *
+     * @param matchedTender
+     *         matched tender
+     *
+     * @return publication source id of the matched tender
+     */
+    public static String getPublicationSourceId(final MatchedTender matchedTender) {
+        if (matchedTender == null) {
+            return null;
+        }
+
+        for (Publication publication : matchedTender.getPublications()) {
+            if (publication != null && publication.getIsIncluded() != null && publication.getIsIncluded()) {
+                return publication.getSourceId();
+            }
+        }
+
+        return null;
+    }
 }

@@ -1,9 +1,6 @@
 package eu.dl.worker.utils;
 
-import org.silvertunnel_ng.netlib.adapter.url.URLGlobalUtil;
-import org.silvertunnel_ng.netlib.api.NetFactory;
-import org.silvertunnel_ng.netlib.api.NetLayer;
-import org.silvertunnel_ng.netlib.api.NetLayerIDs;
+import eu.dl.core.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +10,8 @@ import org.slf4j.LoggerFactory;
  */
 public class NetworkUtils {
     private static final Logger logger = LoggerFactory.getLogger(NetworkUtils.class.getName());
+
+    private static final Config config = Config.getInstance();
 
     /**
      * Utility class only. No constructor needed here.
@@ -26,40 +25,24 @@ public class NetworkUtils {
      * HTTP communication.
      */
     public static void enableTorForHttp() {
-        logger.debug("Starting TOR service");
+        logger.info("Starting TOR service");
 
-        NetLayer lowerNetLayer = NetFactory.getInstance().getNetLayerById(NetLayerIDs.TOR_OVER_TLS_OVER_TCPIP);
+        System.getProperties().put("proxySet", "true");
+        System.getProperties().put("socksProxyHost", config.getParam("tor.socksProxyHost"));
+        System.getProperties().put("socksProxyPort", config.getParam("tor.socksProxyPort"));
+        System.getProperties().put("socksNonProxyHosts", config.getParam("tor.socksNonProxyHosts"));
 
-        // wait until TOR is ready (optional):
-        lowerNetLayer.waitUntilReady();
-
-        // redirect URL handling (JVM global)
-        URLGlobalUtil.initURLStreamHandlerFactory();
-
-        // the following method could be called multiple times
-        // to change layer used by the global factory over the time:
-        URLGlobalUtil.setNetLayerUsedByURLStreamHandlerFactory(lowerNetLayer);
-        logger.debug("TOR service started, HTTP traffic will be redirected via TOR from now on.");
+        logger.info("TOR service started, HTTP traffic will be redirected via TOR from now on.");
     }
 
     /**
      * This method disables Tor usage for http traffic.
      */
     public static void disableTorForHttp() {
-        logger.debug("Stopping TOR service");
+        logger.info("Stopping TOR service");
 
-        NetLayer lowerNetLayer = NetFactory.getInstance().getNetLayerById(NetLayerIDs.TCPIP);
+        System.getProperties().put("proxySet", "false");
 
-        // wait until TOR is ready (optional):
-        lowerNetLayer.waitUntilReady();
-
-        // redirect URL handling (JVM global)
-        URLGlobalUtil.initURLStreamHandlerFactory();
-
-        // the following method could be called multiple times
-        // to change layer used by the global factory over the time:
-        URLGlobalUtil.setNetLayerUsedByURLStreamHandlerFactory(lowerNetLayer);
-
-        logger.debug("TOR service stopped.");
+        logger.info("TOR service stopped.");
     }
 }

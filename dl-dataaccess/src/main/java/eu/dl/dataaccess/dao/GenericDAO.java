@@ -97,6 +97,21 @@ public interface GenericDAO<T> extends BaseDAO<T> {
      * @return set of objects modified after timestamp
      */
     List<T> getModifiedAfter(LocalDateTime timestamp, String createdBy, String countryCode, Integer page);
+
+    /**
+     * Returns count of objects which has been modified after timestamp by certain
+     * source.
+     *
+     * @param timestamp
+     *            objects modified after this timestamp will be counted
+     * @param createdBy
+     *            "author" of the change
+     * @param countryCode
+     *            country code
+     *
+     * @return count of objects modified after timestamp
+     */
+    Integer getModifiedAfterCount(LocalDateTime timestamp, String createdBy, String countryCode);
     
     /**
      * Removes object identified by the id.

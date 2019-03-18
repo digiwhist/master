@@ -353,6 +353,18 @@ public final class VVZTenderParser extends BaseDatlabTenderParser {
     }
 
     /**
+     * Gets section V html.
+     *
+     * @param form
+     *         form html
+     *
+     * @return section V html
+     */
+    static Element getSectionV(final Document form) {
+        return form.select("div#AwardsOfContract").first();
+    }
+
+    /**
      * Gets section VI html.
      *
      * @param form

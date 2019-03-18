@@ -2,6 +2,7 @@ package eu.dl.worker.master.plugin.generic;
 
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
+import eu.dl.dataaccess.dto.generic.Amendment;
 import eu.dl.dataaccess.dto.generic.Payment;
 import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.generic.UnitPrice;
@@ -129,6 +130,12 @@ public final class UnionPlugin<T extends MasterablePart, V, U>
                         .map(t -> (UnitPrice) t)
                         .filter(ArrayUtils.distinct(t -> t.getDescription() + t.getUnitNumber()))
                         .collect(Collectors.toList());
+                } else if (fieldName.toLowerCase().equals("amendments")) {
+                    result = listOfAll
+                            .stream()
+                            .map(t -> (Amendment) t)
+                            .filter(ArrayUtils.distinct(Amendment::getSourceId))
+                            .collect(Collectors.toList());
                 } else {
                     result = listOfAll.stream().filter(ArrayUtils.distinct())
                         .collect(Collectors.toList());

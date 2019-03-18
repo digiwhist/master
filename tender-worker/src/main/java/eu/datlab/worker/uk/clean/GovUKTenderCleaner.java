@@ -150,6 +150,14 @@ public class GovUKTenderCleaner extends BaseDatlabTenderCleaner {
 
     @Override
     protected final ParsedTender preProcessParsedItem(final ParsedTender parsedItem) {
+        if (parsedItem.getIsAwarded() != null) {
+            if (parsedItem.getIsAwarded().contains("Awarded")) {
+                parsedItem.setIsAwarded(Boolean.TRUE.toString());
+            } else {
+                parsedItem.setIsAwarded(Boolean.FALSE.toString());
+            }
+        }
+
         return parsedItem;
     }
 }

@@ -5,6 +5,7 @@ import eu.datlab.worker.clean.BaseDatlabTenderCleaner;
 import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
 import eu.dl.dataaccess.dto.codetables.BuyerType;
+import eu.dl.dataaccess.dto.codetables.NpwpReason;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.codetables.SelectionMethod;
 import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
@@ -160,6 +161,8 @@ public final class TedTenderCleaner extends BaseDatlabTenderCleaner {
     private static Map<Enum, List<String>> npwpReasonMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
+        mapping.put(NpwpReason.NO_VALID_OFFERS_IN_PRECEEDING_PROCUREMENT, Arrays.asList("works_repetition_existing_works"));
+
         /*
         R2.08
         ADDITIONAL_WORKS
@@ -283,7 +286,7 @@ public final class TedTenderCleaner extends BaseDatlabTenderCleaner {
         mapping.put(BuyerActivityType.ECONOMIC_AND_FINANCIAL_AFFAIRS, Arrays.asList("ECONOMIC_AND_FINANCIAL_AFFAIRS"));
         mapping.put(BuyerActivityType.EDUCATION, Arrays.asList("EDUCATION"));
         mapping.put(BuyerActivityType.ENVIRONMENT, Arrays.asList("ENVIRONMENT"));
-        mapping.put(BuyerActivityType.GENERAL_PUBLIC_SERVICES, Arrays.asList("GENERAL_PUBLIC_SERVICES"));
+        mapping.put(BuyerActivityType.GENERAL_PUBLIC_SERVICES, Arrays.asList("GENERAL_PUBLIC_SERVICES", "General public services"));
         mapping.put(BuyerActivityType.HEALTH, Arrays.asList("HEALTH"));
         mapping.put(
             BuyerActivityType.HOUSING_AND_COMMUNITY_AMENITIES, Arrays.asList("HOUSING_AND_COMMUNITY_AMENITIES"));

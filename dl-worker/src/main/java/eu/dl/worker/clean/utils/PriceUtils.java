@@ -55,28 +55,47 @@ public final class PriceUtils {
      */
     public static Price cleanPrice(final ParsedPrice parsedPrice, final List<NumberFormat> numberFormat,
         final String country) {
+        return cleanPrice(parsedPrice, numberFormat, country, true);
+    }
+
+    /**
+     * Cleans the given parsed price.
+     *
+     * @param parsedPrice
+     *          parsed price
+     * @param numberFormat
+     *          list of number formats
+     * @param country
+     *          ISO code of country
+     * @param removeNonsensical
+     *          remove nonsensical prices
+     *
+     * @return cleaned price
+     */
+    public static Price cleanPrice(final ParsedPrice parsedPrice, final List<NumberFormat> numberFormat,
+                                   final String country, final boolean removeNonsensical) {
         if (parsedPrice == null) {
             return null;
         }
 
         Price price = new Price()
-            .setAmountWithVat(NumberUtils.cleanBigDecimal(parsedPrice.getAmountWithVat(), numberFormat))
-            .setCurrency(cleanPriceCurrency(parsedPrice.getCurrency()))
-            .setMaxAmountWithVat(NumberUtils.cleanBigDecimal(parsedPrice.getMaxAmountWithVat(), numberFormat))
-            .setMaxNetAmount(NumberUtils.cleanBigDecimal(parsedPrice.getMaxNetAmount(), numberFormat))
-            .setMinAmountWithVat(NumberUtils.cleanBigDecimal(parsedPrice.getMinAmountWithVat(), numberFormat))
-            .setMinNetAmount(NumberUtils.cleanBigDecimal(parsedPrice.getMinNetAmount(), numberFormat))
-            .setNetAmount(NumberUtils.cleanBigDecimal(parsedPrice.getNetAmount(), numberFormat))
-            .setNetAmountEur(NumberUtils.cleanBigDecimal(parsedPrice.getNetAmountEur(), numberFormat))
-            .setVat(NumberUtils.cleanBigDecimal(removePercentFromVat(parsedPrice.getVat()), numberFormat));
+                .setAmountWithVat(NumberUtils.cleanBigDecimal(parsedPrice.getAmountWithVat(), numberFormat))
+                .setCurrency(cleanPriceCurrency(parsedPrice.getCurrency()))
+                .setMaxAmountWithVat(NumberUtils.cleanBigDecimal(parsedPrice.getMaxAmountWithVat(), numberFormat))
+                .setMaxNetAmount(NumberUtils.cleanBigDecimal(parsedPrice.getMaxNetAmount(), numberFormat))
+                .setMinAmountWithVat(NumberUtils.cleanBigDecimal(parsedPrice.getMinAmountWithVat(), numberFormat))
+                .setMinNetAmount(NumberUtils.cleanBigDecimal(parsedPrice.getMinNetAmount(), numberFormat))
+                .setNetAmount(NumberUtils.cleanBigDecimal(parsedPrice.getNetAmount(), numberFormat))
+                .setNetAmountEur(NumberUtils.cleanBigDecimal(parsedPrice.getNetAmountEur(), numberFormat))
+                .setVat(NumberUtils.cleanBigDecimal(removePercentFromVat(parsedPrice.getVat()), numberFormat));
 
         updateNetAmounts(price, country);
 
         Currency currency = price.getCurrency();
         if (currency == null && country != null) {
             String defaultCurrency = Config.getInstance().getParam("eu.datlab.worker."
-                + Strings.toLowerCase(country) + ".currency");
-            
+                    + Strings.toLowerCase(country) + ".currency");
+
             if (defaultCurrency != null) {
                 currency = Currency.getInstance(defaultCurrency);
                 price.setCurrency(currency);
@@ -88,13 +107,15 @@ public final class PriceUtils {
                 && price.getNetAmount() != null) {
             price.setNetAmountEur(price.getNetAmount());
         }
-        
-        price.setAmountWithVat(removeNonsensicalAmount(price.getAmountWithVat(), currency));
-        price.setMaxAmountWithVat(removeNonsensicalAmount(price.getMaxAmountWithVat(), currency));
-        price.setMinAmountWithVat(removeNonsensicalAmount(price.getMinAmountWithVat(), currency));
-        price.setNetAmount(removeNonsensicalAmount(price.getNetAmount(), currency));
-        price.setMaxNetAmount(removeNonsensicalAmount(price.getMaxNetAmount(), currency));
-        price.setMinNetAmount(removeNonsensicalAmount(price.getMinNetAmount(), currency));
+
+        if (removeNonsensical) {
+            price.setAmountWithVat(removeNonsensicalAmount(price.getAmountWithVat(), currency));
+            price.setMaxAmountWithVat(removeNonsensicalAmount(price.getMaxAmountWithVat(), currency));
+            price.setMinAmountWithVat(removeNonsensicalAmount(price.getMinAmountWithVat(), currency));
+            price.setNetAmount(removeNonsensicalAmount(price.getNetAmount(), currency));
+            price.setMaxNetAmount(removeNonsensicalAmount(price.getMaxNetAmount(), currency));
+            price.setMinNetAmount(removeNonsensicalAmount(price.getMinNetAmount(), currency));
+        }
 
         return price;
     }
@@ -164,6 +185,25 @@ public final class PriceUtils {
     }
 
     /**
+     * Cleans the given parsed price.
+     *
+     * @param parsedPrice
+     *          parsed price
+     * @param numberFormat
+     *          number format
+     * @param country
+     *          ISO code of country
+     * @param removeNonsensical
+     *          remove nonsensical prices
+     *
+     * @return cleaned price
+     */
+    public static Price cleanPrice(final ParsedPrice parsedPrice, final NumberFormat numberFormat,
+                                   final String country, final boolean removeNonsensical) {
+        return cleanPrice(parsedPrice, Arrays.asList(numberFormat), country, removeNonsensical);
+    }
+
+    /**
      * Cleans currency.
      *
      * @see Currency#getInstance(java.lang.String)
@@ -187,6 +227,7 @@ public final class PriceUtils {
                 .replace("Hrvatska kuna", "HRK")
                 .replace("forint", "HUF")
                 .replace("yen", "JPY")
+                .replace("Peso Chileno", "CLP")
                 .replace("litai", "LTL");
 
         //processes only first three characters (ISO 4217 currency code consists of three alphabetical characters)

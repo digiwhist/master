@@ -62,30 +62,46 @@ public final class PCETenderCrawler extends BaseDatlabIncrementalPagedSourceHttp
         for (int i = 1; i <= tenderCount; i++) {
             try {
                 final HtmlAnchor tenderDetailLink = actualPage.getFirstByXPath(
-                        "//table[@id='myTablaBusquedaCustom']/tbody/tr[" + i + "]/td[1]/div/a");
+                    "//table[@id='myTablaBusquedaCustom']/tbody/tr[" + i + "]/td[1]/div/a");
                 actualPage = tenderDetailLink.click();
 
                 HtmlSpan error = actualPage.getFirstByXPath("//table[@class='TextTablaErrores']//span");
                 if (error != null) {
                     if (error.getTextContent().contains("NonUniqueResultException")) {
-                        logger.warn("Unable to get record {} from {} page for {} because of server is not able to return unique record",
+                        logger.warn("Unable to get record {} from page {} for {} because of server is not able to return unique record",
                             i, getCurrentPageNumber(), actualDate);
 
                         // page doesn't include back button, use browser page navigation by javascript
-                        ScriptResult result = actualPage.executeJavaScript("javascript:window.history.back();");
-                        actualPage = (HtmlPage) result.getNewPage();
+                        actualPage = goBackToList(actualPage);
+                        continue;
+                    } else if (error.getTextContent().contains("NullPointerException")) {
+                        logger.warn("Unable to get record {} from page {} for {} because of server returns NullPointerException" +
+                                " instead of detail page",
+                            i, getCurrentPageNumber(), actualDate);
 
+                        // page doesn't include back button, use browser page navigation by javascript
+                        actualPage = goBackToList(actualPage);
+                        continue;
+                    } else if (error.getTextContent().contains("ExcepcionSistemicoPLACE")) {
+                        logger.warn("Unable to get record {} from page {} for {} because of server returns system exception",
+                            i, getCurrentPageNumber(), actualDate);
+
+                        actualPage = goBackToList(actualPage);
                         continue;
                     } else {
-                        logger.error("Unexpected exception for record {} from {} page for {}: {}", i, getCurrentPageNumber(), actualDate,
+                        logger.error("Unexpected exception for record {} from page {} for {}: {}", i, getCurrentPageNumber(), actualDate,
                             error.getTextContent());
                         throw new UnrecoverableException("Unexpected exception");
                     }
                 }
 
-                // we want to go back to the list of tenders after visiting the tender detail page (we have to click on
-                // red "Back" button)
-                final HtmlAnchor backButton = actualPage.getHtmlElementById("enlace_volver");
+                // don't download detail without back button
+                try {
+                    actualPage.getHtmlElementById("enlace_volver");
+                } catch (ElementNotFoundException ex) {
+                    actualPage = goBackToList(actualPage);
+                    continue;
+                }
 
                 // get links to XML files
                 try {
@@ -127,7 +143,7 @@ public final class PCETenderCrawler extends BaseDatlabIncrementalPagedSourceHttp
                         logger.warn("Tender {} does not have any HTML document.", tenderName.getTextContent());
                     } else {
                         logger.warn("Tender {} is inaccessible.", tenderDetailLink.getTextContent());
-                        actualPage = backButton.click();
+                        actualPage = goBackToList(actualPage);
                         continue;
                     }
                 }
@@ -137,7 +153,7 @@ public final class PCETenderCrawler extends BaseDatlabIncrementalPagedSourceHttp
                         "//a[@id='viewns_Z7_AVEQAI930OBRD02JPMTPG21006_:form1:URLgenera']");
                 createAndPublishMessage(tenderDetailsPageLink.getHrefAttribute(),
                         actualPage.getWebResponse().getContentAsString());
-                actualPage = backButton.click();
+                actualPage = goBackToList(actualPage);
             } catch (final Exception ex) {
                 logger.error("Crawling failed for page #{} on url {} with exception {}", getCurrentPageNumber(),
                         getCurrentPageUrl(), ex);
@@ -146,6 +162,56 @@ public final class PCETenderCrawler extends BaseDatlabIncrementalPagedSourceHttp
         }
 
         return actualPage;
+    }
+
+    /**
+     * Navigates to the list page. If backward navigation has led to the non-list page loads list "manually".
+     *
+     * @param page
+     *      HTML page from witch go back
+     * @return list page
+     */
+    private HtmlPage goBackToList(final HtmlPage page) {
+        HtmlPage actualPage;
+        try {
+            HtmlAnchor backButton = page.getHtmlElementById("enlace_volver");
+            actualPage = backButton.click();
+        } catch (ElementNotFoundException | IOException ex) {
+            // unable to navigate back with button, use browser page navigation by javascript
+            actualPage = goBackByJS(page);
+        }
+
+        // check whether is located on the list page
+        if (actualPage.getFirstByXPath("//table[@id='myTablaBusquedaCustom']") == null) {
+            logger.warn("Backward navigation has led to the non-list page");
+
+            actualPage = getSearchResultsStartPageForDate(actualDate);
+            logger.warn("Tenders for {} loaded", actualDate);
+
+            // get number of current page
+            int pageNumber = Integer.valueOf(
+                actualPage.getElementById("viewns_Z7_AVEQAI930OBRD02JPMTPG21004_:form1:textfooterInfoNumPagMAQ").getTextContent());
+
+            while (pageNumber < getCurrentPageNumber()) {
+                actualPage = getNextPage(actualPage);
+                pageNumber++;
+            }
+            logger.warn("Last crawled page {} loaded", getCurrentPageNumber());
+        }
+
+        return actualPage;
+    }
+
+    /**
+     * Uses browser page navigation by javascript to go the previous page.
+     *
+     * @param page
+     *      HTML page from witch go back
+     * @return previous page
+     */
+    private HtmlPage goBackByJS(final HtmlPage page) {
+        ScriptResult result = page.executeJavaScript("javascript:window.history.back();");
+        return (HtmlPage) result.getNewPage();
     }
 
     @Override
