@@ -53,9 +53,9 @@ public class Amendment {
     private String modificationReason;
 
     /**
-     * Short description of modification reason.
+     * Short description of modification.
      */
-    private String modificationReasonShortDescription;
+    private String modificationShortDescription;
 
     /**
      * Detailed description of modification reason.
@@ -82,7 +82,7 @@ public class Amendment {
      */
     private String sourceId;
 
-
+    private LocalDate publicationDate;
 
     /**
      * @return the cpvs
@@ -235,24 +235,24 @@ public class Amendment {
     }
 
     /**
-     * Gets modificationReasonShortDescription.
+     * Gets modificationShortDescription.
      *
-     * @return value of modificationReasonShortDescription
+     * @return value of modificationShortDescription
      */
-    public final String getModificationReasonShortDescription() {
-        return modificationReasonShortDescription;
+    public final String getModificationShortDescription() {
+        return modificationShortDescription;
     }
 
     /**
-     * Sets modificationReasonShortDescription.
+     * Sets modificationShortDescription.
      *
-     * @param modificationReasonShortDescription
-     *         the modificationReasonShortDescription to set
+     * @param modificationShortDescription
+     *         the modificationShortDescription to set
      *
      * @return this instance for chaining
      */
-    public final Amendment setModificationReasonShortDescription(final String modificationReasonShortDescription) {
-        this.modificationReasonShortDescription = modificationReasonShortDescription;
+    public final Amendment setModificationShortDescription(final String modificationShortDescription) {
+        this.modificationShortDescription = modificationShortDescription;
         return this;
     }
 
@@ -351,6 +351,23 @@ public class Amendment {
      */
     public final Amendment setSourceId(final String sourceId) {
         this.sourceId = sourceId;
+        return this;
+    }
+
+    /**
+     * @return publication date
+     */
+    public final LocalDate getPublicationDate() {
+        return this.publicationDate;
+    }
+
+    /**
+     * @param publicationDate
+     *      publication date to be set
+     * @return the Amendment
+     */
+    public final Amendment setPublicationDate(final LocalDate publicationDate) {
+        this.publicationDate = publicationDate;
         return this;
     }
 }

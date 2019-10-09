@@ -4,9 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.List;
 
 import org.junit.Test;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 /**
  * StringUtils test class.
@@ -16,6 +20,8 @@ import org.junit.Test;
 public final class StringUtilsTest {
 
     private static final String TEST_STRING = "header\nline 1\nline 2\nline 3\nline 4";
+
+    private static final Charset WINDOWS_1250 = Charset.forName("Windows-1250");
 
     /**
      * Test for method {@link StringUtils#chunkStringByLines(java.lang.String, int, int)}.
@@ -90,5 +96,35 @@ public final class StringUtilsTest {
         assertEquals("2345", StringUtils.justifyLeft("12345", 4, "0"));
         assertEquals("1234", StringUtils.justifyLeft("1234", 4, "0"));
         assertEquals("0012", StringUtils.justifyLeft("12", 4, "0"));
+    }
+
+    /**
+     * Test for methods {@link StringUtils#charset(String, Charset...)} and {@link StringUtils#convert(String, Charset, Charset)}.
+     */
+    @Test
+    public void charsetAndConvertTest() {
+        Charset[] charsets = new Charset[]{ISO_8859_1, WINDOWS_1250};
+        String utf8 = "ěščřžýáíéúů";
+        String iso88591 = "Ä\u009BÅ¡Ä\u008DÅ\u0099Å¾Ã½Ã¡Ã\u00ADÃ©ÃºÅ¯";
+        String windows1250 = "Ä›ĹˇÄŤĹ™ĹľĂ˝ĂˇĂ\u00ADĂ©ĂşĹŻ";
+
+        assertNull(StringUtils.charset(null, charsets));
+        assertNull(StringUtils.charset(utf8, ISO_8859_1));
+        assertNull(StringUtils.charset(utf8, ISO_8859_1, null));
+        assertNull(StringUtils.convert(null, ISO_8859_1, UTF_8));
+
+        assertEquals(utf8, StringUtils.convert(utf8, null, UTF_8));
+        assertEquals(utf8, StringUtils.convert(utf8, ISO_8859_1, null));
+
+        assertEquals(ISO_8859_1, StringUtils.charset(iso88591, charsets));
+        assertEquals(utf8, StringUtils.convert(iso88591, ISO_8859_1, UTF_8));
+        assertEquals(utf8, StringUtils.convert(iso88591, StringUtils.charset(iso88591, charsets), UTF_8));
+
+        assertEquals(WINDOWS_1250, StringUtils.charset(windows1250, charsets));
+        assertEquals(utf8, StringUtils.convert(windows1250, WINDOWS_1250, UTF_8));
+        assertEquals(utf8, StringUtils.convert(windows1250, StringUtils.charset(windows1250, charsets), UTF_8));
+
+        assertEquals(null, StringUtils.charset(utf8, charsets));
+        assertEquals(utf8, StringUtils.convert(utf8, StringUtils.charset(utf8, charsets), UTF_8));
     }
 }

@@ -13,10 +13,12 @@ import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.ArrayList;
 
 /**
  * Contract notice handler for E-procurement in Estonia.
@@ -67,8 +69,6 @@ public final class EPEContractNoticeHandler {
             .setAwardDeadlineDuration(EPEParserUtils.tableValueByLabel("Minimaalne aeg, mille jooksul pakkuja peab"
                 + " pakkumuse jõus hoidma", context))
             .addFunding(EPEParserUtils.parseEUFunding("^VI\\.2\\)", context))
-            // dps ????
-            .setIsDps(EPEParserUtils.parseBoolean("^VI\\.6\\)", context))
             .setLots(EPEParserUtils.parseLots(EPEContractNoticeHandler::parseLot,
                 JsoupUtils.selectFirst("tr:contains(B LISA:) + tr", context), null,
                 Collections.singletonMap("criteria", EPEParserUtils.parseLotsRelatedCriteria(context))))
@@ -82,17 +82,25 @@ public final class EPEContractNoticeHandler {
 
     /**
      * @param context
-     *      context that includes eligible languages
+     *         context that includes eligible languages
      * @return non-empty list of languages or null
      */
     private static List<String> parseEligibleLanguages(final Element context) {
-        String languages = EPEParserUtils.tableValueByLabel("Keel(ed), milles võib esitada pakkumuse või taotluse",
-            context);
+        List<String> resList = new ArrayList<>();
+        String languages = EPEParserUtils.tableValueByLabel("Keel\\(ed\\), milles võib esitada pakkumuse või taotluse",
+                context);
         if (languages == null) {
             return null;
         }
-
-        return Arrays.asList(languages.split(", ?"));
+        while (languages != null) {
+            resList.addAll(Arrays.asList(languages.split(", ?")));
+            String nextTitle = EPEParserUtils.nextNNodeValueFromNextTableRowByValue(languages, 0, context);
+            languages = EPEParserUtils.nextNNodeValueFromNextTableRowByValue(languages, 1, context);
+            if (nextTitle == null || !nextTitle.isEmpty()) {
+                break;
+            }
+        }
+        return resList;
     }
 
     /**
@@ -121,18 +129,28 @@ public final class EPEContractNoticeHandler {
      * @return updated tender
      */
     private static BaseParsedTenderLot parseDuration(final BaseParsedTenderLot tender, final String label,
-        final Element context) {
+                                                     final Element context) {
 
-        String duration = EPEParserUtils.tableValueByLabel(label, context);
-        if (duration != null) {
-            assert duration.contains("kuundes") || duration.contains("aastates") || duration.contains("päevades");
-            
-            if (duration.contains("aastates")) {
-                tender.setEstimatedDurationInYears(duration);
-            } else if (duration.contains("kuundes")) {
-                tender.setEstimatedDurationInMonths(duration);
-            }  else {
-                tender.setEstimatedDurationInDays(duration);
+        String value1 = EPEParserUtils.tableValueByLabel(label, context);
+        if (value1 != null) {
+            String value2 = EPEParserUtils.tableValueByLabel(value1, context);
+            if (value2 == null) {
+                assert value1.contains("kuude") || value1.contains("aasta") || value1.contains("päeva");
+
+                if (value1.contains("aasta")) {
+                    tender.setEstimatedDurationInYears(value1);
+                } else if (value1.contains("kuude")) {
+                    tender.setEstimatedDurationInMonths(value1);
+                } else {
+                    tender.setEstimatedDurationInDays(value1);
+                }
+            } else {
+                if (value1.contains("alguskuupäev")) {
+                    tender.setEstimatedStartDate(value1);
+                }
+                if (value2.contains("lõppkuupäev")) {
+                    tender.setEstimatedCompletionDate(value2);
+                }
             }
         }
         return tender;

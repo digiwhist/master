@@ -56,76 +56,60 @@ final class BOAMPTenderNewHandler {
         final Boolean isFrameworkAgreement = JsoupUtils.exists("DONNEES > PROCEDURE > AVIS_IMPLIQUE > ACCORD_CADRE_OUI",
                 document);
         parsedTender
-                .setPublications(parsePublications(document, rawTender.getSourceUrl().toString(),
-                        rawTender.getSourceFileName()))
-                .addBuyer(new ParsedBody()
-                        .setName(JsoupUtils.selectText("DONNEES > IDENTITE > DENOMINATION", document))
-                        .setContactPoint(JsoupUtils.selectText("DONNEES > IDENTITE > CONTACT", document))
-                        .setAddress(new ParsedAddress()
-                                .setPostcode(JsoupUtils.selectText("DONNEES > IDENTITE > CP", document))
-                                .setCity(JsoupUtils.selectText("DONNEES > IDENTITE > VILLE", document))
-                                .setCountry(JsoupUtils.selectText("DONNEES > IDENTITE > PAYS", document))
-                                .addNuts(JsoupUtils.selectText("DONNEES > IDENTITE > ADJUDICATEUR_NUTS", document))
-                                .setStreet(JsoupUtils.selectText("DONNEES > IDENTITE > ADRESSE", document))
-                                .setUrl(JsoupUtils.selectText("DONNEES > IDENTITE > URL", document)))
-                        .setPhone(JsoupUtils.selectText("DONNEES > IDENTITE > TEL", document))
-                        .addMainActivity(JsoupUtils.selectNodeName(
-                                "DONNEES > ACTIVITE_PRINCIPALE > POUVOIR_ADJUDICATEUR > *, " +
-                                        "DONNEES > ACTIVITE_PRINCIPALE > ENTITE_ADJUDICATRICE > *", document))
-                        .setBuyerType(JsoupUtils.selectNodeName("DONNEES > TYPE_ORGANISME > *, " +
-                                "DONNEES > TYPE_POUVOIR_ADJUDICATEUR > *", document)))
-                .setIsCentralProcurement(JsoupUtils.exists(
-                        "DONNEES > IDENTITE > ORGANISME_ACHETEUR_CENTRAL_OUI", document).toString())
-                .setTitle(JsoupUtils.selectText("DONNEES > OBJET > TITRE_MARCHE", document))
-                .setAddressOfImplementation(new ParsedAddress()
-                        .setPostcode(JsoupUtils.selectText("DONNEES > OBJET > LIEU_EXEC_LIVR > CP", document))
-                        .setCity(JsoupUtils.selectText("DONNEES > OBJET > LIEU_EXEC_LIVR > VILLE", document))
-                        .setRawAddress(JsoupUtils.selectText("DONNEES > OBJET > LIEU_EXEC_LIVR > ADRESSE", document))
-                        .addNuts(JsoupUtils.selectText("DONNEES > OBJET > LIEU_EXEC_LIVR > CODE_NUTS", document)))
-                .setCpvs(parseCpvs(document))
-                .setSupplyType(JsoupUtils.selectNodeName("DONNEES > OBJET > TYPE_MARCHE > *", document))
-                .setEstimatedDurationInYears(JsoupUtils.selectText("DONNEES > OBJET > DELEGATION > DUREE_AN", document))
-                .setEstimatedDurationInMonths(JsoupUtils.selectText("DONNEES > OBJET > DELEGATION > DUREE_MOIS",
-                        document))
-                .setEstimatedStartDate(StringUtils.removeDotsAtTheEnd(JsoupUtils.selectText(
-                        "DONNEES > OBJET > DATE_LANCEMENT", document)))
-                .addCorrigendum(parseEstimatedStartDateCorrigendum(document))
-                .setHasLots(JsoupUtils.exists("DONNEES > OBJET > DIV_EN_LOTS > OUI", document).toString())
-                .setLots(parseTenderLots(document, isFrameworkAgreement))
-                .setProcedureType(JsoupUtils.selectNodeName("DONNEES > PROCEDURE > TYPE_PROCEDURE > *", document))
-                .setIsAcceleratedProcedure(JsoupUtils.exists("DONNEES > PROCEDURE > RESTREINT > ACCELERE", document)
-                        .toString())
-                .setEnvisagedMaxCandidatesCount(JsoupUtils.selectText(
-                        "DONNEES > PROCEDURE > NB_CANDIDATS > NB_MAX_OFFRE", document))
-                .setEnvisagedMinCandidatesCount(JsoupUtils.selectText(
-                        "DONNEES > PROCEDURE > NB_CANDIDATS > NB_MIN_OFFRE", document))
-                .setIsFrameworkAgreement(isFrameworkAgreement.toString())
-                .setIsDps(JsoupUtils.exists("DONNEES > PROCEDURE > AVIS_IMPLIQUE > SAD_OUI", document).toString())
-                .setMaxFrameworkAgreementParticipants(JsoupUtils.selectText(
-                        "DONNEES > PROCEDURE > ACCORD_CADRE > NB_MAX_PARTICIPANTS", document))
-                .setAwardCriteria(parseTenderAwardCriteria(document))
-                .setEstimatedPrice(parseEstimatedPrice(document))
-                .setAwardDecisionDate(JsoupUtils.selectText("DONNEES > ATTRIBUTION > DATE_DECISION", document))
-                .setCorrections(parseCorrections(document))
-                .setIsWholeTenderCancelled(JsoupUtils.exists("DONNEES > ANNULATION", document).toString())
-                .setCancellationReason(JsoupUtils.selectText("DONNEES > ANNULATION > MOTIF", document))
-                .setEligibilityCriteria(JsoupUtils.selectText("DONNEES > CONDITION_PARTICIPATION > CRITERE_SELECTION",
-                        document))
-                .setPersonalRequirements(JsoupUtils.selectText(
-                        "DONNEES > CONDITION_PARTICIPATION > SITUATION_JURIDIQUE", document))
-                .setEconomicRequirements(JsoupUtils.selectText("DONNEES > CONDITION_PARTICIPATION > CAP_ECO",
-                        document))
-                .setTechnicalRequirements(JsoupUtils.selectText("DONNEES > CONDITION_PARTICIPATION > CAP_TECH",
-                        document))
-                .setIsDocumentsAccessRestricted(JsoupUtils.exists(
-                        "DONNEES > CONDITION_ADMINISTRATIVE > CONDITIONS_ET_MODE_PAIEMENT_OBTENIR_DOCUMENTS", document)
-                        .toString())
-                .setDocumentsDeadline(JsoupUtils.selectText(
-                        "DONNEES > CONDITION_ADMINISTRATIVE > DATE_LIMITE_OBTENTION_DOCUMENTS", document))
-                .setDocumentsPayable(JsoupUtils.exists("DONNEES > CONDITION_ADMINISTRATIVE > DOCUMENT_PAYANT_OUI",
-                        document).toString())
-                .setDocumentsPrice(parseDocumentsPrice(document))
-                .setDescription(parseTenderDescription(document));
+            .setPublications(parsePublications(document, rawTender.getSourceUrl().toString(), rawTender.getSourceFileName()))
+            .addBuyer(new ParsedBody()
+                .setName(JsoupUtils.selectText("DONNEES > IDENTITE > DENOMINATION", document))
+                .setContactPoint(JsoupUtils.selectText("DONNEES > IDENTITE > CONTACT", document))
+                .setAddress(BOAMPTenderParserUtils.parseAddress(JsoupUtils.selectFirst("DONNEES > IDENTITE", document)))
+                .setPhone(JsoupUtils.selectText("DONNEES > IDENTITE > TEL", document))
+                .addMainActivity(JsoupUtils.selectNodeName("DONNEES > ACTIVITE_PRINCIPALE > POUVOIR_ADJUDICATEUR > *, " +
+                    "DONNEES > ACTIVITE_PRINCIPALE > ENTITE_ADJUDICATRICE > *", document))
+                .setBuyerType(JsoupUtils.selectNodeName("DONNEES > TYPE_ORGANISME > *, " +
+                    "DONNEES > TYPE_POUVOIR_ADJUDICATEUR > *", document)))
+            .setIsCentralProcurement(JsoupUtils.exists("DONNEES > IDENTITE > ORGANISME_ACHETEUR_CENTRAL_OUI", document).toString())
+            .setTitle(JsoupUtils.selectText("DONNEES > OBJET > TITRE_MARCHE, DONNEES > OBJET > OBJET_COMPLET", document))
+            .setAddressOfImplementation(new ParsedAddress()
+                .setPostcode(JsoupUtils.selectText("DONNEES > OBJET > LIEU_EXEC_LIVR > CP", document))
+                .setCity(JsoupUtils.selectText("DONNEES > OBJET > LIEU_EXEC_LIVR > VILLE", document))
+                .setRawAddress(JsoupUtils.selectText("DONNEES > OBJET > LIEU_EXEC_LIVR > ADRESSE", document))
+                .addNuts(JsoupUtils.selectText("DONNEES > OBJET > LIEU_EXEC_LIVR > CODE_NUTS", document)))
+            .setCpvs(parseCpvs(JsoupUtils.selectFirst("DONNEES > OBJET", document)))
+            .setSupplyType(JsoupUtils.selectNodeName("DONNEES > OBJET > TYPE_MARCHE > *", document))
+            .setEstimatedDurationInYears(JsoupUtils.selectText("DONNEES > OBJET > DELEGATION > DUREE_AN", document))
+            .setEstimatedDurationInMonths(JsoupUtils.selectText("DONNEES > OBJET > DELEGATION > DUREE_MOIS", document))
+            .setEstimatedStartDate(StringUtils.removeDotsAtTheEnd(JsoupUtils.selectText("DONNEES > OBJET > DATE_LANCEMENT", document)))
+            .addCorrigendum(parseEstimatedStartDateCorrigendum(document))
+            .setHasLots(JsoupUtils.exists("DONNEES > OBJET > DIV_EN_LOTS > OUI", document).toString())
+            .setLots(parseTenderLots(document, isFrameworkAgreement))
+            .setProcedureType(JsoupUtils.selectNodeName("DONNEES > PROCEDURE > TYPE_PROCEDURE > *", document))
+            .setIsAcceleratedProcedure(JsoupUtils.exists("DONNEES > PROCEDURE > RESTREINT > ACCELERE", document).toString())
+            .setEnvisagedMaxCandidatesCount(JsoupUtils.selectText("DONNEES > PROCEDURE > NB_CANDIDATS > NB_MAX_OFFRE", document))
+            .setEnvisagedMinCandidatesCount(JsoupUtils.selectText("DONNEES > PROCEDURE > NB_CANDIDATS > NB_MIN_OFFRE", document))
+            .setIsFrameworkAgreement(isFrameworkAgreement.toString())
+            .setIsDps(JsoupUtils.exists("DONNEES > PROCEDURE > AVIS_IMPLIQUE > SAD_OUI", document).toString())
+            .setMaxFrameworkAgreementParticipants(JsoupUtils.selectText("DONNEES > PROCEDURE > ACCORD_CADRE > NB_MAX_PARTICIPANTS",
+                document))
+            .setAwardCriteria(parseTenderAwardCriteria(document))
+            .setEstimatedPrice(parseEstimatedPrice(document))
+            .setAwardDecisionDate(JsoupUtils.selectText("DONNEES > ATTRIBUTION > DATE_DECISION", document))
+            .setCorrections(parseCorrections(document))
+            .setIsWholeTenderCancelled(JsoupUtils.exists("DONNEES > ANNULATION", document).toString())
+            .setCancellationReason(JsoupUtils.selectText("DONNEES > ANNULATION > MOTIF", document))
+            .setEligibilityCriteria(JsoupUtils.selectText("DONNEES > CONDITION_PARTICIPATION > CRITERE_SELECTION", document))
+            .setPersonalRequirements(JsoupUtils.selectText("DONNEES > CONDITION_PARTICIPATION > SITUATION_JURIDIQUE", document))
+            .setEconomicRequirements(JsoupUtils.selectText("DONNEES > CONDITION_PARTICIPATION > CAP_ECO", document))
+            .setTechnicalRequirements(JsoupUtils.selectText("DONNEES > CONDITION_PARTICIPATION > CAP_TECH", document))
+            .setIsDocumentsAccessRestricted(JsoupUtils.exists(
+                "DONNEES > CONDITION_ADMINISTRATIVE > CONDITIONS_ET_MODE_PAIEMENT_OBTENIR_DOCUMENTS", document).toString())
+            .setDocumentsDeadline(JsoupUtils.selectText("DONNEES > CONDITION_ADMINISTRATIVE > DATE_LIMITE_OBTENTION_DOCUMENTS", document))
+            .setDocumentsPayable(JsoupUtils.exists("DONNEES > CONDITION_ADMINISTRATIVE > DOCUMENT_PAYANT_OUI", document).toString())
+            .setDocumentsPrice(parseDocumentsPrice(document))
+            .setDescription(parseTenderDescription(document))
+            .setBidDeadline(JsoupUtils.selectText("GESTION > INDEXATION > DATE_LIMITE_REPONSE", document))
+            .setDocumentsLocation(BOAMPTenderParserUtils.parseAddress(JsoupUtils.selectFirst("DONNEES > RENSEIGNEMENTS_COMPLEMENTAIRES" +
+                " > ADRESSES_COMPLEMENTAIRES > ADRESSE:has(TYPE:has(DOCUMENTS))", document)))
+            .setAppealBodyName(JsoupUtils.selectText("DONNEES > RENSEIGNEMENTS_COMPLEMENTAIRES" +
+                " > ADRESSES_COMPLEMENTAIRES > ADRESSE:has(TYPE:has(INSTANCE_RECOURS)) > DENOMINATION", document));
 
         return Arrays.asList(parsedTender);
     }
@@ -183,14 +167,14 @@ final class BOAMPTenderNewHandler {
     private static List<ParsedCPV> parseCpvs(final Element element) {
         List<ParsedCPV> tenderCpvs = new ArrayList<>();
 
-        String mainCpvCode = JsoupUtils.selectText("DONNEES > OBJET > CPV > PRINCIPAL", element);
+        String mainCpvCode = JsoupUtils.selectText(":root > CPV > PRINCIPAL", element);
         if (mainCpvCode != null) {
             tenderCpvs.add(new ParsedCPV()
                     .setCode(mainCpvCode)
                     .setIsMain(Boolean.TRUE.toString()));
         }
 
-        Elements complementCpvCodeElements = JsoupUtils.select("DONNEES > OBJET > CPV > SUPPLEMENTAIRE", element);
+        Elements complementCpvCodeElements = JsoupUtils.select(":root > CPV > SUPPLEMENTAIRE", element);
         if (complementCpvCodeElements != null) {
             for (Element complementCpvCodeElement : complementCpvCodeElements) {
                 tenderCpvs.add(new ParsedCPV()
@@ -211,24 +195,33 @@ final class BOAMPTenderNewHandler {
      */
     private static List<ParsedTenderLot> parseTenderLots(final Document document, final Boolean isFrameworkAgreement) {
         List<ParsedTenderLot> lots1 = new ArrayList<>();
-        Elements lotElements = JsoupUtils.select("DONNEES > OBJET > LOTS", document);
-        for (Element lotElement : lotElements) {
-            lots1.add(new ParsedTenderLot()
+        Elements lotElements = JsoupUtils.select(document, "DONNEES > OBJET > LOTS > LOT", "DONNEES > OBJET > LOTS");
+        if (lotElements != null) {
+            for (Element lotElement : lotElements) {
+                lots1.add(new ParsedTenderLot()
                     .setLotNumber(JsoupUtils.selectText("NUM", lotElement))
                     .setTitle(JsoupUtils.selectText("INTITULE", lotElement))
                     .setDescription(JsoupUtils.selectText("DESCRIPTION", lotElement))
                     .setCpvs(parseCpvs(lotElement))
                     .setAddressOfImplementation(new ParsedAddress()
-                            .addNuts(JsoupUtils.selectText("CODE_NUTS", lotElement))
-                            .setRawAddress(JsoupUtils.selectText("LIEU_PRINCIPAL", lotElement)))
+                        .addNuts(JsoupUtils.selectText("CODE_NUTS", lotElement))
+                        .setRawAddress(JsoupUtils.selectText("LIEU_PRINCIPAL", lotElement)))
                     .addAwardCriterion(new ParsedAwardCriterion()
-                            .setDescription(JsoupUtils.selectText("CRITERES_ATTRIBUTION", lotElement)))
+                        .setDescription(JsoupUtils.selectText("CRITERES_ATTRIBUTION", lotElement)))
                     .setEnvisagedMinCandidatesCount(JsoupUtils.selectText("NB_CANDIDATS > NB_MIN_OFFRE", lotElement))
                     .setEnvisagedMaxCandidatesCount(JsoupUtils.selectText("NB_CANDIDATS > NB_MAX_OFFRE", lotElement))
                     .setEnvisagedCandidatesCount(JsoupUtils.selectText("NB_CANDIDATS > NB_OFFRE", lotElement))
-                    .setLimitedCandidatesCountCriteria(JsoupUtils.selectText("NB_CANDIDATS > LIMITATION_CANDIDATS",
-                            lotElement))
-                    .setAreVariantsAccepted(JsoupUtils.exists("VARIANTES_OUI", lotElement).toString()));
+                    .setLimitedCandidatesCountCriteria(JsoupUtils.selectText("NB_CANDIDATS > LIMITATION_CANDIDATS", lotElement))
+                    .setAreVariantsAccepted(JsoupUtils.exists("VARIANTES_OUI", lotElement).toString())
+                    .setHasOptions(JsoupUtils.exists("OPTIONS_OUI", lotElement).toString())
+                    .addBid(new ParsedBid()
+                        .setPrice(new ParsedPrice()
+                            .setNetAmount(JsoupUtils.selectText("VALEUR", lotElement))
+                            .setCurrency(JsoupUtils.selectAttribute("VALEUR", "DEVISE", lotElement))))
+                    .setEstimatedDurationInMonths(JsoupUtils.selectText("DUREE_MOIS", lotElement))
+                    .setIsElectronicAuction(JsoupUtils.exists("CATALOGUE_ELECTRONIQUE_OUI", lotElement).toString())
+                );
+            }
         }
 
         List<ParsedTenderLot> lots2 = new ArrayList<>();
@@ -254,13 +247,7 @@ final class BOAMPTenderNewHandler {
                                 .setId(JsoupUtils.selectText("CODE_IDENT_NATIONAL", bidderElement))
                                 .setType(BodyIdentifier.Type.ORGANIZATION_ID))
                         .setContactName(JsoupUtils.selectText("CORRESPONDANT", bidderElement))
-                        .setAddress(new ParsedAddress()
-                                .setStreet(JsoupUtils.selectText("ADRESSE", bidderElement))
-                                .setPostcode(JsoupUtils.selectText("CP", bidderElement))
-                                .setCity(JsoupUtils.selectText("VILLE", bidderElement))
-                                .addNuts(JsoupUtils.selectText("CODE_NUTS", bidderElement))
-                                .setCountry(JsoupUtils.selectText("PAYS", bidderElement))
-                                .setUrl(JsoupUtils.selectText("URL", bidderElement)))
+                        .setAddress(BOAMPTenderParserUtils.parseAddress(bidderElement))
                         .setPhone(JsoupUtils.selectText("TEL", bidderElement))
                         .setIsSme(JsoupUtils.exists("PME_OUI", bidderElement).toString()));
             }
@@ -478,7 +465,7 @@ final class BOAMPTenderNewHandler {
         } else if (descriptionLabel != null) {
             return descriptionLabel;
         } else {
-            return null;
+            return JsoupUtils.selectText("DONNEES > OBJET > CARACTERISTIQUES", document);
         }
     }
 

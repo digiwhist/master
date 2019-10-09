@@ -106,6 +106,19 @@ final class BOAMPWebTenderHandler {
             }
         }
 
+        // parse from "Informations pratiques" section
+        String selectionMethod = JsoupUtils.selectText("h3:containsOwn(Critères d\\'attribution) + p", document);
+        if (selectionMethod == null) {
+            Element selectionMethodTitleNode = JsoupUtils.selectFirst("i:containsOwn(Critères d\\'attribution)", document);
+            if (selectionMethodTitleNode != null && selectionMethodTitleNode.nextSibling() != null) {
+                selectionMethod = selectionMethodTitleNode.nextSibling().toString();
+            }
+        }
+        if (selectionMethod == null) {
+            selectionMethod = getStringFromtText(new String[]{"IV.2.1", "Critères d\\'attribution"}, document);
+        }
+
+
         // Notice
         parsedTender
                 .setTitle(JsoupUtils.selectText("i:containsOwn(Objet du marché) + *", document))
@@ -125,8 +138,9 @@ final class BOAMPWebTenderHandler {
                 .setBuyerAssignedId(getStringFromtText("uméro de référence attribué au marché", document))
                 .setEligibilityCriteria(getStringFromtText("Autres renseignements demandé", document))
                 .setEstimatedStartDate(getStringFromtText("Durée du marché ou délai d'exécution", document))
-                .setBidDeadline(getByClass("date-response", document))
-                .setSelectionMethod(getStringFromtText(new String[]{"IV.2.1", "Critères d'attribution"}, document))
+                .setBidDeadline(JsoupUtils.selectText("p.date-response", document, true)
+                    .replace("Date limite de réponse :", ""))
+                .setSelectionMethod(selectionMethod)
                 .setAddressOfImplementation(new ParsedAddress()
                         .setRawAddress(getStringFromtText("ieu principal de livraison", document))
                         .addNuts(getStringFromtNode("Code NUTS", document))
@@ -339,21 +353,6 @@ final class BOAMPWebTenderHandler {
         } else {
             return node.toString();
         }
-    }
-
-    /**
-     * Parse by Id.
-     *
-     * @param selector selector
-     * @param element  element
-     * @return String
-     */
-    private static String getByClass(final String selector, final Element element) {
-        if (element == null) {
-            return null;
-        }
-
-        return JsoupUtils.selectText("*." + selector, element);
     }
 
     /**

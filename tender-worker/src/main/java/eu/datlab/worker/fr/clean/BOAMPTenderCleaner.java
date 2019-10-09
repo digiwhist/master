@@ -38,6 +38,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import static java.time.format.DateTimeFormatter.ISO_LOCAL_DATE;
+import static java.time.format.DateTimeFormatter.ISO_OFFSET_DATE_TIME;
 
 /**
  * Tender cleaner for France.
@@ -71,156 +72,169 @@ public class BOAMPTenderCleaner extends BaseDatlabTenderCleaner {
             ISO_LOCAL_DATE); // equals to 'yyyy-MM-dd'
 
     private static final List<DateTimeFormatter> DATETIME_FORMATTERS = Arrays.asList(
-            new DateTimeFormatterBuilder()
-                    .appendPattern("d MMMM yyyy")
-                    //optional time
-                    .optionalStart()
-                    .appendLiteral(" , à ")
-                    .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
-                    .appendLiteral(" heures")
-                    .optionalEnd()
-                    //default values for time
-                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-                    .toFormatter(LOCALE),
-            new DateTimeFormatterBuilder()
-                    .appendPattern("d MMMM yyyy")
-                    //optional time
-                    .optionalStart()
-                    .appendLiteral(" , à ")
-                    .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
-                    .appendLiteral(" h ")
-                    .appendValue(ChronoField.MINUTE_OF_HOUR, 1, 2, SignStyle.NEVER)
-                    .optionalEnd()
-                    //default values for time
-                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-                    .toFormatter(LOCALE),
-            new DateTimeFormatterBuilder()
-                    .appendPattern("d MMMM yyyy")
-                    //optional time
-                    .optionalStart()
-                    .appendLiteral(" ")
-                    .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
-                    .appendLiteral(" heures")
-                    .optionalEnd()
-                    //default values for time
-                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-                    .toFormatter(LOCALE),
-            new DateTimeFormatterBuilder()
-                    .appendPattern("d MMMM yyyy")
-                    //optional time
-                    .optionalStart()
-                    .appendLiteral(" ")
-                    .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
-                    .appendLiteral(" h ")
-                    .appendValue(ChronoField.MINUTE_OF_HOUR, 1, 2, SignStyle.NEVER)
-                    .optionalEnd()
-                    //default values for time
-                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-                    .toFormatter(LOCALE),
-            new DateTimeFormatterBuilder()
-                    .appendPattern("d MMMM yyyy")
-                    //optional time
-                    .optionalStart()
-                    .appendLiteral(" , avant ")
-                    .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
-                    .appendLiteral(" heures")
-                    .optionalEnd()
-                    //default values for time
-                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-                    .toFormatter(LOCALE),
-            new DateTimeFormatterBuilder()
-                    .appendPattern("d MMMM yyyy")
-                    //optional time
-                    .optionalStart()
-                    .appendLiteral(" , avant ")
-                    .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
-                    .appendLiteral(" h ")
-                    .appendValue(ChronoField.MINUTE_OF_HOUR, 1, 2, SignStyle.NEVER)
-                    .optionalEnd()
-                    //default values for time
-                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-                    .toFormatter(LOCALE),
-            new DateTimeFormatterBuilder()
-                    .appendLiteral("1er ")
-                    .appendPattern("MMMM yyyy")
-                    .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
-                    //optional time
-                    .optionalStart()
-                    .appendLiteral(" , à ")
-                    .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
-                    .appendLiteral(" heures")
-                    .optionalEnd()
-                    //default values for time
-                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-                    .toFormatter(LOCALE),
-            new DateTimeFormatterBuilder()
-                    .appendLiteral("1er ")
-                    .appendPattern("MMMM yyyy")
-                    .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
-                    //optional time
-                    .optionalStart()
-                    .appendLiteral(" , à ")
-                    .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
-                    .appendLiteral(" h ")
-                    .appendValue(ChronoField.MINUTE_OF_HOUR, 1, 2, SignStyle.NEVER)
-                    .optionalEnd()
-                    //default values for time
-                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-                    .toFormatter(LOCALE),
-            new DateTimeFormatterBuilder()
-                    .appendLiteral("1er ")
-                    .appendPattern("MMMM yyyy")
-                    .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
-                    //optional time
-                    .optionalStart()
-                    .appendLiteral(" ")
-                    .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
-                    .appendLiteral(" heures")
-                    .optionalEnd()
-                    //default values for time
-                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-                    .toFormatter(LOCALE),
-            new DateTimeFormatterBuilder()
-                    .appendLiteral("1er ")
-                    .appendPattern("MMMM yyyy")
-                    .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
-                    //optional time
-                    .optionalStart()
-                    .appendLiteral(" ")
-                    .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
-                    .appendLiteral(" h ")
-                    .appendValue(ChronoField.MINUTE_OF_HOUR, 1, 2, SignStyle.NEVER)
-                    .optionalEnd()
-                    //default values for time
-                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-                    .toFormatter(LOCALE),
-            new DateTimeFormatterBuilder()
-                    .appendPattern("yyyy-MM-dd")
-                    //default values for time
-                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
-                    .toFormatter(LOCALE));
+        new DateTimeFormatterBuilder()
+            .appendPattern("d MMMM yyyy")
+            //optional time
+            .optionalStart()
+            .appendLiteral(" , à ")
+            .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
+            .appendLiteral(" heures")
+            .optionalEnd()
+            //default values for time
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(LOCALE),
+        new DateTimeFormatterBuilder()
+            .appendPattern("d MMMM yyyy")
+            //optional time
+            .optionalStart()
+            .appendLiteral(" , à ")
+            .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
+            .appendLiteral(" h ")
+            .appendValue(ChronoField.MINUTE_OF_HOUR, 1, 2, SignStyle.NEVER)
+            .optionalEnd()
+            //default values for time
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(LOCALE),
+        new DateTimeFormatterBuilder()
+            .appendPattern("d MMMM yyyy")
+            //optional time
+            .optionalStart()
+            .appendLiteral(" ")
+            .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
+            .appendLiteral(" heures")
+            .optionalEnd()
+            //default values for time
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(LOCALE),
+        new DateTimeFormatterBuilder()
+            .appendPattern("d MMMM yyyy")
+            //optional time
+            .optionalStart()
+            .appendLiteral(" ")
+            .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
+            .appendLiteral(" h ")
+            .appendValue(ChronoField.MINUTE_OF_HOUR, 1, 2, SignStyle.NEVER)
+            .optionalEnd()
+            //default values for time
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(LOCALE),
+        new DateTimeFormatterBuilder()
+            .appendPattern("d MMMM yyyy")
+            //optional time
+            .optionalStart()
+            .appendLiteral(" , avant ")
+            .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
+            .appendLiteral(" heures")
+            .optionalEnd()
+            //default values for time
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(LOCALE),
+        new DateTimeFormatterBuilder()
+            .appendPattern("d MMMM yyyy")
+            //optional time
+            .optionalStart()
+            .appendLiteral(" , avant ")
+            .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
+            .appendLiteral(" h ")
+            .appendValue(ChronoField.MINUTE_OF_HOUR, 1, 2, SignStyle.NEVER)
+            .optionalEnd()
+            //default values for time
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(LOCALE),
+        new DateTimeFormatterBuilder()
+            .appendLiteral("1er ")
+            .appendPattern("MMMM yyyy")
+            .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+            //optional time
+            .optionalStart()
+            .appendLiteral(" , à ")
+            .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
+            .appendLiteral(" heures")
+            .optionalEnd()
+            //default values for time
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(LOCALE),
+        new DateTimeFormatterBuilder()
+            .appendLiteral("1er ")
+            .appendPattern("MMMM yyyy")
+            .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+            //optional time
+            .optionalStart()
+            .appendLiteral(" , à ")
+            .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
+            .appendLiteral(" h ")
+            .appendValue(ChronoField.MINUTE_OF_HOUR, 1, 2, SignStyle.NEVER)
+            .optionalEnd()
+            //default values for time
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(LOCALE),
+        new DateTimeFormatterBuilder()
+            .appendLiteral("1er ")
+            .appendPattern("MMMM yyyy")
+            .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+            //optional time
+            .optionalStart()
+            .appendLiteral(" ")
+            .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
+            .appendLiteral(" heures")
+            .optionalEnd()
+            //default values for time
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(LOCALE),
+        new DateTimeFormatterBuilder()
+            .appendLiteral("1er ")
+            .appendPattern("MMMM yyyy")
+            .parseDefaulting(ChronoField.DAY_OF_MONTH, 1)
+            //optional time
+            .optionalStart()
+            .appendLiteral(" ")
+            .appendValue(ChronoField.HOUR_OF_DAY, 1, 2, SignStyle.NEVER)
+            .appendLiteral(" h ")
+            .appendValue(ChronoField.MINUTE_OF_HOUR, 1, 2, SignStyle.NEVER)
+            .optionalEnd()
+            //default values for time
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(LOCALE),
+        new DateTimeFormatterBuilder()
+            .appendPattern("yyyy-MM-dd")
+            //default values for time
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(LOCALE),
+        ISO_OFFSET_DATE_TIME,
+        new DateTimeFormatterBuilder()
+            .appendPattern("ddMMyyyy")
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(LOCALE),
+        new DateTimeFormatterBuilder()
+            .appendPattern("dd/MM/yyyy")
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+            .toFormatter(LOCALE));
 
     @Override
     public final String getVersion() {

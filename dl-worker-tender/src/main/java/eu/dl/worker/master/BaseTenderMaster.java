@@ -4,6 +4,7 @@ import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
 import eu.dl.dataaccess.dto.generic.Amendment;
 import eu.dl.dataaccess.dto.generic.BasePrice;
+import eu.dl.dataaccess.dto.generic.Corrigendum;
 import eu.dl.dataaccess.dto.generic.Payment;
 import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.generic.UnitPrice;
@@ -18,10 +19,13 @@ import eu.dl.dataaccess.dto.utils.DTOUtils;
 import eu.dl.utils.currency.CurrencyService;
 import eu.dl.utils.currency.CurrencyServiceFactory;
 import eu.dl.utils.currency.UnconvertableException;
+import eu.dl.worker.master.plugin.specific.CorrigendumPlugin;
 import eu.dl.worker.master.plugin.specific.DigiwhistPricePlugin;
 import eu.dl.worker.master.plugin.specific.NoLotStatusPlugin;
 import eu.dl.worker.master.utils.ContractImplementationUtils;
+import eu.dl.worker.master.utils.MasterUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -47,6 +51,8 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
 
     private final NoLotStatusPlugin noLotStatusPlugin;
 
+    private final CorrigendumPlugin corrigendumPlugin;
+
     /**
      * Initialization of everything.
      */
@@ -57,6 +63,8 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
         digiwhistPricePlugin = new DigiwhistPricePlugin();
 
         noLotStatusPlugin = new NoLotStatusPlugin();
+
+        corrigendumPlugin = new CorrigendumPlugin();
     }
 
     @Override
@@ -74,10 +82,10 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
         // add publication dates to TenderParts where needed i.e. Document
         populatePublicationDates(preprocessedData);
         // add publication source ids to Amendments
-        populateSourceIds(preprocessedData);
+        populateAmendments(preprocessedData);
 
         if (preprocessedData.size() > NUMBER_OF_PUBLICATIONS) {
-            return preprocessedData.subList(0, NUMBER_OF_PUBLICATIONS-1);
+            return preprocessedData.subList(0, NUMBER_OF_PUBLICATIONS - 1);
         }
 
         return preprocessedData;
@@ -153,6 +161,12 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
                     }
                 }
 
+                if (item.getCorrections() != null) {
+                    for (Corrigendum c : item.getCorrections()) {
+                        parts.add(c);
+                    }
+                }
+
                 for (MasterablePart part : parts) {
                     if (part != null) {
                         part.setPublicationDate(publicationDate);
@@ -167,15 +181,19 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
      *
      * @param items items to be populated
      */
-    private void populateSourceIds(final List<T> items) {
+    private void populateAmendments(final List<T> items) {
         for (T item : items) {
             String sourceId = DTOUtils.getPublicationSourceId(item);
-            if (sourceId != null) {
+            LocalDate publicationDate = DTOUtils.getPublicationDate(item);
+
+            if (sourceId != null || publicationDate != null) {
                 if (item.getLots() != null) {
                     for (MatchedTenderLot lot : item.getLots()) {
                         if (lot.getAmendments() != null) {
                             for (Amendment amendment : lot.getAmendments()) {
-                                amendment.setSourceId(sourceId);
+                                amendment
+                                        .setSourceId(sourceId)
+                                        .setPublicationDate(publicationDate);
                             }
                         }
                     }
@@ -257,7 +275,7 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
     protected final String getPersistentId(final List<T> matchedItems) {
         String persistentId = null;
         LocalDate min = null;
-        
+
         for (T t : matchedItems) {
             for (Publication publication : t.getPublications()) {
                 if (publication.getIsIncluded() != null && publication.getIsIncluded()) {
@@ -270,12 +288,12 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
                 }
             }
         }
-        
+
         return persistentId;
     }
-    
+
     /**
-     * Predicate used to filter the resulting set of items. It does skip tenders 
+     * Predicate used to filter the resulting set of items. It does skip tenders
      * with publication type = OTHER and isIncluded = true.
      *
      * @return predicate used to test type and isIncluded of tender.
@@ -286,11 +304,11 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
             @Override
             public boolean test(final MatchedTender t) {
                 for (Publication publication : t.getPublications()) {
-                    if (publication.getIsIncluded() != null 
+                    if (publication.getIsIncluded() != null
                             && publication.getIsIncluded()
                             && publication.getFormType() != null
                             && publication.getFormType().equals(PublicationFormType.OTHER)) {
-                        
+
                         return false;
                     }
                 }
@@ -299,9 +317,9 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
 
         };
     }
-    
+
     /**
-     * Predicate used to filter the resulting set of items. In this case we don't want to master a tender 
+     * Predicate used to filter the resulting set of items. In this case we don't want to master a tender
      * with too much lots because of performance issues.
      *
      * @return predicate testing whether the group does not contain too much lots
@@ -324,20 +342,26 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
 
     @Override
     protected final V postProcessMasterRecord(final V masterTender,
-            final List<T> matchedTenders) {
+                                              final List<T> matchedTenders) {
         processContractImplementation(masterTender, matchedTenders);
 
         updateLotStatus(masterTender);
-        
+
         convertPrices(masterTender);
+
+        MasterUtils.calculateEstimatedDurationInDays(masterTender);
 
         MasterTender tender = masterTender;
         tender = digiwhistPricePlugin.master(null, tender, null);
         tender = noLotStatusPlugin.master(null, tender, null);
+        tender = corrigendumPlugin.master(null, tender, null);
+
 
         return (V) tender;
     }
-    
+
+
+
     /**
      * This method sets status of each lot to CANCELLED if tender.isWholeTenderCancelled is TRUE.
      *
@@ -359,7 +383,7 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
      * mastered including the contract implementations skipped in previous phase. Additionaly, the publication
      * info is added to set of publications.
      *
-     * @param masterTender master tender
+     * @param masterTender   master tender
      * @param matchedTenders matched tenders
      */
     private void processContractImplementation(final V masterTender, final List<T> matchedTenders) {
@@ -372,7 +396,7 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
 
     /**
      * This method converts all prices to national currency and EUR where available.
-     * 
+     *
      * @param tender master tender
      */
     private void convertPrices(final MasterTender tender) {
@@ -407,21 +431,28 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
                         }
                     }
                 }
+
+                if (lot.getAmendments() != null) {
+                    for (Amendment a : lot.getAmendments()) {
+                        convertPrice(a.getOriginalPrice(), conversionDate);
+                        convertPrice(a.getUpdatedPrice(), conversionDate);
+                    }
+                }
             }
         }
     }
 
     /**
      * Picks the date, for which should be the currency conversion performed.
-     * 
+     *
      * @param tender master tender
      * @return date
      */
-    private LocalDate pickConversionDate(final MasterTender tender) {
+    protected final LocalDate pickConversionDate(final MasterTender tender) {
         if (tender == null) {
             return null;
         }
-        
+
         LocalDate minDate = null;
         LocalDate minContractAwardDate = null;
         LocalDate minNoticeDate = null;
@@ -430,59 +461,69 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
                 if (minDate == null || minDate.isAfter(publication.getPublicationDate())) {
                     minDate = publication.getPublicationDate();
                 }
-                
-                if (publication.getFormType() == PublicationFormType.CONTRACT_AWARD  && publication.getIsIncluded()) {
+
+                if (publication.getFormType() == PublicationFormType.CONTRACT_AWARD && publication.getIsIncluded()) {
                     if (minContractAwardDate == null || minContractAwardDate.isAfter(
                             publication.getPublicationDate())) {
                         minContractAwardDate = publication.getPublicationDate();
-                    } 
+                    }
                 }
-                
+
                 if (publication.getFormType() == PublicationFormType.CONTRACT_NOTICE && publication.getIsIncluded()) {
                     if (minNoticeDate == null || minNoticeDate.isAfter(
                             publication.getPublicationDate())) {
                         minNoticeDate = publication.getPublicationDate();
-                    } 
+                    }
                 }
             }
         }
-        
-        if (minContractAwardDate != null) {
-            return minContractAwardDate;
-        } else if (minNoticeDate != null) {
-            return minNoticeDate;
-        } else {
-            return minDate;
+
+        LocalDate minAwardDecisionDate = null;
+        if (minDate == null) {
+            minAwardDecisionDate = tender.getAwardDecisionDate();
+            if (tender.getLots() != null) {
+                for (MasterTenderLot l : tender.getLots()) {
+                    if (l.getAwardDecisionDate() != null) {
+                        if (minAwardDecisionDate == null || minAwardDecisionDate.isAfter(l.getAwardDecisionDate())) {
+                            minAwardDecisionDate = l.getAwardDecisionDate();
+                        }
+                    }
+                }
+            }
         }
+
+        return ObjectUtils.firstNonNull(minContractAwardDate, minNoticeDate, minDate, minAwardDecisionDate);
     }
 
     /**
      * This methods converts price to national currencies and EUR.
+     *
      * @param price price to be converted
-     * @param date defines date, fow whixh should be the exchange rate taken
+     * @param date  defines date, fow whixh should be the exchange rate taken
      */
-    private void convertPrice(final BasePrice price, final LocalDate date) {
-       if (price == null) {
-           return;
-       }
-       try {
-           if (price.getNetAmount() != null) {
-               if (price.getNetAmountEur() == null) {
-                   price.setNetAmountEur(currencyService.convert(
-                           price.getCurrency(), Currency.getInstance("EUR"), price.getNetAmount(), date));
-               }
-               
-               price.setCurrencyNational(getNationalCurrency());
-               price.setNetAmountNational(currencyService.convert(
-                       price.getCurrency(), price.getCurrencyNational(), price.getNetAmount(), date));
-           }
-       } catch (UnconvertableException e) {
-           logger.error("Unable to convert prices because of {}", e);
-       }
+    protected final void convertPrice(final BasePrice price, final LocalDate date) {
+        if (price == null) {
+            return;
+        }
+        try {
+            if (price.getNetAmount() != null) {
+                if (price.getNetAmountEur() == null) {
+                    price.setNetAmountEur(currencyService.convert(
+                            price.getCurrency(), Currency.getInstance("EUR"), price.getNetAmount(), date));
+                }
+
+                price.setCurrencyNational(getNationalCurrency());
+                price.setNetAmountNational(currencyService.convert(
+                        price.getCurrency(), price.getCurrencyNational(), price.getNetAmount(), date));
+            }
+        } catch (UnconvertableException e) {
+            logger.error("Unable to convert prices because of {}", e);
+        }
     }
 
     /**
      * Returns national currency relevant for this source.
+     *
      * @return national currency
      */
     protected final Currency getNationalCurrency() {

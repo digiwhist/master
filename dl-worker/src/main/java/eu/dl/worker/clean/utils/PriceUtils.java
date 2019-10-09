@@ -228,7 +228,8 @@ public final class PriceUtils {
                 .replace("forint", "HUF")
                 .replace("yen", "JPY")
                 .replace("Peso Chileno", "CLP")
-                .replace("litai", "LTL");
+                .replace("litai", "LTL")
+                .replace("Rp", "IDR");
 
         //processes only first three characters (ISO 4217 currency code consists of three alphabetical characters)
         if (normCurrency.length() > 3) {

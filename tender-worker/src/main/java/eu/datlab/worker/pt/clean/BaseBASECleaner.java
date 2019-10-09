@@ -18,7 +18,8 @@ import java.util.Map;
  * @author Tomas Mrazek
  */
 abstract class BaseBASECleaner extends BaseDatlabTenderCleaner {
-    protected static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-uuuu");
+    protected static final List<DateTimeFormatter> DATE_FORMATTER = Arrays.asList(DateTimeFormatter.ofPattern("dd-MM-uuuu"),
+        DateTimeFormatter.ofPattern("uuuu-MM-dd"));
 
     protected static final NumberFormat NUMBER_FORMAT;
     static {
@@ -36,9 +37,9 @@ abstract class BaseBASECleaner extends BaseDatlabTenderCleaner {
 
         mapping.put(TenderSupplyType.WORKS, Arrays.asList("Empreitadas de obras públicas"));
         mapping.put(TenderSupplyType.SERVICES, Arrays.asList("Aquisição de serviços"));
+        mapping.put(TenderSupplyType.SUPPLIES, Arrays.asList("Aquisição de bens móveis"));
         mapping.put(TenderSupplyType.OTHER, Arrays.asList("Concessão de obras públicas",
-            "Concessão de serviços públicos", "Locação de bens móveis", "Sociedade", "Outros",
-            "Aquisição de bens móveis"));
+            "Concessão de serviços públicos", "Locação de bens móveis", "Sociedade", "Outros"));
 
         return mapping;
     }

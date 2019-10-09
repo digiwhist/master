@@ -63,6 +63,9 @@ public final class LotUtils {
                 (parsedCriterion) -> AwardCriterionUtils.cleanAwardCriterion(parsedCriterion, numberFormat,
                     AwardCriterionUtils.countWeightMultiplier(parsedLot.getAwardCriteria(), numberFormat))))
             .setAwardDecisionDate(DateUtils.cleanDate(parsedLot.getAwardDecisionDate(), formatter))
+            .setAreVariantsAccepted(StringUtils.cleanBoolean(parsedLot.getAreVariantsAccepted()))
+            .setAmendments(ArrayUtils.walk(parsedLot.getAmendments(),
+                (parsedAmendment) -> AmendmentUtils.cleanAmendment(parsedAmendment, numberFormat, formatter, country)))
             .setBids(ArrayUtils.walk(parsedLot.getBids(),
                 (parsedBid) -> BidUtils.cleanBid(parsedBid, numberFormat, formatter, documentTypeMapping, unitPriceMapping, countryMapping,
                     country)))
@@ -80,8 +83,10 @@ public final class LotUtils {
             .setEstimatedCompletionDate(DateUtils.cleanDate(parsedLot.getEstimatedCompletionDate(), formatter))
             .setEstimatedDurationInDays(NumberUtils.cleanInteger(parsedLot.getEstimatedDurationInDays(), numberFormat))
             .setEstimatedDurationInMonths(NumberUtils.cleanInteger(parsedLot.getEstimatedDurationInMonths(), numberFormat))
+            .setEstimatedDurationInYears(NumberUtils.cleanInteger(parsedLot.getEstimatedDurationInYears(), numberFormat))
             .setEstimatedPrice(PriceUtils.cleanPrice(parsedLot.getEstimatedPrice(), numberFormat, country))
             .setEstimatedStartDate(DateUtils.cleanDate(parsedLot.getEstimatedStartDate(), formatter))
+            .setHasOptions(StringUtils.cleanBoolean(parsedLot.getHasOptions()))
             .setForeignCompaniesBidsCount(NumberUtils.cleanInteger(parsedLot.getForeignCompaniesBidsCount(), numberFormat))
             .setFundings(ArrayUtils.walk(parsedLot.getFundings(),
                 (parsedFunding) -> FundingUtils.cleanFunding(parsedFunding, numberFormat, country)))
@@ -91,6 +96,7 @@ public final class LotUtils {
             .setIsElectronicAuction(StringUtils.cleanBoolean(parsedLot.getIsElectronicAuction()))
             .setIsFrameworkAgreement(StringUtils.cleanBoolean(parsedLot.getIsFrameworkAgreement()))
             .setLotNumber(NumberUtils.cleanInteger(parsedLot.getLotNumber(), numberFormat))
+            .setLimitedCandidatesCountCriteria(StringUtils.cleanLongString(parsedLot.getCancellationReason()))
             .setMaxFrameworkAgreementParticipants(NumberUtils.cleanInteger(parsedLot.getMaxFrameworkAgreementParticipants(), numberFormat))
             .setNonEuMemberStatesCompaniesBidsCount(
                 NumberUtils.cleanInteger(parsedLot.getNonEuMemberStatesCompaniesBidsCount(), numberFormat))
@@ -102,9 +108,7 @@ public final class LotUtils {
             .setStatus((TenderLotStatus) CodeTableUtils.mapValue(parsedLot.getStatus(), statusMapping))
             .setTitle(StringUtils.cleanShortString(parsedLot.getTitle()))
             .setTitleEnglish(StringUtils.cleanShortString(parsedLot.getTitleEnglish()))
-            .setValidBidsCount(NumberUtils.cleanInteger(parsedLot.getValidBidsCount(), numberFormat))
-            .setAmendments(ArrayUtils.walk(parsedLot.getAmendments(),
-                    (parsedAmendment) -> AmendmentUtils.cleanAmendment(parsedAmendment, numberFormat, formatter, country)));
+            .setValidBidsCount(NumberUtils.cleanInteger(parsedLot.getValidBidsCount(), numberFormat));
     }
 
     /**

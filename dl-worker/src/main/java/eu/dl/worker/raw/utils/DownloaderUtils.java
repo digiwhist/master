@@ -27,7 +27,7 @@ public final class DownloaderUtils {
      * Maximum bytes to read from the (uncompressed) connection into the body, before the connection is closed, and the
      * input truncated.
      */
-    private static final int MAX_BODY_SIZE = 50000000;
+    private static final int MAX_BODY_SIZE = 100000000;
 
     /**
      * Suppress default constructor for noninstantiability.

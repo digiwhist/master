@@ -2,6 +2,7 @@ package eu.datlab.dataaccess.dao.jdbc;
 
 import java.util.List;
 
+import eu.datlab.dataaccess.dao.MasterTenderZIndexIndicatorDAO;
 import eu.dl.dataaccess.dao.jdbc.JdbcMatchedBodyDAO;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -138,7 +139,13 @@ public final class JdbcDAOFactory extends DAOFactory {
     }
 
     @Override
-    public ZIndexIndicatorDAO getZIndexIndicatorDAO() {
-        return new JdbcZIndexIndicatorDAO();
+    public ZIndexIndicatorDAO getZIndexIndicatorDAO(final String workerName, final String workerVersion) {
+        return (ZIndexIndicatorDAO) new JdbcZIndexIndicatorDAO().populateWithWorkerMetadata(workerName, workerVersion);
+    }
+
+    @Override
+    public MasterTenderZIndexIndicatorDAO getMasterTenderZIndexIndicatorDAO(final String workerName, final String workerVersion) {
+        return (MasterTenderZIndexIndicatorDAO) new JdbcMasterTenderZIndexIndicatorDAO().populateWithWorkerMetadata(workerName,
+            workerVersion);
     }
 }

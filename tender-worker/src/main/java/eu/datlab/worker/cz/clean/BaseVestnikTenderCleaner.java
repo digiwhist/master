@@ -52,32 +52,37 @@ public abstract class BaseVestnikTenderCleaner extends BaseDatlabTenderCleaner {
 
     @Override
     protected final void registerSpecificPlugins() {
-
-            final Map<String, Map<Enum, List<String>>> lotMapping = new HashMap<>();
-            lotMapping.put("selectionMethodMapping", getSelectionMethodMapping());
-
+        final Map<String, Map<Enum, List<String>>> lotMapping = new HashMap<>();
+        lotMapping.put("selectionMethodMapping", getSelectionMethodMapping());
 
         pluginRegistry.registerPlugin("integerPlugin", new IntegerPlugin(numberFormat))
-                .registerPlugin("supplyType", new TenderSupplyTypePlugin(getSupplyTypeMapping()))
-                .registerPlugin("procedureType", new VestnikTenderProcedureTypePlugin(getProcedureTypeMapping()))
-                .registerPlugin("date", new DatePlugin(getDateFormatters()))
-                .registerPlugin("datetime", new DateTimePlugin(getDateTimeFormatters()))
-                .registerPlugin("bodies", new BodyPlugin(getBodyTypeMapping(), getBodyActivityMapping()))
-                .registerPlugin("publications",
-                        new PublicationPlugin(numberFormat, getDateFormatters(), getFormTypeMapping()))
-                //document type isn't provided -> mapping = null
-                //status isn't provided -> mapping = null
-                //price unit isn't provided -> mapping = null
-                .registerPlugin("lots", new VestnikLotPlugin(numberFormat, getDateFormatters(), lotMapping))
-                //document type isn't provided -> mapping = null
-                .registerPlugin("documents", new DocumentPlugin(numberFormat, getDateFormatters(), null))
-                .registerPlugin("npwpReasons", new NpwpReasonPlugin(getNpwpReasonMapping(), getNpwpReasonFreeTextMapping()))
-                .registerPlugin("prices", new PricePlugin(numberFormat))
-                .registerPlugin("fundings", new FundingsPlugin(numberFormat))
-                .registerPlugin("corrections", new CorrigendumPlugin(numberFormat, getDateFormatters()))
-                .registerPlugin("selectionMethod", new VestnikSelectionMethodPlugin(getSelectionMethodMapping()))
-                .registerPlugin("awardCriteria", new AwardCriteriaPlugin(numberFormat));
+            .registerPlugin("supplyType", new TenderSupplyTypePlugin(getSupplyTypeMapping()))
+            .registerPlugin("procedureType", new VestnikTenderProcedureTypePlugin(getProcedureTypeMapping()))
+            .registerPlugin("date", new DatePlugin(getDateFormatters()))
+            .registerPlugin("datetime", new DateTimePlugin(getDateTimeFormatters()))
+            .registerPlugin("bodies", new BodyPlugin(getBodyTypeMapping(), getBodyActivityMapping()))
+            .registerPlugin("publications",
+                    new PublicationPlugin(numberFormat, getDateFormatters(), getFormTypeMapping()))
+            //document type isn't provided -> mapping = null
+            //status isn't provided -> mapping = null
+            //price unit isn't provided -> mapping = null
+            .registerPlugin("lots", new VestnikLotPlugin(numberFormat, getDateFormatters(), lotMapping))
+            //document type isn't provided -> mapping = null
+            .registerPlugin("documents", new DocumentPlugin(numberFormat, getDateFormatters(), null))
+            .registerPlugin("npwpReasons", new NpwpReasonPlugin(getNpwpReasonMapping(), getNpwpReasonFreeTextMapping()))
+            .registerPlugin("prices", new PricePlugin(numberFormat))
+            .registerPlugin("fundings", new FundingsPlugin(numberFormat))
+            .registerPlugin("corrections", new CorrigendumPlugin(numberFormat, getDateFormatters()))
+            .registerPlugin("selectionMethod", new VestnikSelectionMethodPlugin(getSelectionMethodMapping()))
+            .registerPlugin("awardCriteria", new AwardCriteriaPlugin(numberFormat));
+
+        registerVestnikOrVvzSpecificPlugin();
     }
+
+    /**
+     * Method registers another plugins.
+     */
+    protected abstract void registerVestnikOrVvzSpecificPlugin();
 
     @Override
     public final String getVersion() {

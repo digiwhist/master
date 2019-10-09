@@ -65,8 +65,6 @@ public class PCETenderParser extends BaseDatlabTenderParser {
         ParsedTender parsedTender = new ParsedTender();
         String tenderUrl = rawTender.getSourceUrl().toString();
 
-
-
         if (rawTender.getSourceUrl().toString().startsWith("https://contrataciondelestado.es/wps/poc")) {
             parsedTender = PCETenderHtmlDetailHandler.parse(parsedTender, document, "HtmlDetail");
         } else {

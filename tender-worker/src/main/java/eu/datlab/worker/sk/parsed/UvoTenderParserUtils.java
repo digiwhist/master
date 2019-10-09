@@ -41,6 +41,8 @@ public final class UvoTenderParserUtils {
                 return PublicationFormType.CONTRACT_AWARD;
             } else if (formCode.startsWith("Z")) {
                 return PublicationFormType.CONTRACT_CANCELLATION;
+            } else if (formCode.matches("DO(P|S|T)")) {
+                return PublicationFormType.CONTRACT_AMENDMENT;
             } else {
                 return PublicationFormType.OTHER;
             }

@@ -1,8 +1,10 @@
 package eu.datlab.dataaccess.dao.jdbc;
 
 import eu.datlab.dataaccess.dao.ZIndexIndicatorDAO;
+import eu.datlab.dataaccess.dto.codetables.ZIndexWhitelistRecordType;
 import eu.datlab.dataaccess.dto.zindex.ZIndexIndicator;
 import eu.datlab.dataaccess.dto.zindex.ZIndexOffense;
+import eu.datlab.dataaccess.dto.zindex.ZIndexWhitelistRecord;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dao.jdbc.GenericJdbcDAO;
 
@@ -102,6 +104,35 @@ public final class JdbcZIndexIndicatorDAO extends GenericJdbcDAO<ZIndexIndicator
                     .setSubject(rs.getString("subject"))
                     .setIsSeriousOffense(rs.getBoolean("isseriousoffense"))
                     .setIsUOHSConfirmed(rs.getBoolean("isuohsconfirmed"))
+                    .setUrl(rs.getString("url")));
+            }
+
+            rs.close();
+            statement.close();
+
+            return result;
+        } catch (Exception e) {
+            logger.error("Unable to perform query, because of of {}", e);
+            throw new UnrecoverableException("Unable to perform query.", e);
+        }
+    }
+
+    @Override
+    public List<ZIndexWhitelistRecord> getWhitelist(final ZIndexWhitelistRecordType type) {
+        try {
+            PreparedStatement statement = connection.prepareStatement(
+                "SELECT * FROM " + schema + ".zindex_whitelist WHERE \"type\" = ?");
+
+            statement.setString(1, type.name());
+
+            ResultSet rs = statement.executeQuery();
+
+            List<ZIndexWhitelistRecord> result = new ArrayList<>();
+            while (rs.next()) {
+                String recordType = rs.getString("type");
+
+                result.add(new ZIndexWhitelistRecord()
+                    .setType(recordType == null ? null : ZIndexWhitelistRecordType.valueOf(recordType))
                     .setUrl(rs.getString("url")));
             }
 

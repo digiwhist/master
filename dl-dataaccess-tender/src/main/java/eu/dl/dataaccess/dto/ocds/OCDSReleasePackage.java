@@ -7,6 +7,7 @@ import eu.dl.dataaccess.annotation.Transformable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * OCDS release package.
@@ -27,6 +28,11 @@ public class OCDSReleasePackage {
     private List<String> extensions;
 
     private List<OCDSRelease> releases;
+
+    /**
+     * Release package metaData. Is not in OCDS scheme.
+     */
+    private Map<String, Object> metaData;
 
     /**
      * @return list of extensions
@@ -167,6 +173,24 @@ public class OCDSReleasePackage {
      */
     public final OCDSReleasePackage setPublisher(final OCDSPublisher publisher) {
         this.publisher = publisher;
+        return this;
+    }
+
+    /**
+     * @return record metaData
+     */
+    public final Map<String, Object> getMetaData() {
+        return metaData;
+    }
+
+    /**
+     * @param metaData
+     *      metadata to be set
+     * @return
+     *      this instance for chaining
+     */
+    public final OCDSReleasePackage setMetaData(final Map<String, Object> metaData) {
+        this.metaData = metaData;
         return this;
     }
 }

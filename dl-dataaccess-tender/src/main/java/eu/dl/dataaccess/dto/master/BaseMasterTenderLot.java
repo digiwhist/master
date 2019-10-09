@@ -11,6 +11,7 @@ import eu.dl.dataaccess.dto.generic.AwardCriterion;
 import eu.dl.dataaccess.dto.generic.CPV;
 import eu.dl.dataaccess.dto.generic.Funding;
 import eu.dl.dataaccess.dto.generic.Price;
+import eu.dl.dataaccess.dto.indicator.Indicator;
 
 /**
  * Abstract master tender lot DTO containing properties that may also be
@@ -180,6 +181,11 @@ public abstract class BaseMasterTenderLot<T> extends BaseMasterStorableDTO {
      * Objective criteria for choosing the limited number of candidates.
      */
     private String limitedCandidatesCountCriteria;
+
+    /**
+     * Indicators related to this tender.
+     */
+    private List<Indicator> indicators;
 
     /**
      * @return the title
@@ -766,6 +772,23 @@ public abstract class BaseMasterTenderLot<T> extends BaseMasterStorableDTO {
      */
     public final T setLimitedCandidatesCountCriteria(final String newLimitedCandidatesCountCriteria) {
         this.limitedCandidatesCountCriteria = newLimitedCandidatesCountCriteria;
+        return (T) this;
+    }
+
+    /**
+     * @return the indicators
+     */
+    public final List<Indicator> getIndicators() {
+        return indicators;
+    }
+
+    /**
+     * @param newIndicators the indicators to set
+     *
+     * @return this instance for chaining
+     */
+    public final T setIndicators(final List<Indicator> newIndicators) {
+        this.indicators = newIndicators;
         return (T) this;
     }
 }

@@ -1,6 +1,7 @@
 package eu.datlab.worker.cz.parsed;
 
 import eu.dl.dataaccess.dto.parsed.ParsedBid;
+import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
@@ -146,10 +147,11 @@ abstract class VVZContractAwardHandler extends VVZEuFormsHandler {
      *
      * @param form
      *         parsed form
-     *
+     * @param isFrameworkAgreement
+     *          whether the parsed tender is framework agreement
      * @return parsed information about awarding lots
      */
-    static List<ParsedTenderLot> parseLotsAwards(final Document form) {
+    static List<ParsedTenderLot> parseLotsAwards(final Document form, final boolean isFrameworkAgreement) {
         List<ParsedTenderLot> lots = new ArrayList<>();
         Elements lotsHtmls = VVZTenderParser.getLotsAwardsHtmls(form);
 
@@ -185,7 +187,7 @@ abstract class VVZContractAwardHandler extends VVZEuFormsHandler {
                         .setElectronicBidsCount(VVZTenderParser.parseLotAwardElectronicBidsCount(lotHtml));
 
                 // parse bid info (V.2.3, V.2.4, V.2.5)
-                parsedLot.addBid(parseLotAwardWinningBid(lotHtml));
+                parsedLot.setBids(parseLotAwardWinningBids(lotHtml, isFrameworkAgreement));
 
                 // subsection V.2.4)
                 parsedLot.setEstimatedPrice(parseLotAwardEstimatedPrice(lotHtml));
@@ -200,25 +202,47 @@ abstract class VVZContractAwardHandler extends VVZEuFormsHandler {
      *
      * @param lotAwardHtml
      *         html with lot info
-     *
-     * @return parsed winning bid info
+     * @param isFrameworkAgreement
+     *         whether the parsed tender is framework agreement
+     * @return list of parsed winning bids or null
      */
-    static ParsedBid parseLotAwardWinningBid(final Element lotAwardHtml) {
-        ParsedBid winningBid = new ParsedBid().setIsWinning(Boolean.TRUE.toString());
-
+    static List<ParsedBid> parseLotAwardWinningBids(final Element lotAwardHtml, final boolean isFrameworkAgreement) {
         // subsection V.2.3)
-        winningBid.setBidders(VVZTenderParser.parseLotAwardWinners(lotAwardHtml));
+        List<ParsedBody> bidders = VVZTenderParser.parseLotAwardWinners(lotAwardHtml);
 
         // subsection V.2.4)
-        winningBid.setPrice(parseLotAwardBidPrice(lotAwardHtml));
-
-        // subsection V.2.5)
-        winningBid = parseSubcontractingInfo(lotAwardHtml, winningBid);
+        ParsedPrice price = parseLotAwardBidPrice(lotAwardHtml);
 
         // subsection V.2.2)
-        winningBid.setIsConsortium(VVZTenderParser.parseLotAwardBidIsConsortium(lotAwardHtml));
+        String isConsortium = VVZTenderParser.parseLotAwardBidIsConsortium(lotAwardHtml);
 
-        return winningBid;
+        List<ParsedBid> bids = new ArrayList<>();
+        if (isFrameworkAgreement) {
+            bidders.forEach(b -> {
+                ParsedBid bid = new ParsedBid()
+                    .setIsWinning(Boolean.TRUE.toString())
+                    .addBidder(b)
+                    .setPrice(price)
+                    .setIsConsortium(isConsortium);
+
+                parseSubcontractingInfo(lotAwardHtml, bid);
+
+                bids.add(bid);
+            });
+        } else {
+            ParsedBid bid = new ParsedBid()
+                .setIsWinning(Boolean.TRUE.toString())
+                .setBidders(bidders)
+                .setPrice(price)
+                .setIsConsortium(isConsortium);
+
+            // subsection V.2.5)
+            bid = parseSubcontractingInfo(lotAwardHtml, bid);
+
+            bids.add(bid);
+        }
+
+        return bids.isEmpty() ? null : bids;
     }
 
     // ---------------------------------

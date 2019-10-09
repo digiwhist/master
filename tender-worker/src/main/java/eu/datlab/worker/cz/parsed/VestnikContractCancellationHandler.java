@@ -102,7 +102,7 @@ abstract class VestnikContractCancellationHandler {
                 .setCode(VestnikTenderParserUtils.getFieldValue(lotSection, "AttItems\\.HlavniSlovnikHp_2")));
 
         // other CPVs
-        cpvs.addAll(lotSection.select("div.iform-field > input[name~=AttItems\\.HlavniSlovnikDp[1-4]_2")
+        cpvs.addAll(lotSection.select("div.iform-field > input[name~=AttItems\\.HlavniSlovnikDp(1|2|3|4)_2]")
                 .stream()
                 .filter(cpvDetail -> !cpvDetail.attr("value").isEmpty())
                 .map(cpvDetail -> new ParsedCPV().setIsMain(Boolean.FALSE.toString())

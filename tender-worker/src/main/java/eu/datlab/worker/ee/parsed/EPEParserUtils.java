@@ -6,9 +6,12 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
+import eu.dl.dataaccess.dto.parsed.*;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,15 +19,6 @@ import eu.datlab.dataaccess.dto.codetables.PublicationSources;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 import eu.dl.dataaccess.dto.codetables.TenderSize;
-import eu.dl.dataaccess.dto.parsed.ParsedAddress;
-import eu.dl.dataaccess.dto.parsed.ParsedAwardCriterion;
-import eu.dl.dataaccess.dto.parsed.ParsedBody;
-import eu.dl.dataaccess.dto.parsed.ParsedCPV;
-import eu.dl.dataaccess.dto.parsed.ParsedFunding;
-import eu.dl.dataaccess.dto.parsed.ParsedPrice;
-import eu.dl.dataaccess.dto.parsed.ParsedPublication;
-import eu.dl.dataaccess.dto.parsed.ParsedTender;
-import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.utils.StringUtils;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
 import java.util.Arrays;
@@ -32,6 +26,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -43,10 +38,11 @@ public final class EPEParserUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(EPEParserUtils.class);
 
-    private static final String IS_CANCELLED_TITLE = "Riigihanke hankemenetluse lõppemise aluseks on:";
+    private static final String TENDER_CLOSER_TITLE = "Riigihanke hankemenetluse lõppemise aluseks on:";
+
+    private static final String RELATED_PARTS_TITLE = "Seotud hanke osad";
 
     private static final List<String> CANCELLATION_REASONS = Arrays.asList(new String[] {
-        "hankelepingu või raamlepingu sõlmimine",
         "hankemenetluse kehtetuks tunnistamine Rahandusministeeriumii või hankija omal otsusel",
         "hankemenetluse kehtetuks tunnistamine Rahandusministeeriumi või hankija omal otsusel",
         "kõikide pakkujate või taotlejate hankemenetlusest kõrvaldamine või kvalifitseerimata jätmine",
@@ -54,7 +50,6 @@ public final class EPEParserUtils {
         "kõikide pakkumuste tagasilükkamine põhjusel, et ühtegi pakkumust ei tunnistatud vastavaks",
         "kõikide pakkumuste tagasilükkamisega RHS §-s 49 sätestatud alustel",
         "pakkumuste või hankemenetluses osalemise taotluste mitteesitamine",
-        "Hankelepingu või raamlepingu sõlmimine (kuni 31.08.2017 avaldatud või KJ sektor)",
         "Ühtegi pakkumust ei tunnistatud vastavaks või kõigi pakkumuste maksumus oli põhjendamatult madal"
     });
 
@@ -188,6 +183,31 @@ public final class EPEParserUtils {
     }
 
     /**
+     * Returns value by the given {@code number } from next row to row by the given {@code label}.
+     *
+     * <pre>
+     * {@code
+     *      <tr>...#label#...</tr>
+     *      <tr>...<td>#value#</td>...</tr>
+     * }
+     * </pre>
+     *
+     * @param label
+     *         label
+     * @param number
+     *         number of value inside row
+     * @param context
+     *         context that includes labeled value
+     * @return value or null
+     */
+    public static String nextNNodeValueFromNextTableRowByValue(final String label, final int number,
+                                                               final Element context) {
+        Element node = JsoupUtils.selectFirst("tr:matches(" + label + ") + tr > td:eq(" + number + ")", context);
+        return node == null ? null : node.text();
+    }
+
+
+    /**
      * @param label
      *      label
      * @param context
@@ -236,6 +256,42 @@ public final class EPEParserUtils {
             return lots == null ? Stream.empty() : lots.stream();
         }).collect(Collectors.toList());
     }
+
+
+    /**
+     * The alternative function to "parseLots" for EPEContractAwardHandler.
+     * @param parser
+     *         lot parser, accepts two parameters, parsed row and metaData
+     * @param firstRow
+     *         row where the lots data starts
+     * @param lastRow
+     *         row where lots parsing ends, in case it is null parsing ends at the end of table
+     * @return non-empty list of lots or null
+     */
+    public static List<ParsedTenderLot> parseContractAwardsLots(
+            final Function<Element, ParsedTenderLot> parser,
+            final Element firstRow,
+            final Element lastRow) {
+
+        final List<Element> lotNodes = parseRepeatedParts(firstRow, lastRow, "(?i)(LEPING) \\d+");
+        if (lotNodes == null) {
+            return null;
+        }
+
+        Map<String, ParsedTenderLot> lots = new HashMap<>();
+        for (Element lotNode : lotNodes) {
+            ParsedTenderLot lot = parser.apply(lotNode);
+            if (lots.containsKey(lot.getTitle())) {
+                for (ParsedBid bid : lot.getBids()) {
+                    lots.get(lot.getTitle()).addBid(bid);
+                }
+            } else {
+                lots.put(lot.getTitle(), lot);
+            }
+        }
+        return new ArrayList<>(lots.values());
+    }
+
 
     /**
      * Parses repeated parts starting at the given {@code firstRow} and ending on {@code lastRow}. For each part is made
@@ -604,38 +660,67 @@ public final class EPEParserUtils {
 
         String procedureType = EPEParserUtils.tableValueByLabel("^IV\\.1\\.1\\)", dataTable);
 
-        Element tenderIsCancelledNode = EPEParserUtils.tableValueNodeByLabel(IS_CANCELLED_TITLE, dataTable);
+        Element tenderCloserNode = EPEParserUtils.tableValueNodeByLabel(TENDER_CLOSER_TITLE, dataTable);
         String tenderIsCancelled = null;
         String tenderCancellationReason = null;
-        if (tenderIsCancelledNode != null) {
-            if (CANCELLATION_REASONS.stream().anyMatch(n -> n.equalsIgnoreCase(tenderIsCancelledNode.text()))) {
-                tenderIsCancelled = Boolean.TRUE.toString();
+        List<ParsedTenderLot> closedLots = new ArrayList<>();
+        if (tenderCloserNode != null) {
 
-                Element reasonNode = tenderIsCancelledNode.parent().nextElementSibling();
-                if (reasonNode != null && JsoupUtils.hasText("b", reasonNode, OTHER_CANCELLATION_REASON)) {
-                    tenderCancellationReason = reasonNode.text();
+            if (CANCELLATION_REASONS.stream().anyMatch(n -> n.equalsIgnoreCase(tenderCloserNode.text()))) {
+
+                Element closedLotNode = EPEParserUtils.tableValueNodeByLabel(RELATED_PARTS_TITLE, dataTable);
+                String closedLotValue;
+                if (closedLotNode != null) {
+                    final int lotIdIndex = 1;
+                    closedLotValue = closedLotNode.text();
+                    while (closedLotValue != null && closedLotValue.contains("Osa")) {
+                        ParsedTenderLot lot = new ParsedTenderLot();
+                        lot.setStatus(TenderLotStatus.CANCELLED.toString());
+                        List<String> lotParts = Arrays.asList(closedLotValue.split(" "));
+                        StringBuilder title = new StringBuilder();
+                        for (int i = 2; i < lotParts.size(); i++) {
+                            title.append(lotParts.get(i));
+                        }
+                        lot.setLotNumber(lotParts.get(lotIdIndex));
+                        lot.setTitle(title.toString());
+                        lot.setCancellationReason(tenderCloserNode.text());
+                        closedLots.add(lot);
+                        closedLotValue =
+                                EPEParserUtils.nextNNodeValueFromNextTableRowByValue(closedLotValue, 1, dataTable);
+                    }
                 } else {
-                    tenderCancellationReason = tenderIsCancelledNode.text();
+
+                    tenderIsCancelled = Boolean.TRUE.toString();
+
+                    Element reasonNode = tenderCloserNode.parent().nextElementSibling();
+                    if (reasonNode != null && JsoupUtils.hasText("b", reasonNode, OTHER_CANCELLATION_REASON)) {
+                        tenderCancellationReason = reasonNode.text();
+                    } else {
+                        tenderCancellationReason = tenderCloserNode.text();
+                    }
                 }
-            } else {                
-                logger.error("Unknown cancellation reason '{}'", tenderIsCancelledNode.text());
-                throw new UnrecoverableException("Unknown cancellation reason");
             }
         }
-        
+        if (closedLots.isEmpty()) {
+            closedLots = null;
+        }
+
+
         return EPEParserUtils.parsePublicationAndTitle(doc, publicationDate)
-            .setIsWholeTenderCancelled(tenderIsCancelled)
-            .setCancellationReason(tenderCancellationReason)
-            .setSize(EPEParserUtils.parseTenderSize(dataTable))
-            .addBuyer(EPEParserUtils.parseBuyer(dataTable))
-            .setIsOnBehalfOf(EPEParserUtils.parseBoolean("Hankija teostab hanget teiste hankijate nimel", dataTable))
-            .setAddressOfImplementation(EPEParserUtils.parseAddressOfImplementation(dataTable))
-            .setIsFrameworkAgreement(EPEParserUtils.parseIsFrameworkAgreement(dataTable))
-            .setNationalProcedureType(procedureType)
-            .setProcedureType(procedureType)
-            .setSelectionMethod(EPEParserUtils.tableValueByLabel("^IV\\.2\\.1\\)", dataTable))
-            .setAwardCriteria(parseTenderRelatedCriteria(dataTable))
-            .setIsElectronicAuction(EPEParserUtils.parseBoolean("^IV\\.2\\.2\\)", dataTable));
+                .setIsWholeTenderCancelled(tenderIsCancelled)
+                .setCancellationReason(tenderCancellationReason)
+                .setSize(EPEParserUtils.parseTenderSize(dataTable))
+                .addBuyer(EPEParserUtils.parseBuyer(dataTable))
+                .setIsOnBehalfOf(
+                        EPEParserUtils.parseBoolean("Hankija teostab hanget teiste hankijate nimel", dataTable))
+                .setAddressOfImplementation(EPEParserUtils.parseAddressOfImplementation(dataTable))
+                .setIsFrameworkAgreement(EPEParserUtils.parseIsFrameworkAgreement(dataTable))
+                .setNationalProcedureType(procedureType)
+                .setProcedureType(procedureType)
+                .setSelectionMethod(EPEParserUtils.tableValueByLabel("^IV\\.2\\.1\\)", dataTable))
+                .setAwardCriteria(parseTenderRelatedCriteria(dataTable))
+                .setIsElectronicAuction(EPEParserUtils.parseBoolean("^IV\\.2\\.2\\)", dataTable))
+                .setLots(closedLots);
     }
 
     /**

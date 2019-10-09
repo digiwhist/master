@@ -1,5 +1,6 @@
 package eu.dl.worker.utils;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.lang3.StringUtils.lastOrdinalIndexOf;
 import static org.apache.commons.lang3.StringUtils.leftPad;
 import static org.apache.commons.lang3.StringUtils.ordinalIndexOf;
@@ -9,6 +10,7 @@ import static org.apache.commons.lang3.StringUtils.strip;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -224,4 +226,54 @@ public final class StringUtils {
         return stringToModify;
     }
 
+    /**
+     * Method tries to guess an encoding of an input string.
+     *
+     * The approach is very simple: if the string is changed from the expected charset to UTF-8 and then back from UTF-8 to the expected
+     * charset, the resulting string has to be exactly the same than the original one.
+     *
+     * Avoid of testing UTF-8, it always suit, because of converting from UTF-8 to UTF-8 doesn't affect an input string and method will
+     * consider UTF-8 as charset of string.
+     *
+     * @param input
+     *      input string
+     * @param charsets
+     *      list of expected charsets
+     * @return charset or null
+     */
+    public static Charset charset(final String input, final Charset... charsets) {
+        if (input == null || charsets == null) {
+            return null;
+        }
+
+        for (Charset c : charsets) {
+            if(c != null && input.equals(convert(convert(input, c, UTF_8), UTF_8, c))) {
+                return c;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Method converts an input string from one encoding to another one.
+     *
+     * @param input
+     *      input string to be converted
+     * @param fromEncoding
+     *      encoding of the input string
+     * @param toEncoding
+     *      charset of the resulting string
+     * @return converted string
+     */
+    public static String convert(final String input, final Charset fromEncoding, final Charset toEncoding) {
+        if (input == null) {
+            return null;
+        }
+        if (fromEncoding == null || toEncoding == null) {
+            return input;
+        }
+
+        return new String(input.getBytes(fromEncoding), toEncoding);
+    }
 }

@@ -1,6 +1,7 @@
 package eu.datlab.worker.master.indicator;
 
 import eu.datlab.dataaccess.dao.DAOFactory;
+import eu.dl.dataaccess.dto.master.MasterTenderLot;
 import eu.dl.dataaccess.utils.PopulateUtils;
 import eu.dl.dataaccess.dao.MasterBodyDAO;
 import eu.dl.dataaccess.dao.MasterTenderDAO;
@@ -12,6 +13,9 @@ import eu.dl.worker.Message;
 import eu.dl.worker.indicator.plugin.AdvertisementPeriodIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.CallForTenderIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.CentralizedProcurementIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.LotDecisionPeriodIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.LotNewCompanyIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.LotSingleBidIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.CoveredByGPAIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.DecisionPeriodIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.ElectronicAuctionIndicatorPlugin;
@@ -19,6 +23,7 @@ import eu.dl.worker.indicator.plugin.EnglishLanguageIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.FrameworkAgreementIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.IndicatorPlugin;
 import eu.dl.worker.indicator.plugin.KeyMissingFieldsIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.LotIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.NewCompanyIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.NoticeAndAwardDiscrepanciesIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.PoliticalConnectionsOfSuppliers;
@@ -55,7 +60,9 @@ public class IndicatorWorker extends BaseWorker {
 
     private static PopulateUtils populateUtils;
 
-    protected PluginRegistry<IndicatorPlugin<MasterTender>> indicatorPluginRegistry = new BasicPluginRegistry();
+    protected PluginRegistry<IndicatorPlugin<MasterTender>> tenderIndicatorPluginRegistry = new BasicPluginRegistry();
+
+    protected PluginRegistry<LotIndicatorPlugin> lotIndicatorPluginRegistry = new BasicPluginRegistry();
 
     /**
      * Initialization of everythong.
@@ -106,18 +113,31 @@ public class IndicatorWorker extends BaseWorker {
         if (tender != null) {
             populateUtils.populateBodies(Arrays.asList(tender));
 
-            List<Indicator> indicators = new ArrayList<>();
-
-            // iterate over all indicator plugins and execute them in a proper order
-            for (Entry<String, IndicatorPlugin<MasterTender>> entry : indicatorPluginRegistry.getPlugins().entrySet()) {
+            // iterate over all item indicator plugins and execute them in a proper order
+            List<Indicator> tenderIndicators = new ArrayList<>();
+            for (Entry<String, IndicatorPlugin<MasterTender>> entry : tenderIndicatorPluginRegistry.getPlugins().entrySet()) {
                 IndicatorPlugin<MasterTender> plugin = entry.getValue();
-                Indicator indicator = (Indicator) plugin.evaluate(tender);
+                Indicator indicator = plugin.evaluate(tender);
                 if (indicator != null) {
-                    indicators.add(indicator);
+                    tenderIndicators.add(indicator);
                 }
             }
+            tender.setIndicators(tenderIndicators);
 
-            tender.setIndicators(indicators);
+            if (tender.getLots() != null) {
+                for (MasterTenderLot lot : tender.getLots()) {
+                    List<Indicator> lotIndicators = new ArrayList<>();
+                    // iterate over all item indicator plugins and execute them in a proper order
+                    for (Entry<String, LotIndicatorPlugin> entry : lotIndicatorPluginRegistry.getPlugins().entrySet()) {
+                        LotIndicatorPlugin plugin = entry.getValue();
+                        Indicator indicator = plugin.evaluate(lot, tender);
+                        if (indicator != null) {
+                            lotIndicators.add(indicator);
+                        }
+                    }
+                    lot.setIndicators(lotIndicators);
+                }
+            }
 
             populateUtils.depopulateBodies(Arrays.asList(tender));
             masterDao.save(tender);
@@ -141,76 +161,62 @@ public class IndicatorWorker extends BaseWorker {
      */
     protected final void registerIndicatorPlugins() {
         SingleBidIndicatorPlugin singleBidIndicatorPlugin = new SingleBidIndicatorPlugin();
-        indicatorPluginRegistry.registerPlugin(singleBidIndicatorPlugin.getType(), singleBidIndicatorPlugin);
+        tenderIndicatorPluginRegistry.registerPlugin(singleBidIndicatorPlugin.getType(), singleBidIndicatorPlugin);
 
-        CentralizedProcurementIndicatorPlugin centralizedProcurementIndicatorPlugin =
-                new CentralizedProcurementIndicatorPlugin();
-        indicatorPluginRegistry.registerPlugin(
-                centralizedProcurementIndicatorPlugin.getType(), centralizedProcurementIndicatorPlugin);
+        CentralizedProcurementIndicatorPlugin centralizedProcurementIndicatorPlugin = new CentralizedProcurementIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(centralizedProcurementIndicatorPlugin.getType(),
+            centralizedProcurementIndicatorPlugin);
 
-        AdvertisementPeriodIndicatorPlugin advertisementPeriodIndicatorPlugin =
-                new AdvertisementPeriodIndicatorPlugin();
-        indicatorPluginRegistry.registerPlugin(
-                advertisementPeriodIndicatorPlugin.getType(), advertisementPeriodIndicatorPlugin);
+        AdvertisementPeriodIndicatorPlugin advertisementPeriodIndicatorPlugin = new AdvertisementPeriodIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(advertisementPeriodIndicatorPlugin.getType(), advertisementPeriodIndicatorPlugin);
 
-        DecisionPeriodIndicatorPlugin decisionPeriodIndicatorPlugin =
-                new DecisionPeriodIndicatorPlugin();
-        indicatorPluginRegistry.registerPlugin(
-                decisionPeriodIndicatorPlugin.getType(), decisionPeriodIndicatorPlugin);
+        DecisionPeriodIndicatorPlugin decisionPeriodIndicatorPlugin = new DecisionPeriodIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(decisionPeriodIndicatorPlugin.getType(), decisionPeriodIndicatorPlugin);
 
-        CoveredByGPAIndicatorPlugin coveredByGPAIndicatorPlugin =
-                new CoveredByGPAIndicatorPlugin();
-        indicatorPluginRegistry.registerPlugin(
-                coveredByGPAIndicatorPlugin.getType(), coveredByGPAIndicatorPlugin);
+        CoveredByGPAIndicatorPlugin coveredByGPAIndicatorPlugin = new CoveredByGPAIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(coveredByGPAIndicatorPlugin.getType(), coveredByGPAIndicatorPlugin);
 
-        ElectronicAuctionIndicatorPlugin electronicAuctionIndicatorPlugin =
-                new ElectronicAuctionIndicatorPlugin();
-        indicatorPluginRegistry.registerPlugin(
-                electronicAuctionIndicatorPlugin.getType(), electronicAuctionIndicatorPlugin);
+        ElectronicAuctionIndicatorPlugin electronicAuctionIndicatorPlugin = new ElectronicAuctionIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(electronicAuctionIndicatorPlugin.getType(), electronicAuctionIndicatorPlugin);
 
-        FrameworkAgreementIndicatorPlugin frameworkAgreementIndicatorPlugin =
-                new FrameworkAgreementIndicatorPlugin();
-        indicatorPluginRegistry.registerPlugin(
-                frameworkAgreementIndicatorPlugin.getType(), frameworkAgreementIndicatorPlugin);
+        FrameworkAgreementIndicatorPlugin frameworkAgreementIndicatorPlugin = new FrameworkAgreementIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(frameworkAgreementIndicatorPlugin.getType(), frameworkAgreementIndicatorPlugin);
 
-        NewCompanyIndicatorPlugin newCompanyIndicatorPlugin =
-                new NewCompanyIndicatorPlugin();
-        indicatorPluginRegistry.registerPlugin(
-                newCompanyIndicatorPlugin.getType(), newCompanyIndicatorPlugin);
+        NewCompanyIndicatorPlugin newCompanyIndicatorPlugin = new NewCompanyIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(newCompanyIndicatorPlugin.getType(), newCompanyIndicatorPlugin);
 
-        EnglishLanguageIndicatorPlugin englishLanguagePlugin =
-                new EnglishLanguageIndicatorPlugin();
-        indicatorPluginRegistry.registerPlugin(
-                englishLanguagePlugin.getType(), englishLanguagePlugin);
+        EnglishLanguageIndicatorPlugin englishLanguagePlugin = new EnglishLanguageIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(englishLanguagePlugin.getType(), englishLanguagePlugin);
 
-        CallForTenderIndicatorPlugin priorInformationNoticePlugin =
-                new CallForTenderIndicatorPlugin();
-        indicatorPluginRegistry.registerPlugin(
-                priorInformationNoticePlugin.getType(), priorInformationNoticePlugin);
+        CallForTenderIndicatorPlugin priorInformationNoticePlugin = new CallForTenderIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(priorInformationNoticePlugin.getType(), priorInformationNoticePlugin);
 
-        ProcedureTypeIndicatorPlugin procedureTypePlugin =
-                new ProcedureTypeIndicatorPlugin();
-        indicatorPluginRegistry.registerPlugin(
-                procedureTypePlugin.getType(), procedureTypePlugin);
+        ProcedureTypeIndicatorPlugin procedureTypePlugin = new ProcedureTypeIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(procedureTypePlugin.getType(), procedureTypePlugin);
 
-        TaxHavenIndicatorPlugin taxHavenPlugin =
-                new TaxHavenIndicatorPlugin();
-        indicatorPluginRegistry.registerPlugin(
-                taxHavenPlugin.getType(), taxHavenPlugin);
+        TaxHavenIndicatorPlugin taxHavenPlugin = new TaxHavenIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(taxHavenPlugin.getType(), taxHavenPlugin);
 
         KeyMissingFieldsIndicatorPlugin keyMissingFieldsPlugin = new KeyMissingFieldsIndicatorPlugin(
                 DAOFactory.getDAOFactory().getMatchedTenderDAO(null, null, Collections.emptyList()),
                 DAOFactory.getDAOFactory().getCleanTenderDAO(null, null));
-        indicatorPluginRegistry.registerPlugin(keyMissingFieldsPlugin.getType(), keyMissingFieldsPlugin);
+        tenderIndicatorPluginRegistry.registerPlugin(keyMissingFieldsPlugin.getType(), keyMissingFieldsPlugin);
 
         NoticeAndAwardDiscrepanciesIndicatorPlugin noticeAndAwardDiscPlugin =
                 new NoticeAndAwardDiscrepanciesIndicatorPlugin(
                         DAOFactory.getDAOFactory().getMatchedTenderDAO(null, null, Collections.emptyList()));
-        indicatorPluginRegistry.registerPlugin(noticeAndAwardDiscPlugin.getType(), noticeAndAwardDiscPlugin);
+        tenderIndicatorPluginRegistry.registerPlugin(noticeAndAwardDiscPlugin.getType(), noticeAndAwardDiscPlugin);
 
-        PoliticalConnectionsOfSuppliers politicalConnectionsOfSuppliers = new PoliticalConnectionsOfSuppliers(
-                masterBodyDao);
-        indicatorPluginRegistry.registerPlugin(politicalConnectionsOfSuppliers.getType(),
-                politicalConnectionsOfSuppliers);
+        PoliticalConnectionsOfSuppliers politicalConnectionsOfSuppliers = new PoliticalConnectionsOfSuppliers(masterBodyDao);
+        tenderIndicatorPluginRegistry.registerPlugin(politicalConnectionsOfSuppliers.getType(), politicalConnectionsOfSuppliers);
+
+        LotSingleBidIndicatorPlugin corruptionSingleBid = new LotSingleBidIndicatorPlugin();
+        lotIndicatorPluginRegistry.registerPlugin(corruptionSingleBid.getType(), corruptionSingleBid);
+
+        LotDecisionPeriodIndicatorPlugin corruptionDecisionPeriod = new LotDecisionPeriodIndicatorPlugin();
+        lotIndicatorPluginRegistry.registerPlugin(corruptionDecisionPeriod.getType(), corruptionDecisionPeriod);
+
+        LotNewCompanyIndicatorPlugin corruptionNewCompany = new LotNewCompanyIndicatorPlugin();
+        lotIndicatorPluginRegistry.registerPlugin(corruptionNewCompany.getType(), corruptionNewCompany);
     }
 }

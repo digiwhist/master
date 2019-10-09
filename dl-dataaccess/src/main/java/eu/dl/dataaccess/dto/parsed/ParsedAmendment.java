@@ -52,9 +52,9 @@ public class ParsedAmendment {
     private String modificationReason;
 
     /**
-     * Short description of modification reason.
+     * Short description of modification.
      */
-    private String modificationReasonShortDescription;
+    private String modificationShortDescription;
 
     /**
      * Detailed description of modification reason.
@@ -69,7 +69,7 @@ public class ParsedAmendment {
     /**
      * Final price value of contract.
      */
-    private ParsedPrice finalPrice;
+    private ParsedPrice updatedPrice;
 
     /**
      * Justification for framework agreement going over 4 years.
@@ -231,24 +231,24 @@ public class ParsedAmendment {
     }
 
     /**
-     * Gets modificationReasonShortDescription.
+     * Gets modificationShortDescription.
      *
-     * @return value of modificationReasonShortDescription
+     * @return value of modificationShortDescription
      */
-    public final String getModificationReasonShortDescription() {
-        return modificationReasonShortDescription;
+    public final String getModificationShortDescription() {
+        return modificationShortDescription;
     }
 
     /**
-     * Sets modificationReasonShortDescription.
+     * Sets modificationShortDescription.
      *
-     * @param modificationReasonShortDescription
-     *         the modificationReasonShortDescription to set
+     * @param modificationShortDescription
+     *         the modificationShortDescription to set
      *
      * @return this instance for chaining
      */
-    public final ParsedAmendment setModificationReasonShortDescription(final String modificationReasonShortDescription) {
-        this.modificationReasonShortDescription = modificationReasonShortDescription;
+    public final ParsedAmendment setModificationShortDescription(final String modificationShortDescription) {
+        this.modificationShortDescription = modificationShortDescription;
         return this;
     }
 
@@ -283,7 +283,7 @@ public class ParsedAmendment {
 
     /**
      * @param originalPrice
-     *         the finalPrice to set
+     *         the updatedPrice to set
      *
      * @return this instance for chaining
      */
@@ -293,20 +293,20 @@ public class ParsedAmendment {
     }
 
     /**
-     * @return the finalPrice
+     * @return the updatedPrice
      */
-    public final ParsedPrice getFinalPrice() {
-        return finalPrice;
+    public final ParsedPrice getUpdatedPrice() {
+        return updatedPrice;
     }
 
     /**
-     * @param finalPrice
-     *         the finalPrice to set
+     * @param updatedPrice
+     *         the updatedPrice to set
      *
      * @return this instance for chaining
      */
-    public final ParsedAmendment setFinalPrice(final ParsedPrice finalPrice) {
-        this.finalPrice = finalPrice;
+    public final ParsedAmendment setUpdatedPrice(final ParsedPrice updatedPrice) {
+        this.updatedPrice = updatedPrice;
         return this;
     }
 

@@ -11,6 +11,7 @@ import eu.dl.worker.clean.plugin.PricePlugin;
 import eu.dl.worker.clean.plugin.PublicationPlugin;
 import eu.dl.worker.clean.plugin.TenderProcedureTypePlugin;
 import eu.dl.worker.clean.plugin.TenderSupplyTypePlugin;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;

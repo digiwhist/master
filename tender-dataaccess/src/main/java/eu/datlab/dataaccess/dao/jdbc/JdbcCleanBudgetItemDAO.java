@@ -10,6 +10,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * JDBC DAO implementation for budget item.
@@ -29,22 +31,33 @@ public class JdbcCleanBudgetItemDAO extends GenericJdbcDAO<CleanBudgetItem>
     }
 
     @Override
-    public final List<CleanBudgetItem> getBodyBudgetItemsInPeriod(final String organizationId, final int yearFrom, final int yearTo) {
-        String profitAndLossCodes = "'A.I.1.', 'A.I.2.', 'A.I.3.', 'A.I.4.', 'A.I.5.', 'A.I.6.', 'A.I.7.', 'A.I.8.', 'A.I.9.', 'A.I.10.'," +
-            " 'A.I.11.', 'A.I.12.', 'A.I.35.', 'A.I.36.'";
+    public final List<CleanBudgetItem> getBodyBudgetItemsInPeriod(final String organizationId, final int yearFrom, final int yearTo,
+                                                                  final Map<BudgetItemReportType, List<String>> reportsAndCodes) {
+        String restriction = "";
+        if (reportsAndCodes != null) {
+            restriction = reportsAndCodes.entrySet().stream()
+                .map(n -> {
+                    String query = "data->>'report' = '" + n.getKey().name() + "'";
+                    if (n.getValue() != null && !n.getValue().isEmpty()) {
+                        // list of codes to string with values surrounded by "'" and separated with ","
+                        query += " AND data->>'level3Code'" +
+                            " IN (" + n.getValue().stream().map(m -> "'" + m + "'").collect(Collectors.joining(",")) + ")";
+                    }
+
+                    return "(" + query + ")";
+                }).collect(Collectors.joining(" OR "));
+        }
 
         try {
             PreparedStatement statement = connection.prepareStatement(
                 "SELECT * FROM " + getTableWithSchema() +
-                " WHERE ((data->>'report' = ? AND data->>'level3Code' IN (" + profitAndLossCodes + "))" +
-                        " OR (data->>'report' = ? AND data->>'level3Code' = 'B.I.'))" +
-                    " AND data#>>'{body,bodyIds,0,id}' = ? AND (data->>'year')::int BETWEEN ? AND ?");
+                " WHERE "
+                    + (!restriction.isEmpty() ? "(" + restriction + ") AND " : "")
+                    + "data#>>'{body,bodyIds,0,id}' = ? AND (data->>'year')::int BETWEEN ? AND ?");
 
-            statement.setString(1, BudgetItemReportType.PROFIT_AND_LOSS.name());
-            statement.setString(2, BudgetItemReportType.CASH_FLOW.name());
-            statement.setString(3, organizationId);
-            statement.setInt(4, yearFrom - 2);
-            statement.setInt(5, yearTo);
+            statement.setString(1, organizationId);
+            statement.setInt(2, yearFrom);
+            statement.setInt(3, yearTo);
 
             ResultSet rs = statement.executeQuery();
 

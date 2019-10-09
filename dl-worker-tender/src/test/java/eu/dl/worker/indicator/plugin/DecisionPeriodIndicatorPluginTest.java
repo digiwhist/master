@@ -95,6 +95,8 @@ public final class DecisionPeriodIndicatorPluginTest {
         assertEquals(plugin.evaluate(null).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
         assertEquals(plugin.evaluate(nullTender).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
         assertEquals(plugin.evaluate(tender1).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
+        assertEquals(plugin.evaluate(tender7).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
+        assertEquals(plugin.evaluate(tender8).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
     }
 
     /**
@@ -113,12 +115,6 @@ public final class DecisionPeriodIndicatorPluginTest {
 
         assertEquals(plugin.evaluate(tender6).getStatus(), IndicatorStatus.CALCULATED);
         assertEquals(plugin.evaluate(tender6).getValue(), new Double(0d));
-
-        assertEquals(plugin.evaluate(tender7).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender7).getValue(), new Double(0d));
-
-        assertEquals(plugin.evaluate(tender8).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender8).getValue(), new Double(100d));
 
         assertEquals(plugin.evaluate(tender9).getStatus(), IndicatorStatus.CALCULATED);
         assertEquals(plugin.evaluate(tender9).getValue(), new Double(0d));

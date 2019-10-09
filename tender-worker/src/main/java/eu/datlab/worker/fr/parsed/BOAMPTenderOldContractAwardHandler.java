@@ -60,21 +60,20 @@ final class BOAMPTenderOldContractAwardHandler {
      * @return award criterion list or Null
      */
     private static List<ParsedAwardCriterion> parseTenderAwardCriteria(final Element publicationElement) {
-        String mainAwardCriteriaString = JsoupUtils.selectText("DONNEES > CRITERES_D_ATTRIBUTION > CRITERES_LISTE",
-                publicationElement);
-        if (mainAwardCriteriaString != null && !mainAwardCriteriaString.isEmpty()) {
-            assert false : "We do not know this situation -> refactor parser to parse main award criterion.";
+        String awardCriteriaString = JsoupUtils.selectText("DONNEES > CRITERES_D_ATTRIBUTION > CRITERES_LISTE," +
+            "DONNEES > CRITERES_D_ATTRIBUTION > LISTE_CRITERES", publicationElement);
+
+        if (awardCriteriaString == null) {
+            awardCriteriaString = JsoupUtils.selectText("DONNEES > CRITERES_D_ATTRIBUTION > AUTRES", publicationElement);
         }
 
-        String awardCriteriaString = JsoupUtils.selectText("DONNEES > CRITERES_D_ATTRIBUTION > AUTRES",
-                publicationElement);
         if (awardCriteriaString == null) {
             return null;
         }
 
         List<ParsedAwardCriterion> awardCriteria = new ArrayList<>();
 
-        List<String> awardCriterionStrings = new ArrayList<>(Arrays.asList(awardCriteriaString.split(" - ")));
+        List<String> awardCriterionStrings = new ArrayList<>(Arrays.asList(awardCriteriaString.split("-")));
 
         for (String awardCriterionString : awardCriterionStrings) {
             // award criterion can be
@@ -87,7 +86,6 @@ final class BOAMPTenderOldContractAwardHandler {
             // So we have to find the weight by regular expression:
             Pattern pattern = Pattern.compile("(\\d{1,3} %)");
             Matcher matcher = pattern.matcher(awardCriterionString);
-            assert matcher.groupCount() == 1;
             if (matcher.find()) {
                 awardCriteria.add(new ParsedAwardCriterion()
                         .setName(awardCriterionString.substring(0, matcher.start(1)))
@@ -95,7 +93,7 @@ final class BOAMPTenderOldContractAwardHandler {
             }
         }
 
-        return awardCriteria;
+        return awardCriteria.isEmpty() ? null : awardCriteria;
     }
 
     /**
@@ -107,14 +105,41 @@ final class BOAMPTenderOldContractAwardHandler {
      * @return list of all parsed lots or empty list if no lots specified
      */
     private static List<ParsedTenderLot> parseTenderLots(final Element publicationElement) {
+        List<ParsedTenderLot> lots = new ArrayList<>();
+
+        Elements winningBids = JsoupUtils.select("DONNEES > PROCEDURES > MARCHES", publicationElement);
+        if (winningBids != null) {
+            for (Element n : winningBids) {
+                ParsedPrice price = null;
+                String amountAndCurrency = JsoupUtils.selectText("montant", n);
+                if (amountAndCurrency != null) {
+                    String amount = amountAndCurrency.replaceAll("^([^a-zA-Z]+)(.*)", "$1").trim();
+                    String currency = amountAndCurrency
+                        // get currency string
+                        .replaceAll("(.*?)([^ ]{3,})$", "$2")
+                        // get ISO code
+                        .replace("euros", "EUR").replaceAll("\\.$", "").trim();
+
+                    price = new ParsedPrice().setNetAmount(amount).setCurrency(currency);
+                }
+
+                lots.add(new ParsedTenderLot()
+                    .addBid(new ParsedBid()
+                        .setIsWinning(String.valueOf(true))
+                        .addBidder(new ParsedBody()
+                            .setName(JsoupUtils.selectText("nom", n))
+                            .setAddress(BOAMPTenderParserUtils.parseAddress(n)))
+                        .setPrice(price)));
+            }
+
+            return lots;
+        }
+
         Elements lotsElements = JsoupUtils.select("DONNEES > PROCEDURES > LOTS", publicationElement);
         if (lotsElements.isEmpty()) {
             return null;
         }
-        assert lotsElements.size() == 1;
         Element lotsElement = lotsElements.get(0);
-
-        List<ParsedTenderLot> lots = new ArrayList<>();
 
         final String bidsCountOfAllLots = JsoupUtils.selectText("DONNEES > PROCEDURES > NB_OFFRES", publicationElement);
 
@@ -122,24 +147,12 @@ final class BOAMPTenderOldContractAwardHandler {
         // - sometimes lots are not separated by "NUM_LOT" element. For this situation we close actual lot and creates
         //   new lot when find information which is already set (see
         //   ftp://echanges.dila.gouv.fr/BOAMP/ANCIEN_STOCK/BOAMP/2011/MPC20110179.taz , "NOJO" = 11-209645)
-
         ParsedTenderLot lot = null;
         for (Element lotChildElement : lotsElement.children()) {
             if (lotChildElement.nodeName().equalsIgnoreCase("NUM_LOT")) {
                 if (lotChildElement.hasText()) {
                     lot = createNewLot(lot, lots, bidsCountOfAllLots);
-                    lot
-                            .setLotId(lotChildElement.text());
-                } else {
-                    assert lot == null : "Empty lot number should be only at the beginning where lot is not created";
-                    // <LOTS>
-                    //   <NUM_LOT/>
-                    //   <DESC>
-                    //   ...
-                    // or
-                    // <LOTS>
-                    //   <NUM_LOT/>
-                    // </LOTS>
+                    lot.setLotId(lotChildElement.text());
                 }
             } else if (lotChildElement.nodeName().equalsIgnoreCase("DESC")) {
                 lot = createLotIfDoesNotExist(lot);
@@ -147,22 +160,19 @@ final class BOAMPTenderOldContractAwardHandler {
                     lot = createNewLot(lot, lots, bidsCountOfAllLots);
                 }
                 lot.setDescription(lotChildElement.text());
-
             } else if (lotChildElement.nodeName().equalsIgnoreCase("NOM")) {
                 lot = createLotIfDoesNotExist(lot);
                 if (lot.getBids() == null) {
-                    lot.addBid(new ParsedBid()
-                            .setIsWinning(Boolean.TRUE.toString()));
+                    lot.addBid(new ParsedBid().setIsWinning(Boolean.TRUE.toString()));
                 }
                 if (lot.getBids().get(0).getBidders() == null) {
                     lot.getBids().get(0).addBidder(new ParsedBody());
                 }
                 if (lot.getBids().get(0).getBidders().get(0).getName() != null) {
                     lot = createNewLot(lot, lots, bidsCountOfAllLots);
-                    lot
-                            .addBid(new ParsedBid()
-                                    .setIsWinning(Boolean.TRUE.toString())
-                                    .addBidder(new ParsedBody()));
+                    lot.addBid(new ParsedBid()
+                        .setIsWinning(Boolean.TRUE.toString())
+                        .addBidder(new ParsedBody()));
                 }
                 lot.getBids().get(0).getBidders().get(0).setName(lotChildElement.text());
             } else if (lotChildElement.nodeName().equalsIgnoreCase("TEL")) {
@@ -176,34 +186,27 @@ final class BOAMPTenderOldContractAwardHandler {
                 }
                 if (lot.getBids().get(0).getBidders().get(0).getPhone() != null) {
                     lot = createNewLot(lot, lots, bidsCountOfAllLots);
-                    lot
-                            .addBid(new ParsedBid()
-                                    .setIsWinning(Boolean.TRUE.toString())
-                                    .addBidder(new ParsedBody()));
+                    lot.addBid(new ParsedBid()
+                        .setIsWinning(Boolean.TRUE.toString())
+                        .addBidder(new ParsedBody()));
                 }
-                lot.getBids().get(0).getBidders().get(0)
-                        .setPhone(lotChildElement.text());
+                lot.getBids().get(0).getBidders().get(0).setPhone(lotChildElement.text());
             } else if (lotChildElement.nodeName().equalsIgnoreCase("ADRESSE")) {
                 lot = createBidderAddressIfDoesNotExist(lot);
                 if (lot.getBids().get(0).getBidders().get(0).getAddress().getStreet() != null) {
                     lot = createNewLot(lot, lots, bidsCountOfAllLots);
-                    lot
-                            .addBid(new ParsedBid()
-                                    .setIsWinning(Boolean.TRUE.toString())
-                                    .addBidder(new ParsedBody()
-                                            .setAddress(new ParsedAddress())));
+                    lot.addBid(new ParsedBid()
+                        .setIsWinning(Boolean.TRUE.toString())
+                        .addBidder(new ParsedBody().setAddress(new ParsedAddress())));
                 }
-                lot.getBids().get(0).getBidders().get(0).getAddress()
-                        .setStreet(lotChildElement.text());
+                lot.getBids().get(0).getBidders().get(0).getAddress().setStreet(lotChildElement.text());
             } else if (lotChildElement.nodeName().equalsIgnoreCase("CP")) {
                 lot = createBidderAddressIfDoesNotExist(lot);
                 if (lot.getBids().get(0).getBidders().get(0).getAddress().getPostcode() != null) {
                     lot = createNewLot(lot, lots, bidsCountOfAllLots);
-                    lot
-                            .addBid(new ParsedBid()
-                                    .setIsWinning(Boolean.TRUE.toString())
-                                    .addBidder(new ParsedBody()
-                                            .setAddress(new ParsedAddress())));
+                    lot.addBid(new ParsedBid()
+                        .setIsWinning(Boolean.TRUE.toString())
+                        .addBidder(new ParsedBody().setAddress(new ParsedAddress())));
                 }
                 lot.getBids().get(0).getBidders().get(0).getAddress()
                         .setPostcode(lotChildElement.text());
@@ -211,14 +214,11 @@ final class BOAMPTenderOldContractAwardHandler {
                 lot = createBidderAddressIfDoesNotExist(lot);
                 if (lot.getBids().get(0).getBidders().get(0).getAddress().getCity() != null) {
                     lot = createNewLot(lot, lots, bidsCountOfAllLots);
-                    lot
-                            .addBid(new ParsedBid()
-                                    .setIsWinning(Boolean.TRUE.toString())
-                                    .addBidder(new ParsedBody()
-                                            .setAddress(new ParsedAddress())));
+                    lot.addBid(new ParsedBid()
+                        .setIsWinning(Boolean.TRUE.toString())
+                        .addBidder(new ParsedBody().setAddress(new ParsedAddress())));
                 }
-                lot.getBids().get(0).getBidders().get(0).getAddress()
-                        .setCity(lotChildElement.text());
+                lot.getBids().get(0).getBidders().get(0).getAddress().setCity(lotChildElement.text());
             } else if (lotChildElement.nodeName().equalsIgnoreCase("MONTANT_HT")
                 || lotChildElement.nodeName().equalsIgnoreCase("MONTANT")) {
                 parseLotFinalPrice(lotChildElement, lot, lots, bidsCountOfAllLots);

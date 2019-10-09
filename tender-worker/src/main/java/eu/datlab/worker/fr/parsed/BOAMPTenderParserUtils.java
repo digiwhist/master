@@ -1,5 +1,9 @@
 package eu.datlab.worker.fr.parsed;
 
+import eu.dl.dataaccess.dto.parsed.ParsedAddress;
+import eu.dl.worker.utils.jsoup.JsoupUtils;
+import org.jsoup.nodes.Element;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -42,5 +46,25 @@ final class BOAMPTenderParserUtils {
             m = r.matcher(stringWithoutLeftSpaces);
             return m.find() ? m.group(1) : null;
         }
+    }
+
+    /**
+     * @param node
+     *      the node from which is the address parsed
+     * @return parsed address or null, in case that the node is null
+     */
+    public static ParsedAddress parseAddress(final Element node) {
+        if (node == null) {
+            return null;
+        }
+
+        return new ParsedAddress()
+            .setPostcode(JsoupUtils.selectText(":root > CP", node))
+            .setCity(JsoupUtils.selectText(":root > VILLE", node))
+            .setCountry(JsoupUtils.selectText(":root > PAYS", node))
+            .setStreet(JsoupUtils.selectText(":root > ADRESSE", node))
+            .setUrl(JsoupUtils.selectText(":root > URL", node))
+            .addNuts(JsoupUtils.selectText(":root > CODE_NUTS", node))
+            .addNuts(JsoupUtils.selectText(":root > ADJUDICATEUR_NUTS", node));
     }
 }

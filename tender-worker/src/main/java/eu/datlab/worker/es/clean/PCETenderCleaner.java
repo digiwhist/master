@@ -87,10 +87,11 @@ public class PCETenderCleaner extends BaseDatlabTenderCleaner {
     private Map<Enum, List<String>> supplyTypeMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
-        mapping.put(TenderSupplyType.SUPPLIES, Arrays.asList("1", "4"));
-        mapping.put(TenderSupplyType.SERVICES, Arrays.asList("2"));
-        mapping.put(TenderSupplyType.WORKS, Arrays.asList("3"));
-        mapping.put(TenderSupplyType.OTHER, Arrays.asList("50", "8", "7", "40", "31", "21", "0"));
+        mapping.put(TenderSupplyType.SUPPLIES, Arrays.asList("1", "4", "Suministros"));
+        mapping.put(TenderSupplyType.SERVICES, Arrays.asList("2", "Servicios", "Gestión de Servicios Públic", "Concesión de Servicio"));
+        mapping.put(TenderSupplyType.WORKS, Arrays.asList("3", "Obras", "Concesión de Obras Públic", "Concesión de Obra"));
+        mapping.put(TenderSupplyType.OTHER, Arrays.asList("50", "8", "7", "40", "31", "21", "0", "Patrimonial", "Privado",
+            "Administrativo especial", "Colaboración entre el sector público y sector priva", "Otros - OTHER", "Otros"));
 
         return mapping;
     }
@@ -134,13 +135,14 @@ public class PCETenderCleaner extends BaseDatlabTenderCleaner {
     private Map<Enum, List<String>> procedureTypeMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
-        mapping.put(TenderProcedureType.OPEN, Arrays.asList("1"));
+        mapping.put(TenderProcedureType.OPEN, Arrays.asList("1", "Abierto simplificado"));
         mapping.put(TenderProcedureType.RESTRICTED, Arrays.asList("2"));
         mapping.put(TenderProcedureType.NEGOTIATED_WITHOUT_PUBLICATION, Arrays.asList("3"));
         mapping.put(TenderProcedureType.NEGOTIATED_WITH_PUBLICATION, Arrays.asList("4"));
         mapping.put(TenderProcedureType.COMPETITIVE_DIALOG, Arrays.asList("5"));
         mapping.put(TenderProcedureType.MINITENDER, Arrays.asList("6"));
-        mapping.put(TenderProcedureType.OTHER, Arrays.asList("100", "7"));
+        mapping.put(TenderProcedureType.OTHER, Arrays.asList("100", "7", "Otros"));
+        mapping.put(TenderProcedureType.NEGOTIATED, Arrays.asList("Licitación con negociación"));
 
         return mapping;
     }
@@ -154,7 +156,8 @@ public class PCETenderCleaner extends BaseDatlabTenderCleaner {
         mapping.put(PublicationFormType.CONTRACT_NOTICE, Arrays.asList("ContractNotice", "CallForTenders"));
         mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("ContractAwardNotice"));
         mapping.put(PublicationFormType.CONTRACT_UPDATE, Arrays.asList("ContractModificationNotice"));
-        mapping.put(PublicationFormType.OTHER, Arrays.asList("HtmlDetail"));
+        mapping.put(PublicationFormType.COMPILED, Arrays.asList("HtmlDetail"));
+        mapping.put(PublicationFormType.OTHER, Arrays.asList(PublicationFormType.OTHER.name()));
 
         return mapping;
     }
@@ -165,8 +168,12 @@ public class PCETenderCleaner extends BaseDatlabTenderCleaner {
     private Map<Enum, List<String>> statusMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
-        mapping.put(TenderLotStatus.AWARDED, Arrays.asList("1", "2", "8", "9"));
-        mapping.put(TenderLotStatus.CANCELLED, Arrays.asList("3", "4", "5", "6", "7"));
+        mapping.put(TenderLotStatus.AWARDED, Arrays.asList("1", "2", "8", "9", "Adjudicado Provisionalmente", "Adjudicado Definitivamente",
+            "Adjudicado", "Formalizado", "Adjudicada", "Parcialmente Adjudicada"));
+        mapping.put(TenderLotStatus.CANCELLED, Arrays.asList("3", "4", "5", "6", "7", "Desierto", "Desistimiento", "Renuncia",
+            "Desierto Provisionalmente", "Anulada"));
+        mapping.put(TenderLotStatus.PREPARED, Arrays.asList("Anuncio Previo"));
+        mapping.put(TenderLotStatus.ANNOUNCED, Arrays.asList("Evaluació", "Evaluación Previ", "Publicada"));
 
         return mapping;
     }

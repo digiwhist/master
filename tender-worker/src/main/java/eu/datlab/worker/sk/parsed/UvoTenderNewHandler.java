@@ -8,7 +8,6 @@ import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedAwardCriterion;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedCPV;
-import eu.dl.dataaccess.dto.parsed.ParsedCorrigendum;
 import eu.dl.dataaccess.dto.parsed.ParsedFunding;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedPublication;
@@ -17,7 +16,6 @@ import eu.dl.worker.parsed.utils.ParserUtils;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,9 +30,9 @@ import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.parsePrice;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Tender new form parsed for Slovakia.
@@ -52,9 +50,6 @@ final class UvoTenderNewHandler {
 
     private static final String SOURCE_DOMAIN = "https://www.uvo.gov.sk";
 
-    private static final int ORIGINAL_VALUE_BEHIND = 1;
-    private static final int CORRECTION_VALUE_BEHIND = 3;
-
     /**
      * Parse common data for all ancient forms.
      *
@@ -65,61 +60,6 @@ final class UvoTenderNewHandler {
      * @return List<ParsedTender> with parsed data
      */
     List<ParsedTender> parse(final Document document, final String url, final String publicationDate) {
-
-        // if publication is correction, don't parse common attributes
-        if (url.contains("correction")) {
-            final Elements corrections = JsoupUtils.select("div[id=corrections] tr > td", document);
-            final ParsedTender parsedTender =
-                new ParsedTender().addPublication(new ParsedPublication()
-                    .setSource(PublicationSources.SK_UVO)
-                    .setPublicationDate(publicationDate)
-                    .setSourceId(parsePublicationSourceId(document))
-                    .setSourceFormType(parsePublicationSourceFormType(document))
-                    .setHumanReadableUrl(url)
-                    .setIsIncluded(true)
-                    .setLanguage("SK"));
-
-            for (Element correction : corrections) {
-                final List<TextNode> textNodes = correction.textNodes();
-
-                if (textNodes != null && !textNodes.isEmpty()) {
-                    final List<String> strings = textNodes.stream().map(TextNode::text).collect(Collectors.toList());
-
-                    String lastKnownSection = null;
-                    for (int position = 0; position < strings.size();) {
-
-                        // correction data are next and there are original + replacement data, or section data
-                        if (strings.get(position).contains(
-                                "iesto") && strings.size() > position + CORRECTION_VALUE_BEHIND) {
-
-                            // date correction or other value
-                            if (strings.get(position + ORIGINAL_VALUE_BEHIND).trim().matches(
-                                    "^(0[1-9]|[12][0-9]|3[01])\\.(0[1-9]|[12][0-9]|3[01])\\.(19|20)\\d*.*")) {
-                                parsedTender.addCorrigendum(new ParsedCorrigendum()
-                                        .setSectionNumber(lastKnownSection)
-                                        .setOriginalDate(strings.get(position + ORIGINAL_VALUE_BEHIND))
-                                        .setReplacementDate(strings.get(position + CORRECTION_VALUE_BEHIND)));
-                            } else {
-                                parsedTender.addCorrigendum(new ParsedCorrigendum()
-                                        .setSectionNumber(lastKnownSection)
-                                        .setOriginal(strings.get(position + ORIGINAL_VALUE_BEHIND))
-                                        .setReplacement(strings.get(position + CORRECTION_VALUE_BEHIND)));
-                            }
-
-                            position = position + CORRECTION_VALUE_BEHIND;
-                        } else if (strings.get(position).trim().matches("^(IX|IV|V?I{0,3})\\..*")) {
-                            lastKnownSection = strings.get(position);
-                            position++;
-                        } else {
-                            position++;
-                        }
-                    }
-                }
-            }
-
-            return Collections.singletonList(parsedTender);
-        }
-
         // parse common attributes
         ParsedTender parsedTender = new ParsedTender().addPublication(
                 new ParsedPublication()
@@ -169,12 +109,14 @@ final class UvoTenderNewHandler {
                 .setEstimatedPrice(parseEstimatedPrice(document))
                 .setHasOptions(parseIfTenderHasOptions(document))
                 .setEstimatedDurationInMonths(parseTenderEstimatedDurationInMonths(document))
-                .setEstimatedDurationInMonths(parseTenderEstimatedDurationInDays(document))
+                .setEstimatedDurationInDays(parseTenderEstimatedDurationInDays(document))
                 .setAwardCriteria(parseAwardCriteria(document))
                 .setAwardDeadline(parseAwardDeadline(document))
                 .setIsElectronicAuction(parseIfTenderIsElectronicAuction(document))
                 .setBidDeadline(parseBidDeadline(document))
-                .addFunding(new ParsedFunding().setIsEuFund(parseIsEUFunded(document)))
+                .addFunding(new ParsedFunding()
+                    .setIsEuFund(parseIsEUFunded(document))
+                    .setProgramme(JsoupUtils.selectText("div:containsOwn(Číslo projektu alebo referenčné číslo) > span", document)))
                 .setDocumentsPayable(parseIfTenderDocumentsPayable(document))
                 .addPublications(parseRelatedPublications(document))
                 .setEligibleBidLanguages(parseTenderEligibleBidLanguages(document))
@@ -193,6 +135,12 @@ final class UvoTenderNewHandler {
                 break;
             case CONTRACT_CANCELLATION:
                 parsedTender = UvoTenderNewZzzHandler.parse(parsedTender, document);
+                break;
+            case CONTRACT_AMENDMENT:
+                // first parse the form as CONTRACT_AWARD
+                parsedTender = UvoTenderNewOzzHandler.parse(parsedTender, document);
+                // then parse AMENDMENT details (section VII.)
+                parsedTender = UvoTenderNewAmendmentHandler.parse(parsedTender, document);
                 break;
             default:
                 logger.warn("Unknown publication form type.");
@@ -264,8 +212,16 @@ final class UvoTenderNewHandler {
      * @return string or null
      */
     private String parseIsFrameworkAgreement(final Document document) {
-        return getTrueOrFalseFromElement(document,
-                IN_PART_IV + "div:containsOwn(zahŕňa uzavretie rámcovej dohody) > span");
+        Element node = JsoupUtils.selectFirst(IN_PART_IV + "div:containsOwn(zahŕňa uzavretie rámcovej dohody)", document);
+        if (node == null) {
+            return null;
+        }
+        // case when the existence of node means isFrameworkAgreement = TRUE
+        if (node.children().isEmpty()) {
+            return Boolean.TRUE.toString();
+        }
+
+        return getTrueOrFalseFromElement(node, "span");
     }
 
     /**
@@ -277,12 +233,10 @@ final class UvoTenderNewHandler {
      */
     private ParsedPrice parseEstimatedPrice(final Document document) {
         return parsePrice(document,
-                IN_PART_II + "div.subtitle:has(span:matchesOwn(Celková (odhadovaná|predpokladaná) hodnota))" +
-                        " + div:containsOwn(Hodnota) > span + span + span",
-                IN_PART_II + "div.subtitle:has(span:matchesOwn(Celková (odhadovaná|predpokladaná) hodnota))" +
-                        " + div:containsOwn(Hodnota) > span",
-                IN_PART_II + "div.subtitle:has(span:matchesOwn(Celková (odhadovaná|predpokladaná) hodnota))" +
-                        " + div:containsOwn(Hodnota) > span + span", null);
+            IN_PART_II + "div.subtitle:has(span:matchesOwn(Celková (odhadovaná|predpokladaná) hodnota)) + div > span + span + span",
+            IN_PART_II + "div.subtitle:has(span:matchesOwn(Celková (odhadovaná|predpokladaná) hodnota)) + div > span",
+            IN_PART_II + "div.subtitle:has(span:matchesOwn(Celková (odhadovaná|predpokladaná) hodnota)) + div > span + span",
+            null);
     }
 
     /**
@@ -362,7 +316,7 @@ final class UvoTenderNewHandler {
      */
     private String parseAwardDeadline(final Document document) {
         final String awarddeadline = getFirstValueFromElement(document, IN_PART_IV + "div:has(span:containsOwn" +
-                "(inimálna lehota, počas ktorej sú ponuky uchádzačov viaz)) + div + div:containsOwn(Ponuka musí " +
+                "(inimálna lehota, počas ktorej sú ponuky uchádzačov viaz)) ~ div:containsOwn(Ponuka musí " +
                 "platiť do:)");
 
         if (awarddeadline != null) {
@@ -488,22 +442,27 @@ final class UvoTenderNewHandler {
      * @return List<ParsedCpv> or Null
      */
     private List<ParsedCPV> parseTenderNotMainCpvs(final Document document) {
+        List<String> cpvCodes = new ArrayList<>();
+
         final Element firstLineOfSubsection = document.select(
                 IN_PART_II + "div:has(span.code:matchesOwn(^II\\.2\\.2[\\.\\)]))").first();
         final Element lastLineOfSubsection = document.select(
                 IN_PART_II + "div:has(span.code:matchesOwn(^II\\.2\\.(3|4|5)[\\.\\)]))").first();
 
-        if (firstLineOfSubsection == null || lastLineOfSubsection == null) {
-            return null;
+        if (firstLineOfSubsection != null && lastLineOfSubsection != null) {
+            Element subsection = ParserUtils.getSubsectionOfElements(firstLineOfSubsection, lastLineOfSubsection);
+
+            if (subsection != null) {
+                cpvCodes = getValuesFromElement(subsection, "div.selectList > span:not(.title)");
+            }
         }
 
-        Element subsection = ParserUtils.getSubsectionOfElements(firstLineOfSubsection, lastLineOfSubsection);
+        String codes = getFirstValueFromElement(document,
+            IN_PART_II + "div.cpvSelectList div:containsOwn(Doplňujúce predmety) + div");
 
-        if (subsection == null) {
-            return null;
+        if (codes != null) {
+            cpvCodes.addAll(Arrays.asList(codes.replace("Hlavný slovník:", "").trim().split(",")));
         }
-
-        List<String> cpvCodes = getValuesFromElement(subsection, "div.selectList > span:not(.title)");
 
         if (cpvCodes == null) {
             return null;
@@ -528,13 +487,15 @@ final class UvoTenderNewHandler {
      * @return String or Null
      */
     private String parseTenderMainCpv(final Document document) {
-        String cpvCode = getFirstValueFromElement(document, IN_PART_II + "div:has(span:containsOwn(Hlavný kód CPV)) +" +
-                " div");
+        String cpvCode = getFirstValueFromElement(document, new String[]{
+            IN_PART_II + "div:has(span:containsOwn(Hlavný kód CPV)) + div",
+            IN_PART_II + "div.cpvSelectList div span:containsOwn(Hlavný predmet) ~ span",
+        });
 
         if (cpvCode == null) {
             return null;
         } else {
-            return cpvCode.replaceAll("\\.+$", "");
+            return cpvCode.trim().replaceAll("\\.+$", "").replaceAll("Hlavný slovník: ?", "");
         }
     }
 
@@ -546,15 +507,16 @@ final class UvoTenderNewHandler {
      * @return String[] or Null
      */
     private List<String> parseTenderEligibleBidLanguages(final Document document) {
-        String eligibleBidLanguages = getFirstValueFromElement(document,
-                IN_PART_IV + "div:has(span:containsOwn(Jazyk (jazyky), v ktorom (ktorých) možno predkladať))" + " + "
-                        + "div > div");
+        Elements nodes = JsoupUtils.select(IN_PART_IV + "div:has(span:containsOwn(Jazyk (jazyky), v ktorom (ktorých) možno predkladať))" +
+            " + div > div", document);
 
-        if (eligibleBidLanguages == null) {
+        if (nodes == null) {
             return null;
         }
 
-        return Arrays.asList(eligibleBidLanguages.split(","));
+        return nodes.stream()
+            .flatMap(n -> Stream.of(n.text().split(",")))
+            .collect(Collectors.toList());
     }
 
     /**
@@ -595,8 +557,16 @@ final class UvoTenderNewHandler {
      * @return String or Null
      */
     private String parseIfTenderIsElectronicAuction(final Document document) {
-        return getTrueOrFalseFromElement(document, IN_PART_IV + "div:containsOwn(sa elektronická" +
-                " aukci) > span");
+        Element node = JsoupUtils.selectFirst(IN_PART_IV + "div:containsOwn(Použije sa elektronická aukcia)", document);
+        if (node == null) {
+            return null;
+        }
+        // case when the existence of node means isElectronicAction = TRUE
+        if (node.children().isEmpty()) {
+            return Boolean.TRUE.toString();
+        }
+
+        return getTrueOrFalseFromElement(node, "span");
     }
 
     /**
@@ -607,9 +577,10 @@ final class UvoTenderNewHandler {
      * @return String or Null
      */
     private String parseTenderEstimatedDurationInMonths(final Document document) {
-        return getFirstValueFromElement(document,
-                IN_PART_II + "div:has(span:containsOwn(Dĺžka trvania zákazky)) + div + " + "div:containsOwn"
-                        + "(mesiacoch) > span");
+        return getFirstValueFromElement(document, new String[]{
+            IN_PART_II + "div:has(span:containsOwn(Dĺžka trvania zákazky)) + div + div:containsOwn(mesiacoch) > span",
+            IN_PART_II + "div:has(span:containsOwn(Dĺžka trvania zákazky)) + div:has(span:containsOwn(mesiacoch)) + div > span"
+        });
     }
 
     /**
@@ -620,9 +591,10 @@ final class UvoTenderNewHandler {
      * @return String or Null
      */
     private String parseTenderEstimatedDurationInDays(final Document document) {
-        return getFirstValueFromElement(document,
-                IN_PART_II + "div:has(span:containsOwn(Dĺžka trvania zákazky)) + div + " + "div:containsOwn(dňoch) > "
-                        + "span");
+        return getFirstValueFromElement(document, new String[]{
+            IN_PART_II + "div:has(span:containsOwn(Dĺžka trvania zákazky)) + div + div:containsOwn(dňoch) > span",
+            IN_PART_II + "div:has(span:containsOwn(Dĺžka trvania zákazky)) + div:has(span:containsOwn(dňoch)) + div > span"
+        });
     }
 
     /**
@@ -831,7 +803,10 @@ final class UvoTenderNewHandler {
      * @return String or Null
      */
     private String parseBuyerType(final Document document) {
-        return getFirstValueFromElement(document, IN_PART_I + "span:containsOwn(Druh verejného obstarávateľa:) + span");
+        return getFirstValueFromElement(document, new String[]{
+            IN_PART_I +"span:containsOwn(Druh verejného obstarávateľa:) + span",
+            IN_PART_I +"div:has(span:containsOwn(DRUH VEREJNÉHO OBSTARÁVATEĹA)) ~ div.selectList > span:not(.title)"
+        });
     }
 
     /**
@@ -849,11 +824,9 @@ final class UvoTenderNewHandler {
         final Element root = ParserUtils.getSubsectionOfElements(firstLine, lastLine);
 
         final List<String> results = new ArrayList<>();
-        final List<String> mainActivities = getValuesFromElement(root, "div > div");
 
-        if (mainActivities == null) {
-            return null;
-        } else {
+        final List<String> mainActivities = getValuesFromElement(root, new String[]{"div > div", "div + div"});
+        if (mainActivities != null) {
             for (String result : mainActivities) {
                 if (!result.replace("Iné (uveďte)", "").replace("Iný predmet", "").replace("(špecifikujte)", "")
                         .replaceAll(":", "")
@@ -865,10 +838,7 @@ final class UvoTenderNewHandler {
         }
 
         final List<String> otherActivities = getValuesFromElement(root, "div:containsOwn(Iný) > span");
-
-        if (otherActivities == null) {
-            return null;
-        } else {
+        if (otherActivities != null) {
             for (String result : otherActivities) {
                 if (!result.replace("Iné (uveďte)", "").replace("Iný predmet", "").replace("(špecifikujte)", "")
                         .replaceAll(":", "")
@@ -1017,8 +987,7 @@ final class UvoTenderNewHandler {
      * @return String[]
      */
     private String[] parsePublicationSourceInfo(final Document document) {
-        String sourceIdAndFormType = getFirstValueFromElement(document, "div.mainHeader");
-
+        String sourceIdAndFormType = getFirstValueFromElement(document, new String[]{"div.mainHeader", "div.MainHeader"});
         return sourceIdAndFormType != null ? sourceIdAndFormType.split("-") : null;
     }
 

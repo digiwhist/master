@@ -29,8 +29,7 @@ public final class AOPTenderParser extends BaseDatlabTenderParser {
                 "form[name=main_form] > .form_header > h1", doc);
 
         if (sourceFormType != null) {
-            return Collections.singletonList(AOPTenderFirstFormHandler.parse(doc, sourceFormType,
-                    raw.getSourceUrl().toString()));
+            return Collections.singletonList(AOPTenderFirstFormHandler.parse(doc, sourceFormType, raw.getSourceUrl().toString()));
         } else {
             final Element formTypeElement = JsoupUtils.select("div.DocumentBody > div", doc).first();
             if (formTypeElement != null && formTypeElement.textNodes().size() > 0 && !formTypeElement.textNodes()
@@ -42,8 +41,7 @@ public final class AOPTenderParser extends BaseDatlabTenderParser {
                 sourceFormType = JsoupUtils.selectText("div.DocumentBody > div > *:eq(0)", doc);
             }
 
-            return Collections.singletonList(AOPTenderSecondFormHandler.parse(doc, sourceFormType,
-                    raw.getSourceUrl().toString()));
+            return Collections.singletonList(AOPTenderSecondFormHandler.parse(doc, sourceFormType, raw.getSourceUrl().toString()));
         }
     }
 

@@ -8,6 +8,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -83,23 +84,21 @@ public enum Config {
      *      required class of the resulting collection
      * @return collection of values in case that property exists, otherwise empty collection
      */
-    public <T extends Collection> T getParamValueAsList(final String paramName, final String delimiter,
-        final Class<T> collectionClass) {
-        
-        String value = getParam(paramName);
+    public <T extends Collection> T getParamValueAsList(final String paramName, final String delimiter, final Class<T> collectionClass) {
+        return getParamValueAs(paramName, n -> {
+            try {
+                T list = collectionClass.newInstance();
 
-        try {
-            T list = collectionClass.newInstance();
-            
-            if (value != null) {
-                list.addAll(Arrays.asList(value.split(delimiter)).stream()
-                    .map(n -> n.trim()).collect(Collectors.toList()));
+                if (n != null) {
+                    list.addAll(Arrays.asList(n.split(delimiter)).stream()
+                        .map(m -> m.trim()).collect(Collectors.toList()));
+                }
+
+                return list;
+            } catch (IllegalAccessException | InstantiationException e) {
+                throw new RuntimeException("Failure during parsing param as collection:", e);
             }
-
-            return list;
-        } catch (IllegalAccessException | InstantiationException e) {
-            throw new RuntimeException("Failure during parsing param as collection:", e);
-        }
+        });
     }
 
     /**
@@ -202,5 +201,25 @@ public enum Config {
 
 		    inputStream.close();
         }
+    }
+
+    /**
+     * Returns value from configuration assigned to paramName as an instance of T.
+     *
+     * @param <T>
+     *      output class
+     * @param paramName
+     *      the param name should be provided in "dotted" format - ie "mongo.user"
+     * @param transformer
+     *      function that transforms String to T
+     * @return value from configuration
+     */
+    public <T> T getParamValueAs(final String paramName, final Function<String, T> transformer) {
+        String value = getParam(paramName);
+        if (value == null) {
+            return null;
+        }
+
+        return transformer.apply(value);
     }
 }

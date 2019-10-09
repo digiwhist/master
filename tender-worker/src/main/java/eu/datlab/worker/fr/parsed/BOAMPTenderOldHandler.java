@@ -6,6 +6,7 @@ import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedCPV;
+import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.raw.RawData;
@@ -70,7 +71,7 @@ final class BOAMPTenderOldHandler {
                 .setTitle(JsoupUtils.selectText("DONNEES > OBJET > OBJET_COMPLET, GESTION > K1", publicationElement))
                 .setAddressOfImplementation(new ParsedAddress()
                     .setRawAddress(StringUtils.removeDotsAtTheEnd(
-                        JsoupUtils.selectText("DONNEES > OBJET > LIEU_LIVR, DONNEES > OBJET > LIEU_EXEC_LIVR",
+                        JsoupUtils.selectText("DONNEES > OBJET > LIEU_LIVR, DONNEES > OBJET > LIEU_EXEC_LIVR, DONNEES > OBJET > LIEU_EXEC",
                             publicationElement)))
                     .addNuts(StringUtils.removeDotsAtTheEnd(
                         JsoupUtils.selectText("DONNEES > OBJET > CODE_NUTS", publicationElement))))
@@ -80,7 +81,9 @@ final class BOAMPTenderOldHandler {
                     "DONNEES > PROCEDURES_RECOURS > INSTANCE_RECOURS > ACHETEUR", publicationElement))
                 .setAwardDecisionDate(JsoupUtils.selectText("DONNEES > PROCEDURES > DATE_ATT", document))
                 .setProcedureType(JsoupUtils.selectAttribute("DONNEES > PROCEDURE", "type", publicationElement))
-                .setDescription(JsoupUtils.selectCombinedText("DESCRIPTEURS > DESCRIPTEUR", publicationElement));
+                .setDescription(JsoupUtils.selectCombinedText("DESCRIPTEURS > DESCRIPTEUR", publicationElement))
+                .setEstimatedPrice(new ParsedPrice()
+                    .setNetAmount(JsoupUtils.selectText("DONNEES > PROCEDURES > VALEUR_ESTIMEE + AUTRES", document)));
 
             final PublicationFormType formType = (PublicationFormType) CodeTableUtils.mapValue(
                     parsedTender.getPublications().get(0).getSourceFormType(), BOAMPTenderUtils.FORM_TYPE_MAPPING,

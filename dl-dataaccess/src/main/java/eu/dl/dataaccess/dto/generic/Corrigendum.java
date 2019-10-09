@@ -3,6 +3,8 @@ package eu.dl.dataaccess.dto.generic;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import eu.dl.dataaccess.annotation.Transformable;
 import eu.dl.dataaccess.dto.clean.Validable;
+import eu.dl.dataaccess.dto.codetables.CorrectionType;
+import eu.dl.dataaccess.dto.matched.MasterablePart;
 import eu.dl.dataaccess.utils.ClassUtils;
 import eu.dl.dataaccess.utils.ValidationUtils;
 
@@ -14,7 +16,7 @@ import java.util.List;
  * Corrigendum.
  */
 @Transformable
-public class Corrigendum implements Validable {
+public class Corrigendum implements Validable, MasterablePart {
     /**
      * Number of section that is corrected (usually with subsections separated
      * by dot, eg. III.2).
@@ -59,7 +61,7 @@ public class Corrigendum implements Validable {
     /**
      * New modified date.
      */
-    private LocalDate replacementDate;
+    private LocalDateTime replacementDate;
 
     /**
      * Original value (price).
@@ -70,6 +72,42 @@ public class Corrigendum implements Validable {
      * New value (price).
      */
     private Price replacementValue;
+
+    /**
+     * Publication date.
+     */
+    private LocalDate publicationDate;
+
+    /**
+     * Whether the correction was applied.
+     */
+    private Boolean isIncluded;
+
+    /**
+     * Type of the applied correction.
+     */
+    private CorrectionType type;
+
+    /**
+     * The order in which the correction was applied.
+     */
+    private Integer processingOrder;
+
+    /**
+     * @return the type.
+     */
+    public final CorrectionType getType() {
+        return type;
+    }
+
+    /**
+     * @param type - correction type to set
+     * @return this instance for chaining
+     */
+    public final Corrigendum setType(final CorrectionType type) {
+        this.type = type;
+        return this;
+    }
 
     /**
      * @return the sectionNumber
@@ -210,7 +248,7 @@ public class Corrigendum implements Validable {
     /**
      * @return the replacementDate
      */
-    public final LocalDate getReplacementDate() {
+    public final LocalDateTime getReplacementDate() {
         return replacementDate;
     }
 
@@ -219,7 +257,7 @@ public class Corrigendum implements Validable {
      *            the replacementDate to set
      * @return this instance for chaining
      */
-    public final Corrigendum setReplacementDate(final LocalDate replacementDate) {
+    public final Corrigendum setReplacementDate(final LocalDateTime replacementDate) {
         this.replacementDate = replacementDate;
         return this;
     }
@@ -278,5 +316,60 @@ public class Corrigendum implements Validable {
 
         return ValidationUtils.getValid(this, lotNumber, original, originalCpvs, originalDate, originalValue,
             placeOfModifiedText, replacement, replacementCpvs, replacementDate, replacementValue, sectionNumber);
+    }
+
+    @Override
+    public final String getTenderId() {
+        return null;
+    }
+
+    @Override
+    public final LocalDate getPublicationDate() {
+        return publicationDate;
+    }
+
+    @Override
+    public final LocalDateTime getCreatedRaw() {
+        return null;
+    }
+
+    @Override
+    public final Corrigendum setPublicationDate(final LocalDate date) {
+        this.publicationDate = date;
+        return this;
+    }
+
+    /**
+     * @return TRUE if the correction was applied, otherwise FALSE
+     */
+    public final Boolean getIsIncluded() {
+        return isIncluded;
+    }
+
+    /**
+     * @param included
+     *      whether the correction was applied
+     * @return this instance for chaining
+     */
+    public final Corrigendum setIsIncluded(final Boolean included) {
+        isIncluded = included;
+        return this;
+    }
+
+    /**
+     * @return processing order of the correction
+     */
+    public final Integer getProcessingOrder() {
+        return processingOrder;
+    }
+
+    /**
+     * @param processingOrder
+     *      processing order to be set
+     * @return this instance for chaining
+     */
+    public final Corrigendum setProcessingOrder(final Integer processingOrder) {
+        this.processingOrder = processingOrder;
+        return this;
     }
 }

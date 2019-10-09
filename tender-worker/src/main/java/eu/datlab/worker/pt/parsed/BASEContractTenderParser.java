@@ -56,14 +56,14 @@ public final class BASEContractTenderParser extends BaseDatlabTenderParser {
                     BASETenderParserUtils.getFirstValueByLabel(contractTable, "Data de publicação no BASE")))
             .addPublication(BASETenderParserUtils.parsePublicationReference(
                 JsoupUtils.getFirstLabeledValueNode(contractTable, "Anúncio")))
-            .setSupplyType(BASETenderParserUtils.getFirstValueByLabel(contractTable, "Tipo(s) de contrato"))
+            .setSupplyType(BASETenderParserUtils.getFirstValueByLabel(contractTable, "Tipo(\\(s\\))? de contrato"))
             .setNationalProcedureType(procedureType)
             .setProcedureType(procedureType)
             .addBuyer(BASETenderParserUtils.parseBody(
-                JsoupUtils.getFirstLabeledValueNode(contractTable, "Entidade adjudicante - Nome, NIF")))
+                JsoupUtils.getFirstLabeledValueNode(contractTable, "Entidade adjudicante \\- Nome, NIF")))
             .setDescription(BASETenderParserUtils.getFirstValueByLabel(contractTable, "Objeto do Contrato"))
             .setAcceleratedProcedureJustification(BASETenderParserUtils.getFirstValueByLabel(contractTable,
-                "Fundamentação da necessidade de recurso ao ajuste direto (se aplicável)"))
+                "Fundamentação da necessidade de recurso ao ajuste direto \\(se aplicável\\)"))
             .setCpvs(BASETenderParserUtils.parseCPVs(JsoupUtils.getFirstLabeledValueNode(contractTable, "CPV")))
             .setIsCentralProcurement(BASETenderParserUtils.parseBoolean(
                 JsoupUtils.getFirstLabeledValueNode(contractTable, "Procedimento Centralizado")).toString())
@@ -76,7 +76,7 @@ public final class BASEContractTenderParser extends BaseDatlabTenderParser {
                 JsoupUtils.getFirstLabeledValueNode(contractTable, "Preço contratual")))
             .setEstimatedDurationInDays(BASETenderParserUtils.getFirstValueByLabel(contractTable, "Prazo de execução"))
             .setAddressOfImplementation(parseAddress(
-                JsoupUtils.getFirstLabeledValueNode(contractTable, "Local de execução - País, Distrito, Concelho")))
+                JsoupUtils.getFirstLabeledValueNode(contractTable, "Local de execução \\- País, Distrito, Concelho")))
             .setDocuments(parseDocuments(JsoupUtils.getFirstLabeledValueNode(contractTable, "Documentos")))
             .setModificationReason(parseModificationReason(contractExecutionTable));
 
@@ -150,7 +150,7 @@ public final class BASEContractTenderParser extends BaseDatlabTenderParser {
         List<ParsedBid> bids = new ArrayList<>();
 
         List<ParsedBody> winners = BASETenderParserUtils.parseBodies(
-            JsoupUtils.getFirstLabeledValueNode(context, "Entidade adjudicatária - Nome, NIF"));
+            JsoupUtils.getFirstLabeledValueNode(context, "Entidade adjudicatária \\- Nome, NIF"));
         
         if (winners != null) {
             ParsedPrice paymentPrice = BASETenderParserUtils.parsePrice(

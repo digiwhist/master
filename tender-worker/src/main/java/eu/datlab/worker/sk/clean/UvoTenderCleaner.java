@@ -10,8 +10,14 @@ import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.codetables.SelectionMethod;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
 import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
+import eu.dl.dataaccess.dto.generic.Publication;
+import eu.dl.dataaccess.dto.parsed.BaseParsedPrice;
+import eu.dl.dataaccess.dto.parsed.ParsedBid;
+import eu.dl.dataaccess.dto.parsed.ParsedPayment;
 import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
+import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
+import eu.dl.dataaccess.dto.parsed.ParsedUnitPrice;
 import eu.dl.worker.clean.plugin.AddressPlugin;
 import eu.dl.worker.clean.plugin.AwardCriteriaPlugin;
 import eu.dl.worker.clean.plugin.BodyPlugin;
@@ -22,6 +28,8 @@ import eu.dl.worker.clean.plugin.IntegerPlugin;
 import eu.dl.worker.clean.plugin.SelectionMethodPlugin;
 import eu.dl.worker.clean.plugin.TenderSupplyTypePlugin;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -33,6 +41,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Cleaner for the SK UVO source.
@@ -42,15 +51,25 @@ import java.util.Map;
 public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
     private static final String VERSION = "1.1";
 
-    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance(new Locale("sk"));
+    private static final Locale LOCALE = new Locale("sk");
+
+    private static final NumberFormat NUMBER_FORMAT;
+    static {
+        DecimalFormatSymbols formatSymbols = new DecimalFormatSymbols(LOCALE);
+        formatSymbols.setDecimalSeparator(',');
+        formatSymbols.setGroupingSeparator(' ');
+        NUMBER_FORMAT = new DecimalFormat("#,##0.###", formatSymbols);
+    }
 
     private static final List<DateTimeFormatter> DATE_FORMATTERS = Arrays.asList(
-            DateTimeFormatter.ofPattern("d.[ ]M.[ ]uuuu"),
-            DateTimeFormatter.ofPattern("d. M. uuuu."),
-            DateTimeFormatter.ofPattern("dd.MM.uuuu"),
-            DateTimeFormatter.ofPattern("dd.MM.uuuu."),
-            DateTimeFormatter.ofPattern("dd.MM.uuuu "),
-            DateTimeFormatter.ofPattern("[ ]d.M.uuuu HH:mm"));
+        DateTimeFormatter.ofPattern("d.[ ]M.[ ]uuuu"),
+        DateTimeFormatter.ofPattern("d. M. uuuu."),
+        DateTimeFormatter.ofPattern("dd.MM.uuuu"),
+        DateTimeFormatter.ofPattern("dd.MM.uuuu."),
+        DateTimeFormatter.ofPattern("dd.MM.uuuu "),
+        DateTimeFormatter.ofPattern("[ ]d.M.uuuu HH:mm"),
+        DateTimeFormatter.ofPattern("uuuu-M-d")
+    );
 
     /**
      * This DateTimeFormatter parses following datetime strings.
@@ -199,9 +218,7 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
     }
 
     @Override
-    protected final CleanTender postProcessSourceSpecificRules(final ParsedTender parsedTender,
-                                                               final CleanTender cleanTender) {
-
+    protected final CleanTender postProcessSourceSpecificRules(final ParsedTender parsedTender, final CleanTender cleanTender) {
         // On contract cancellations with no cancellation date, set cancellation date as publication date
         if (cleanTender.getPublications() != null && cleanTender.getPublications().get(0).getFormType() != null
                 && cleanTender.getPublications().get(0).getFormType().equals(PublicationFormType.CONTRACT_CANCELLATION)
@@ -218,7 +235,46 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
             }
         }
 
+        if (cleanTender.getPublications() != null) {
+            if (hasAnyIncludedPublication(isDesignContest()).test(cleanTender)) {
+                cleanTender.setProcedureType(TenderProcedureType.DESIGN_CONTEST);
+            } else if (hasAnyIncludedPublication(isApproachingBidders()).test(cleanTender)) {
+                cleanTender.setProcedureType(TenderProcedureType.APPROACHING_BIDDERS);
+            }
+        }
+
         return cleanTender;
+    }
+
+    /**
+     * @param predicate
+     *      publication predicate
+     * @return TRUE if at least one publication matches the given predicate.
+     */
+    private static Predicate<CleanTender> hasAnyIncludedPublication(final Predicate<Publication> predicate) {
+        return t -> {
+            if (t == null || t.getPublications() == null || predicate == null) {
+                return false;
+            }
+
+            return t.getPublications().stream()
+                .filter(p -> Boolean.TRUE.equals(p.getIsIncluded()))
+                .anyMatch(predicate);
+        };
+    }
+
+    /**
+     * @return TRUE if the tested publication indicates DESIGN CONTEST
+     */
+    private static Predicate<Publication> isDesignContest() {
+        return p -> p != null && Arrays.asList("MNA", "VNA").contains(p.getSourceFormType());
+    }
+
+    /**
+     * @return TRUE if the tested publication indicates APPROACHING BIDDERS
+     */
+    private static Predicate<Publication> isApproachingBidders() {
+        return p -> p != null && p.getSourceFormType() != null && p.getSourceFormType().startsWith("WY");
     }
 
     /**
@@ -350,9 +406,11 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
         mapping.put(PublicationFormType.CONTRACT_IMPLEMENTATION, Arrays.asList(
                 "VZP", "VZS", "VZT"));
         mapping.put(PublicationFormType.OTHER, Arrays.asList(
-                "DEP", "DES", "DET", "DOP", "DOS", "DOT", "IBP", "IBS", "IBT", "IDS", "IDT", "IDP", "INO", "IZP",
+                "DEP", "DES", "DET", "IBP", "IBS", "IBT", "IDS", "IDT", "IDP", "INO", "IZP",
                 "IZS", "IZT", "KOP", "KOS", "KPS", "KSP", "KSS", "KST", "NSS", "PKT", "POP", "POS", "POX", "PRP",
                 "PRS", "PRT"));
+        mapping.put(PublicationFormType.CONTRACT_UPDATE, Arrays.asList(PublicationFormType.CONTRACT_UPDATE.name()));
+        mapping.put(PublicationFormType.CONTRACT_AMENDMENT, Arrays.asList("DOP", "DOS", "DOT"));
 
         return mapping;
     }
@@ -415,9 +473,7 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
         }
 
         // remove dots from ends of address of implementation nuts
-        if (parsedItem.getAddressOfImplementation() != null && parsedItem.getAddressOfImplementation().getNuts()
-                != null) {
-
+        if (parsedItem.getAddressOfImplementation() != null && parsedItem.getAddressOfImplementation().getNuts() != null) {
             final List<String> nuts = new ArrayList<>();
 
             for (String nut : parsedItem.getAddressOfImplementation().getNuts()) {
@@ -427,6 +483,49 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
             parsedItem.getAddressOfImplementation().setNuts(nuts);
         }
 
+        // replace SKK currency with EUR
+        fixCurrency(parsedItem.getDocumentsPrice());
+        fixCurrency(parsedItem.getEstimatedPrice());
+        fixCurrency(parsedItem.getFinalPrice());
+        if (parsedItem.getLots() != null) {
+            for (ParsedTenderLot l : parsedItem.getLots()) {
+                fixCurrency(l.getEstimatedPrice());
+                fixCurrency(l.getRobustEstimatedPrice());
+
+                if (l.getBids() != null) {
+                    for (ParsedBid b : l.getBids()) {
+                        fixCurrency(b.getPrice());
+                        fixCurrency(b.getRobustPrice());
+                        fixCurrency(b.getSubcontractedValue());
+
+                        if (b.getUnitPrices() != null) {
+                            for (ParsedUnitPrice p: b.getUnitPrices()) {
+                                fixCurrency(p);
+                            }
+                        }
+
+                        if (b.getPayments() != null) {
+                            for (ParsedPayment p : b.getPayments()) {
+                                fixCurrency(p.getPrice());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         return parsedItem;
+    }
+
+    /**
+     * If the currency of the given price is equal to SKK replace it with EUR.
+     *
+     * @param price
+     *      price to be fixed
+     */
+    private static void fixCurrency(final BaseParsedPrice price) {
+        if (price != null && "SKK".equals(price.getCurrency())) {
+            price.setCurrency("EUR");
+        }
     }
 }

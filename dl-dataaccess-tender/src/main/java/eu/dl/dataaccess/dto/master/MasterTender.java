@@ -10,7 +10,6 @@ import eu.dl.dataaccess.dto.generic.Corrigendum;
 import eu.dl.dataaccess.dto.generic.Document;
 import eu.dl.dataaccess.dto.generic.Price;
 import eu.dl.dataaccess.dto.generic.Publication;
-import eu.dl.dataaccess.dto.indicator.Indicator;
 
 import java.net.URL;
 import java.time.LocalDate;
@@ -322,11 +321,6 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
     private String groupId;
 
     private String masterBy;
-    
-    /*
-     * Indicators related to this tender.
-     */
-    private List<Indicator> indicators;
 
     /**
      * Digiwhist price.
@@ -1671,23 +1665,6 @@ public class MasterTender extends BaseMasterTenderLot<MasterTender> implements M
      */
     public final MasterTender setHash(final String newHash) {
         this.hash = newHash;
-        return this;
-    }
-    
-    /**
-     * @return the indicators
-     */
-    public final List<Indicator> getIndicators() {
-        return indicators;
-    }
-
-    /**
-     * @param indicators the indicators to set
-     * 
-     * @return the master tender
-     */
-    public final MasterTender setIndicators(final List<Indicator> indicators) {
-        this.indicators = indicators;
         return this;
     }
 

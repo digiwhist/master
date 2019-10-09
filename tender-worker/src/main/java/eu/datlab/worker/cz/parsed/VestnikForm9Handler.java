@@ -38,6 +38,8 @@ public final class VestnikForm9Handler extends VestnikContractNoticeHandler {
         // set buyer main activities
         updatedTender.getBuyers().get(0).setMainActivities(parseMainActivities(form));
 
+        updatedTender.setIsDps(Boolean.TRUE.toString());
+
         return updatedTender;
     }
 

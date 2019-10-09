@@ -92,7 +92,8 @@ public class JsonTransformer implements ResponseTransformer {
 
                     // if getter is found, clean the result as well
                     if (method.getName().startsWith("get") && method.getParameterCount() == 0
-                            && !method.isAnnotationPresent(JsonIgnore.class)) {
+                            && !method.isAnnotationPresent(JsonIgnore.class) && !method.getName().equals("getValid")) {
+
                         logger.trace("Cleaning method {} of {}", method.getName(), clazz.getName());
                         try {
                             Object result = method.invoke(object);

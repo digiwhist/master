@@ -41,8 +41,8 @@ public abstract class BaseDatlabTenderLotPlugin extends BaseTenderLotPlugin<Matc
                         "estimatedDurationInYears", "maxFrameworkAgreementParticipants",
                         "envisagedCandidatesCount", "envisagedMinCandidatesCount",
                         "envisagedMaxCandidatesCount", "bidsCount", "validBidsCount", "electronicBidsCount",
-                        "foreignCompaniesBidsCount", "lotNumber"),
-                        new TenderConverter()))
+                        "foreignCompaniesBidsCount", "lotNumber", "smeBidsCount", "otherEuMemberStatesCompaniesBidsCount",
+                        "nonEuMemberStatesCompaniesBidsCount"), new TenderConverter()))
                 .registerPlugin("LNN", new LastPublishedPlugin<>(Arrays.asList("awardDecisionDate",
                         "contractSignatureDate", "completionDate", "cancellationDate", "cancellationReason",
                         "selectionMethod", "limitedCandidatesCountCriteria", "status", "isAwarded"), new TenderConverter()))

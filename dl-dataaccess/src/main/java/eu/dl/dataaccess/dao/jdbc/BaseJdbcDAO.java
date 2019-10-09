@@ -42,9 +42,14 @@ public abstract class BaseJdbcDAO<T> implements BaseDAO<T> {
     protected final String schema;
 
     /**
+     * Default page size.
+     */
+    public static final Integer DEFAULT_PAGE_SIZE = 10000;
+
+    /**
      * Page size used in paged methods.
      */
-    public static final Integer PAGE_SIZE = 10000;
+    protected int pageSize;
 
     /**
      * Initializes connection etc.
@@ -64,6 +69,9 @@ public abstract class BaseJdbcDAO<T> implements BaseDAO<T> {
         mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
 
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+
+        Integer pageSizeParam = config.getParamValueAs("jdbc.pageSize", Integer::valueOf);
+        pageSize = pageSizeParam != null ? pageSizeParam : DEFAULT_PAGE_SIZE;
     }
 
     /**
@@ -155,5 +163,12 @@ public abstract class BaseJdbcDAO<T> implements BaseDAO<T> {
         		result = StringEscapeUtils.escapeJson(result);
         }
         return result;
+    }
+
+    /**
+     * @return page size
+     */
+    public final int getPageSize() {
+        return pageSize;
     }
 }

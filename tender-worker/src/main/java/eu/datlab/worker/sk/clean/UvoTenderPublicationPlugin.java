@@ -69,32 +69,34 @@ public class UvoTenderPublicationPlugin extends BaseCleaningPlugin<ParsedTender,
             try {
                 for (Publication publication : cleanTender.getPublications()) {
                     final String humanReadableUrl =
-                            publication.getHumanReadableUrl() == null ? null : publication.getHumanReadableUrl()
-                                    .toString();
+                        publication.getHumanReadableUrl() == null ? null : publication.getHumanReadableUrl().toString();
 
-                    // if publication ends with corretion like
+                    // if publication ends with correction like
                     // https://www.uvo.gov.sk/vestnik/oznamenie/detail/336106?v=correction
                     // create new publication for original form that is being updated. In this case
                     // https://www.uvo.gov.sk/vestnik/oznamenie/detail/336106
                     if (humanReadableUrl != null && humanReadableUrl.endsWith(correction)) {
                         // also set form type of correction form to CONTRACT_UPDATE
                         publication.setFormType(PublicationFormType.CONTRACT_UPDATE);
-                        Publication updatedContract = new Publication();
-                        updatedContract.setHumanReadableUrl(new URL(humanReadableUrl.replace(correction, ""))).
-                                setIsIncluded(Boolean.FALSE);
-                        updatedPublications.add(updatedContract);
+
+                        updatedPublications.add(new Publication()
+                            .setSource(publication.getSource())
+                            .setIsIncluded(false)
+                            .setHumanReadableUrl(new URL(humanReadableUrl.replace(correction, ""))));
                     }
 
                     final String machineReadableUrl =
-                            publication.getMachineReadableUrl() == null ? null : publication.getMachineReadableUrl()
-                                    .toString();
+                        publication.getMachineReadableUrl() == null ? null : publication.getMachineReadableUrl().toString();
 
                     if (machineReadableUrl != null && machineReadableUrl.endsWith(correction)) {
                         publication.setFormType(PublicationFormType.CONTRACT_UPDATE);
-                        Publication updatedContract = new Publication();
-                        updatedContract.setMachineReadableUrl(new URL(machineReadableUrl.replace(correction, "")));
-                        updatedPublications.add(updatedContract);
+
+                        updatedPublications.add(new Publication()
+                            .setSource(publication.getSource())
+                            .setIsIncluded(false)
+                            .setHumanReadableUrl(new URL(machineReadableUrl.replace(correction, ""))));
                     }
+
                     updatedPublications.add(publication);
                 }
             } catch (MalformedURLException e) {

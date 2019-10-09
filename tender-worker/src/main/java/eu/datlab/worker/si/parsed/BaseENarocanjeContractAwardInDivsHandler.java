@@ -38,10 +38,10 @@ abstract class BaseENarocanjeContractAwardInDivsHandler extends BaseENarocanjeFo
 
         final Element sectionII13 = ParserUtils.getSubsectionOfNodes(
                 JsoupUtils.selectFirst(SUBSECTION_II_1_3_TITLE_SELECTOR, form),
-                JsoupUtils.selectFirst(SUBSECTION_II_1_4_TITLE_SELECTOR, form));
+                JsoupUtils.selectFirst(SUBSECTION_II_1_3_TITLE_SELECTOR + " ~ h5", form));
         final Element sectionII17 = ParserUtils.getSubsectionOfNodes(
                 JsoupUtils.selectFirst(SUBSECTION_II_1_7_TITLE_SELECTOR, form),
-                JsoupUtils.selectFirst(SUBSECTION_II_2_TITLE_SELECTOR, form));
+                JsoupUtils.selectFirst(SUBSECTION_II_1_7_TITLE_SELECTOR + " ~ h5", form));
 
         tender
                 .setFinalPrice(parseTenderFinalPrice(sectionII17))
@@ -77,19 +77,13 @@ abstract class BaseENarocanjeContractAwardInDivsHandler extends BaseENarocanjeFo
         }
 
         final String lotTitleSelector = "h4:containsOwn(Sklop)";
-        final String sectionV2TitleSelector = "h5:containsOwn(V.2" + ENarocanjeTenderParser.NBSP_CHARACTER
-                + "Oddaja naročila)";
-        final String sectionV21TitleSelector = "h5:containsOwn(V.2.1" + ENarocanjeTenderParser.NBSP_CHARACTER
-                + "Datum sklenitve pogodbe)";
-        final String sectionV22TitleSelector = "h5:containsOwn(V.2.2" + ENarocanjeTenderParser.NBSP_CHARACTER
-                + "Informacije o ponudbah)";
-        final String sectionV23TitleSelector = "h5:containsOwn(V.2.3" + ENarocanjeTenderParser.NBSP_CHARACTER
-                + "Ime in naslov izvajalca)";
+        final String sectionV2TitleSelector = "h5:containsOwn(V.2 Oddaja naročila)";
+        final String sectionV21TitleSelector = "h5:containsOwn(V.2.1 Datum sklenitve pogodbe)";
+        final String sectionV22TitleSelector = "h5:containsOwn(V.2.2 Informacije o ponudbah)";
+        final String sectionV23TitleSelector = "h5:containsOwn(V.2.3 Ime in naslov izvajalca)";
         final String sectionV23ContentSelector = sectionV23TitleSelector + " ~ div";
-        final String sectionV24TitleSelector = "h5:containsOwn(V.2.4" + ENarocanjeTenderParser.NBSP_CHARACTER
-                + "Informacije o vrednosti javnega naročila/sklopa)";
-        final String sectionV25TitleSelector = "h5:containsOwn(V.2.5" + ENarocanjeTenderParser.NBSP_CHARACTER
-                + "Informacije o naročilih, oddanih podizvajalcem)";
+        final String sectionV24TitleSelector = "h5:containsOwn(V.2.4 Informacije o vrednosti javnega naročila/sklopa)";
+        final String sectionV25TitleSelector = "h5:containsOwn(V.2.5 Informacije o naročilih, oddanih podizvajalcem)";
 
         for (Element lotElement : lotElements) {
             final Element sectionV22Title = JsoupUtils.selectFirst(sectionV22TitleSelector, lotElement);

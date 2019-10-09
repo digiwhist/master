@@ -25,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  * This class covers the main functionality for the cleaners implementation.
@@ -60,6 +61,8 @@ public abstract class BaseTenderCleaner extends BaseCleaner<ParsedTender, CleanT
         }
 
         updateLotStatus(cleanTender);
+
+        updateLotCancellationDate(cleanTender);
 
         mergeFrameworkAgreementLots(cleanTender);
 
@@ -155,12 +158,13 @@ public abstract class BaseTenderCleaner extends BaseCleaner<ParsedTender, CleanT
             // b) and is framework agreement
             if (BooleanUtils.isTrue(cleanTender.getIsFrameworkAgreement())) {
                 // c) and is CONTRACT_AWARD or CONTRACT_IMPLEMENTATION
-                if (formType != null && (formType.equals(PublicationFormType.CONTRACT_AWARD) || formType.equals(
-                        PublicationFormType.CONTRACT_IMPLEMENTATION))) {
+                if (formType == PublicationFormType.CONTRACT_AWARD || formType == PublicationFormType.CONTRACT_IMPLEMENTATION) {
                     // d) and has same bidsCount on all lots
                     if (lots.stream().allMatch(lot -> Objects.equals(lot.getBidsCount(), firstLot.getBidsCount()))) {
                         // move all the bids under the first lot
-                        lots.stream().forEach(lot -> firstLot.addBids(lot.getBids()));
+                        firstLot.setBids(lots.stream().
+                            map(CleanTenderLot::getBids).filter(Objects::nonNull).flatMap(List::stream)
+                            .collect(Collectors.toList()));
                         // delete other lots
                         cleanTender.setLots(new ArrayList<>(Collections.singletonList(firstLot)));
                     }
@@ -244,5 +248,23 @@ public abstract class BaseTenderCleaner extends BaseCleaner<ParsedTender, CleanT
                 .filter(p -> Boolean.TRUE.equals(p.getIsIncluded()))
                 .findFirst()
                 .orElse(null);
+    }
+
+    /**
+     * This method updates cancellation date of cancelled lots.
+     *
+     * @param cleanTender lots are updated for this tender
+     */
+    private void updateLotCancellationDate(final CleanTender cleanTender) {
+        if (cleanTender == null || cleanTender.getLots() == null) {
+            return;
+        }
+
+        Publication publication = getIncludedPublication(cleanTender);
+        if (publication != null && cleanTender.getLots() != null) {
+            cleanTender.getLots().stream()
+                .filter(n -> n.getStatus() == TenderLotStatus.CANCELLED && n.getCancellationDate() == null)
+                .forEach(n -> n.setCancellationDate(publication.getPublicationDate()));
+        }
     }
 }

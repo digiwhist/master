@@ -53,8 +53,8 @@ public class JdbcMasterTenderDAO extends GenericJdbcDAO<MasterTender> implements
             PreparedStatement statement = connection.prepareStatement(query);
 
             statement.setTimestamp(1, Timestamp.valueOf(timestamp));
-            statement.setInt(2, PAGE_SIZE);
-            statement.setInt(3, page * PAGE_SIZE);
+            statement.setInt(2, getPageSize());
+            statement.setInt(3, page * getPageSize());
 
             ResultSet rs = statement.executeQuery();
 

@@ -28,16 +28,14 @@ public class ENarocanjeTenderParser extends BaseDatlabTenderParser {
 
     private static final String SOURCE_DOMAIN = PublicationSources.SI_ENAROCANJE;
 
-    /**
-     * It is HTML character entity "&nbsp;".
-     */
-    static final Character NBSP_CHARACTER = (char) 160;
-
     @Override
     public final List<ParsedTender> parse(final RawData rawTender) {
         // fix broken table cells
-        String sourceData = rawTender.getSourceData().replaceAll("<tr><script>", "<tr><td><script>");
-        
+        String sourceData = rawTender.getSourceData()
+            .replaceAll("<tr><script>", "<tr><td><script>")
+            .replace((char) 160, ' ')
+            .replace("&nbsp;", " ");
+
         // get form element from the page
         final Document page = Jsoup.parse(sourceData);
         final Elements forms = JsoupUtils.select("div.col-md-10 > div.panel.panel-default:has(" +
@@ -81,7 +79,7 @@ public class ENarocanjeTenderParser extends BaseDatlabTenderParser {
                 String humanReadableUrl = PublicationSources.SI_ENAROCANJE + "/Obrazci/"
                         + onclickAttributeValue.substring(onclickAttributeValue.indexOf("'") + 1, onclickAttributeValue.length() - 1);
 
-                final String rowText = row.text().trim().replace(NBSP_CHARACTER, ' ');
+                final String rowText = row.text().trim();
                 // we want get last occurrences of parentheses. See https://www.enarocanje.si/Obrazci/?id_obrazec=145732
                 assert rowText.contains("(") && rowText.contains(")") && rowText.lastIndexOf('(') < rowText.lastIndexOf(')');
 
@@ -199,7 +197,7 @@ public class ENarocanjeTenderParser extends BaseDatlabTenderParser {
      */
     private static String parsePublicationSourceId(final Element form) {
         final Element formHead = JsoupUtils.selectFirst("div.panel-heading.panel-title > span", form);
-        final String formHeadOwnText = formHead.ownText().replace(NBSP_CHARACTER, ' ').trim();
+        final String formHeadOwnText = formHead.ownText().trim();
         // the own text contains just the source ID or the source ID and TED reference separated by space
         return formHeadOwnText.contains(" ") ? formHeadOwnText.split(" ")[0] : formHeadOwnText;
     }
@@ -231,7 +229,7 @@ public class ENarocanjeTenderParser extends BaseDatlabTenderParser {
      * @return true when the form is new, otherwise false
      */
     private static boolean isNewForm(final Element form) {
-        return JsoupUtils.exists(BaseENarocanjeFormInDivsHandler.SUBSECTION_I_1_CONTENT_SELECTOR, form);
+        return JsoupUtils.exists(BaseENarocanjeFormInDivsHandler.SUBSECTION_I_1_TITLE_SELECTOR + " + div", form);
     }
 
 }

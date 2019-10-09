@@ -41,8 +41,10 @@ public class UvoTenderParser extends BaseDatlabTenderParser {
         String publicationDate = publicationDateElement.split("-")[1].trim();
         LocalDate formPublicationDate = LocalDate.parse(publicationDate, formatter);
 
-        // Pick correct parsed based on tenders age
-        if (formPublicationDate.isBefore(FIRST_OLD_FORMS)) {
+        // Pick correct handler based on tenders age if it isn't a correction
+        if (rawTender.getSourceUrl().toString().contains("correction")) {
+            return UvoTenderCorrectionHandler.parse(document, rawTender.getSourceUrl().toString(), publicationDate);
+        } else if (formPublicationDate.isBefore(FIRST_OLD_FORMS)) {
             return new UvoTenderAncientHandler().parse(document, rawTender.getSourceUrl().toString(), publicationDate);
         } else if (formPublicationDate.isBefore(FIRST_NEW_FORMS)) {
             return new UvoTenderOldHandler().parse(document, rawTender.getSourceUrl().toString(), publicationDate);

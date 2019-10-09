@@ -167,4 +167,24 @@ public final class AOPParserUtils {
             .setNetAmount(amount)
             .setCurrency(getValueByLabel(prefix + "currency", context));
     }
+
+    /**
+     * @param bool
+     *      string to be parsed
+     * @return boolean string or null
+     */
+    public static String parseBoolean(final String bool) {
+        if (bool == null) {
+            return null;
+        }
+
+        switch (bool) {
+            case "НЕ":
+                return Boolean.FALSE.toString();
+            case "ДА":
+                return Boolean.TRUE.toString();
+            default:
+                return null;
+        }
+    }
 }

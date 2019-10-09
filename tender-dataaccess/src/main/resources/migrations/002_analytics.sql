@@ -1,4 +1,4 @@
-SET search_path TO tender_development;
+SET search_path TO buyer_profile_zindex;
 
 DROP TABLE if exists clean_tender_analytics cascade;
 CREATE TABLE clean_tender_analytics
@@ -352,6 +352,7 @@ CREATE TABLE master_tender_analytics
   lot_array_index integer,
   bid_array_index integer,
   amendments_count integer,
+  amendment_date_last date,
   updated_price double precision,
   updated_completion_date date,
   updated_duration_days integer,
@@ -474,10 +475,6 @@ CREATE INDEX analytics_mba_cby_idx
   USING btree
   (createdby COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mba_sn_trgm_idx
-    ON matched_body_analytics
-    USING GIST
-    (standardized_name gist_trgm_ops);
 
 
 

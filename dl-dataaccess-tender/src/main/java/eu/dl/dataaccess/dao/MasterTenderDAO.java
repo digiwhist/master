@@ -1,8 +1,6 @@
 package eu.dl.dataaccess.dao;
 
-import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.master.MasterTender;
-import java.time.LocalDate;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -98,37 +96,4 @@ public interface MasterTenderDAO<T extends MasterTender> extends MasterDAO<T> {
      * @return list of tender ids
      */
     List<String> getIdsBySourceAndVersion(String name, String version);
-
-    /**
-     * Returns all tenders for the given buyer group id which have the first included publication of the given
-     * {@code formType} published between {@code from} and {@code to} dates.
-     *
-     * @param buyerGroupId
-     *      buyer group id
-     * @param from
-     *      from date
-     * @param to
-     *      to date
-     * @param formType
-     *      form type of included publication
-     * @return list of buyer's tenders
-     */
-    List<T> getBuyerTendersInPeriod(String buyerGroupId, LocalDate from, LocalDate to, PublicationFormType formType);
-
-    /**
-     * Returns median of the given CPV for tenders of the given type published in the given period.
-     *
-     * @param createdBy
-     *      worker name
-     * @param from
-     *      start of the period
-     * @param to
-     *      end of the period
-     * @param formType
-     *      form type of included publication
-     * @param cpv
-     *      CPV for that the median to be calculated
-     * @return array where index 0 holds median value for the given CPV and index 1 holds number of tenders used for median calculation
-     */
-    int[] getCPVMedianInPeriod(List<String> createdBy, LocalDate from, LocalDate to, PublicationFormType formType, String cpv);
 }

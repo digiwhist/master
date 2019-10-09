@@ -42,6 +42,9 @@ public final class VVZTenderCrawler extends BaseDatlabIncrementalPagedSourceHttp
     private static final String NEXT_BUTTON_XPATH = "//div[contains(@class, 't-pager')]/a[(./span[contains(@class, "
             + "'t-arrow-next')]) and (not(contains(@class, 't-state-disabled')))]";
 
+    private static final String NEXT_BUTTON_XPATH_NEW = "//div[contains(@class, 'k-pager-wrap')]/a[(./span[contains(@class, "
+        + "'k-i-arrow-e')]) and (not(contains(@class, 'k-state-disabled')))]";
+
     private static final Integer PAGE_SIZE = 500;
     private static final Integer SLEEP_LENGTH = 1000;
     private static final Integer CONNECTION_TIMEOUT = 30000;
@@ -120,7 +123,12 @@ public final class VVZTenderCrawler extends BaseDatlabIncrementalPagedSourceHttp
 
     @Override
     public HtmlPage getNextPage(final HtmlPage actualPage) {
-        return CrawlerUtils.clickElement(actualPage, NEXT_BUTTON_XPATH);
+        HtmlPage next = CrawlerUtils.clickElement(actualPage, NEXT_BUTTON_XPATH);
+        if (next == null) {
+            next = CrawlerUtils.clickElement(actualPage, NEXT_BUTTON_XPATH_NEW);
+        }
+
+        return next;
     }
 
     @Override

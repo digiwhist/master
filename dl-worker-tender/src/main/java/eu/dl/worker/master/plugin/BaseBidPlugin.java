@@ -50,6 +50,11 @@ public abstract class BaseBidPlugin<T extends MatchedTenderLot, W extends Master
             return null;
         }
 
+        // if all the tenders have one bid only, skip the algorithm and match them as one bid without any comparisons
+        if (inputListsForMatching.stream().allMatch(bidList -> bidList.size() <= 1)) {
+            return Arrays.asList(inputListsForMatching.stream().flatMap(List::stream).collect(Collectors.toList()));
+        }
+
         // Algorithm: match on bidder.groupId
         // Note: bid can have different bidders and bidder can not be in different bids.
 

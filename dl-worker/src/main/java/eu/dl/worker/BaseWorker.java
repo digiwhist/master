@@ -21,11 +21,12 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.SocketException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Provides encapsulated functionality to all workers. This class knows how to
@@ -86,6 +87,9 @@ public abstract class BaseWorker implements Worker {
     private static final Integer PUBLISH_MESSAGE_FAILURE_LIMIT = 5;
     private static final long PUBLISH_MESSAGE_FAILURE_SLEEP_TIME = 60000;
 
+    private static final Pattern SOURCE_ID_REGEX =
+        Pattern.compile("^(?<prefix>([^\\.]+\\.)+worker(\\.[a-z]{2})?)\\.([^\\.]+\\.)+((?<worker>.+)(Tender|Body).+$)?");
+
     /**
      * Initialization common for all the workers. Registers worker in the
      * messaging, reads configuration variables, prepares logging.
@@ -114,8 +118,15 @@ public abstract class BaseWorker implements Worker {
      * @return source ID
      */
     protected final String getSourceId() {
-        final String sourceNamePrefix = String.join(".", Arrays.copyOfRange(getName().split("\\."), 0, 4));
-        final String sourceId = config.getParam(sourceNamePrefix + ".sourceId");
+        String sourceId = null;
+
+        Matcher m = SOURCE_ID_REGEX.matcher(getName());
+        if (m.find()) {
+            sourceId = config.getParam(m.group("prefix") + "." + m.group("worker") + ".sourceId");
+            if (sourceId == null) {
+                sourceId = config.getParam(m.group("prefix") + ".sourceId");
+            }
+        }
 
         if (StringUtils.isBlank(sourceId)) {
             logger.error("There is no source ID defined for the worker {}", getName());

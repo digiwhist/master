@@ -111,7 +111,9 @@ public class SPATenderParser extends BaseDatlabTenderParser {
         }
 
         String procedureType = getFromTableFromMainSnippet("Tender type", mainSnippet);
-
+        if(procedureType == null){
+            procedureType = getFromTableFromMainSnippet("Procurement type", mainSnippet);
+        }
         parsedTender
                 .setProcedureType(procedureType)
                 .setNationalProcedureType(procedureType)
@@ -302,6 +304,10 @@ public class SPATenderParser extends BaseDatlabTenderParser {
                 .setIsIncluded(true)
                 .setSourceTenderId(getFromTableFromMainSnippet("Tender Registration Number", mainSnippet))
                 .setHumanReadableUrl(humanReadableUrl);
+
+        if(publications.get(0).getSourceTenderId() == null){
+            publications.get(0).setSourceTenderId(getFromTableFromMainSnippet("Announcment number", mainSnippet));
+        }
 
         return publications;
     }

@@ -8,16 +8,13 @@ import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedAwardCriterion;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedCPV;
-import eu.dl.dataaccess.dto.parsed.ParsedCorrigendum;
 import eu.dl.dataaccess.dto.parsed.ParsedFunding;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.parsed.utils.ParserUtils;
-import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,9 +28,7 @@ import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.parsePrice;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Tender old form parsed for Slovakia.
@@ -51,9 +46,6 @@ class UvoTenderOldHandler {
 
     private static final String SOURCE_DOMAIN = "https://www.uvo.gov.sk";
 
-    private static final int ORIGINAL_VALUE_BEHIND = 3;
-    private static final int CORRECTION_VALUE_BEHIND = 4;
-
     /**
      * Parse common data for all ancient forms.
      *
@@ -64,61 +56,6 @@ class UvoTenderOldHandler {
      * @return List<ParsedTender> with parsed data
      */
     List<ParsedTender> parse(final Document document, final String url, final String publicationDate) {
-
-        // if publication is correction, don't parse common attributes
-        if (url.contains("correction")) {
-            final Elements corrections = JsoupUtils.select("div[id=corrections] tr > td", document);
-            final ParsedTender parsedTender =
-                new ParsedTender().addPublication(new ParsedPublication()
-                    .setSource(PublicationSources.SK_UVO)
-                    .setPublicationDate(publicationDate)
-                    .setSourceId(parsePublicationSourceId(document))
-                    .setSourceFormType(parsePublicationSourceFormType(document))
-                    .setHumanReadableUrl(url)
-                    .setIsIncluded(true)
-                    .setLanguage("SK"));
-
-            for (Element correction : corrections) {
-                final List<TextNode> textNodes = correction.textNodes();
-
-                if (textNodes != null && !textNodes.isEmpty()) {
-                    final List<String> strings = textNodes.stream().map(TextNode::text).collect(Collectors.toList());
-
-                    String lastKnownSection = null;
-                    for (int position = 0; position < strings.size();) {
-
-                        // correction data are next and there are original + replacement data, or section data
-                        if (strings.get(position).contains(
-                                "iesto") && strings.size() > position + CORRECTION_VALUE_BEHIND) {
-
-                            // date correction or other value
-                            if (strings.get(position + ORIGINAL_VALUE_BEHIND).trim().matches(
-                                    "^(0[1-9]|[12][0-9]|3[01])\\.(0[1-9]|[12][0-9]|3[01])\\.(19|20)\\d*.*")) {
-                                parsedTender.addCorrigendum(new ParsedCorrigendum()
-                                        .setSectionNumber(lastKnownSection)
-                                        .setOriginalDate(strings.get(position + ORIGINAL_VALUE_BEHIND))
-                                        .setReplacementDate(strings.get(position + CORRECTION_VALUE_BEHIND)));
-                            } else {
-                                parsedTender.addCorrigendum(new ParsedCorrigendum()
-                                        .setSectionNumber(lastKnownSection)
-                                        .setOriginal(strings.get(position + ORIGINAL_VALUE_BEHIND))
-                                        .setReplacement(strings.get(position + CORRECTION_VALUE_BEHIND)));
-                            }
-
-                            position = position + CORRECTION_VALUE_BEHIND;
-                        } else if (strings.get(position).trim().matches("^(IX|IV|V?I{0,3})\\..*")) {
-                            lastKnownSection = strings.get(position);
-                            position++;
-                        } else {
-                            position++;
-                        }
-                    }
-                }
-            }
-
-            return Collections.singletonList(parsedTender);
-        }
-
         // parse common attributes
         ParsedTender parsedTender = new ParsedTender()
                 .addPublication(new ParsedPublication()
@@ -736,21 +673,14 @@ class UvoTenderOldHandler {
      */
     private ParsedPrice parseEstimatedPrice(final Document document) {
         String[] priceSelectors = new String[]{
-                IN_PART_II + "div:has(span:containsOwn(predpokladaná hodnota)) + div:containsOwn(Hodnota):not(:" +
-                        "matches(Od)) > span",
+                IN_PART_II + "div:has(span:containsOwn(predpokladaná hodnota)) + div:containsOwn(Hodnota):not(:matches(Od)) > span",
                 IN_PART_II + "div:has(span:containsOwn(množstvo alebo rozsah)) + div + div:containsOwn(hodnota) > span",
-                IN_PART_II + "div:has(span:containsOwn(množstvo alebo rozsah)) + div:containsOwn(hodnota) > span",
-                IN_PART_II + "div:containsOwn(Hodnota):not(:matches(Od)) > span"};
+                IN_PART_II + "div:has(span:containsOwn(množstvo alebo rozsah)) + div:containsOwn(hodnota) > span"};
 
         String[] currencySelectors = new String[]{
-                IN_PART_II + "div:has(span:containsOwn(predpokladaná hodnota)) + div:containsOwn(Hodnota):not(:" +
-                        "matches(Od)) > span + span",
-                IN_PART_II + "div:has(span:containsOwn(množstvo alebo rozsah)) + div + div:containsOwn(hodnota) > " +
-                        "span + span",
-                IN_PART_II + "div:has(span:containsOwn(množstvo alebo rozsah)) + div:containsOwn(hodnota) > span + " +
-                        "span",
-                IN_PART_II + "div:containsOwn(Hodnota):not(:matches(Od)) > span + span"};
-
+                IN_PART_II + "div:has(span:containsOwn(predpokladaná hodnota)) + div:containsOwn(Hodnota):not(:matches(Od)) > span + span",
+                IN_PART_II + "div:has(span:containsOwn(množstvo alebo rozsah)) + div + div:containsOwn(hodnota) > span + span",
+                IN_PART_II + "div:has(span:containsOwn(množstvo alebo rozsah)) + div:containsOwn(hodnota) > span + span"};
 
         ParsedPrice parsedPrice = parsePrice(document, false, priceSelectors, currencySelectors, null);
 
@@ -841,7 +771,8 @@ class UvoTenderOldHandler {
         String supplyType = getFirstValueFromElement(document, new String[]{
                 "div.notice > div:has(strong:containsOwn(Druh zákazky:))",
                 "div.notice div:containsOwn(Druh zákazky) > span",
-                "div:has(span:containsOwn(Druh zákazky a miesto uskutočňov)) ~ div"});
+                "div:has(span:containsOwn(Druh zákazky a miesto)) ~ div"
+        });
 
         if (supplyType == null) {
             return null;
@@ -996,11 +927,9 @@ class UvoTenderOldHandler {
         final Element root = ParserUtils.getSubsectionOfElements(firstLine, lastLine);
 
         final List<String> results = new ArrayList<>();
-        final List<String> mainActivities = getValuesFromElement(root, "div > div");
 
-        if (mainActivities == null) {
-            return null;
-        } else {
+        final List<String> mainActivities = getValuesFromElement(root, new String[]{"div[class^=shorttext_] > span", "div > div"});
+        if (mainActivities != null) {
             for (String result : mainActivities) {
                 if (!result.replace("Iné (uveďte)", "").replace("Iný predmet", "").replace("(špecifikujte)", "")
                         .replaceAll(":", "")
@@ -1012,10 +941,7 @@ class UvoTenderOldHandler {
         }
 
         final List<String> otherActivities = getValuesFromElement(root, "div:containsOwn(Iný) > span");
-
-        if (otherActivities == null) {
-            return null;
-        } else {
+        if (otherActivities != null) {
             for (String result : otherActivities) {
                 if (!result.replace("Iné (uveďte)", "").replace("Iný predmet", "").replace("(špecifikujte)", "")
                         .replaceAll(":", "")

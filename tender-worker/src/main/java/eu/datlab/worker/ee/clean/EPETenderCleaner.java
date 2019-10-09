@@ -6,6 +6,7 @@ import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
 import eu.dl.dataaccess.dto.codetables.BuyerType;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.codetables.SelectionMethod;
+import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
 import eu.dl.dataaccess.dto.codetables.TenderSize;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
@@ -128,6 +129,16 @@ public final class EPETenderCleaner extends BaseDatlabTenderCleaner {
     }
 
     /**
+     * @return lot status mapping
+     */
+    private static Map<Enum, List<String>> statusMapping() {
+        Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(TenderLotStatus.CANCELLED, Collections.singletonList("CANCELED"));
+        return mapping;
+    }
+
+    /**
      * @return form type mapping
      */
     private Map<Enum, List<String>> formTypeMapping() {
@@ -161,7 +172,8 @@ public final class EPETenderCleaner extends BaseDatlabTenderCleaner {
          Map<String, Map<Enum, List<String>>> mapping = new HashMap<>();
 
          mapping.put("selectionMethodMapping", selectionMethodMapping());
-         
+         mapping.put("statusMapping", statusMapping());
+
         return mapping;
     }
 

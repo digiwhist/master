@@ -22,17 +22,16 @@ abstract class BaseENarocanjeContractNoticeInDivsHandler extends BaseENarocanjeF
     public static ParsedTender parseCommonContractNoticeAttributes(final ParsedTender tender, final Element form) {
         parseCommonFormInDivsAttributes(tender, form);
 
-        final Element sectionIV23TitleElement = JsoupUtils.selectFirst(SUBSECTION_IV_2_3_TITLE_SELECTOR, form);
         final Element sectionIV26TitleElement = JsoupUtils.selectFirst(SUBSECTION_IV_2_6_TITLE_SELECTOR, form);
         final Element sectionII15 = ParserUtils.getSubsectionOfNodes(
                 JsoupUtils.selectFirst(SUBSECTION_II_1_5_TITLE_SELECTOR, form),
                 JsoupUtils.selectFirst(SUBSECTION_II_1_6_TITLE_SELECTOR, form));
         final Element sectionII13 = ParserUtils.getSubsectionOfNodes(
                 JsoupUtils.selectFirst(SUBSECTION_II_1_3_TITLE_SELECTOR, form),
-                JsoupUtils.selectFirst(SUBSECTION_II_1_4_TITLE_SELECTOR, form));
+                JsoupUtils.selectFirst(SUBSECTION_II_1_3_TITLE_SELECTOR + " ~ h5", form));
         final Element sectionIV22 = ParserUtils.getSubsectionOfNodes(
                 JsoupUtils.selectFirst(SUBSECTION_IV_2_2_TITLE_SELECTOR, form),
-                sectionIV23TitleElement == null ? sectionIV26TitleElement : sectionIV23TitleElement);
+                JsoupUtils.selectFirst(SUBSECTION_IV_2_2_TITLE_SELECTOR + " ~ h5", form));
         final Element sectionIV26 = ParserUtils.getSubsectionOfNodes(
                 sectionIV26TitleElement,
                 JsoupUtils.selectFirst(SUBSECTION_IV_2_7_TITLE_SELECTOR, form));

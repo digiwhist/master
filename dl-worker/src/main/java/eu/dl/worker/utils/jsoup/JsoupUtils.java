@@ -402,4 +402,27 @@ public final class JsoupUtils {
 
         return sibling;
     }
+
+    /**
+     * Finds matching elements. The first selector which returns non-empty result wins.
+     *
+     * Note: Behavior of this method is different from a standard comma separated CSS selector. The Method returns only elements as a result
+     * of a first matching selector, whereas standard CSS returns all elements as a result of all matching selectors.
+     *
+     * @param selector
+     *      set of selector queries
+     * @param context
+     *      context element
+     * @return matched elements or null
+     */
+    public static Elements select(final Element context, final String... selector) {
+        for (String s : selector) {
+            Elements result = select(s, context);
+            if (result != null && !result.isEmpty()) {
+                return result;
+            }
+        }
+
+        return null;
+    }
 }

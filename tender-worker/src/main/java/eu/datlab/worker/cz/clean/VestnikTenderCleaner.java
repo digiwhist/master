@@ -7,6 +7,7 @@ import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
 import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
+import eu.dl.dataaccess.utils.DigestUtils;
 
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -26,14 +27,15 @@ public final class VestnikTenderCleaner extends BaseVestnikTenderCleaner {
             DateTimeFormatter.ofPattern("d.M.uuuu"), DateTimeFormatter.ofPattern("uuuu/M/d"));
 
     private static final List<DateTimeFormatter> DATETIME_FORMATTERS = Arrays.asList(
-            new DateTimeFormatterBuilder().appendPattern("d/M/uuuu[ H:m]")
-                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                    .toFormatter(),
-            new DateTimeFormatterBuilder().appendPattern("d.M.uuuu[ H:m]")
-                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
-                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
-                    .toFormatter());
+        new DateTimeFormatterBuilder().appendPattern("d/M/uuuu[ H:m]")
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .toFormatter(),
+        new DateTimeFormatterBuilder().appendPattern("d.[ ]M.[ ]uuuu[ H:m]")
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .toFormatter(),
+        new DateTimeFormatterBuilder().appendPattern("d.M.uuuu 've' H:m 'hod.'").toFormatter());
 
     private static final List<String> DESIGN_CONTEST_SOURCE_FORM_TYPES = Arrays.asList("12", "13");
 
@@ -192,9 +194,16 @@ public final class VestnikTenderCleaner extends BaseVestnikTenderCleaner {
     }
 
     @Override
-    protected CleanTender postProcessVestnikOrVvzSpecificRules(final ParsedTender parsedTender,
-            final CleanTender cleanTender) {
-        // nothing specific to do
+    protected CleanTender postProcessVestnikOrVvzSpecificRules(final ParsedTender parsedTender, final CleanTender cleanTender) {
+        if (cleanTender.getAdditionalInfo() != null
+                && DigestUtils.removeAccents(cleanTender.getAdditionalInfo()).matches("(?i).*zjednodusene podlimitni.*")) {
+            cleanTender.setProcedureType(TenderProcedureType.APPROACHING_BIDDERS);
+        }
+
         return cleanTender;
+    }
+
+    @Override
+    protected void registerVestnikOrVvzSpecificPlugin() {
     }
 }

@@ -1,6 +1,7 @@
 package eu.dl.worker.indicator.plugin;
 
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
+import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
 import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.indicator.Indicator;
 import eu.dl.dataaccess.dto.indicator.IndicatorStatus;
@@ -24,34 +25,30 @@ public final class SingleBidIndicatorPluginTest {
     private final MasterTender nullTender = new MasterTender()
             .setPublications(Arrays.asList(new Publication()
                     .setIsIncluded(true).setFormType(PublicationFormType.CONTRACT_AWARD)))
-            .setLots(Arrays.asList(new MasterTenderLot()));
+            .setLots(Arrays.asList(new MasterTenderLot().setStatus(TenderLotStatus.AWARDED)));
 
     private final MasterTender tender1 = new MasterTender()
             .setPublications(Arrays.asList(new Publication()
                     .setIsIncluded(true).setFormType(PublicationFormType.CONTRACT_AWARD)))
-            .setLots(Arrays.asList(new MasterTenderLot().setValidBidsCount(null)));
+            .setLots(Arrays.asList(new MasterTenderLot().setStatus(TenderLotStatus.AWARDED).setValidBidsCount(null)));
 
     private final MasterTender tender2 = new MasterTender()
             .setPublications(Arrays.asList(new Publication()
                     .setIsIncluded(true).setFormType(PublicationFormType.CONTRACT_AWARD)))
-            .setLots(Arrays.asList(new MasterTenderLot()
-                    .setValidBidsCount(2)));
+            .setLots(Arrays.asList(new MasterTenderLot().setStatus(TenderLotStatus.FINISHED).setValidBidsCount(2)));
 
     private final MasterTender tender3 = new MasterTender()
             .setPublications(Arrays.asList(new Publication()
                     .setIsIncluded(true).setFormType(PublicationFormType.CONTRACT_AWARD)))
-            .setLots(Arrays.asList(new MasterTenderLot()
-                    .setValidBidsCount(1)));
+            .setLots(Arrays.asList(new MasterTenderLot().setStatus(TenderLotStatus.FINISHED).setValidBidsCount(1)));
 
     private final MasterTender tender4 = new MasterTender()
-            .setLots(Arrays.asList(new MasterTenderLot()
-                    .setBidsCount(0)));
+            .setLots(Arrays.asList(new MasterTenderLot().setBidsCount(0)));
 
     private final MasterTender tender5 = new MasterTender()
             .setPublications(Arrays.asList(new Publication()
                     .setIsIncluded(true).setFormType(PublicationFormType.CONTRACT_AWARD)))
-            .setLots(Arrays.asList(new MasterTenderLot()
-                    .setBidsCount(1)));
+            .setLots(Arrays.asList(new MasterTenderLot().setStatus(TenderLotStatus.AWARDED).setBidsCount(1)));
 
     private final SingleBidIndicatorPlugin plugin = new SingleBidIndicatorPlugin();
 

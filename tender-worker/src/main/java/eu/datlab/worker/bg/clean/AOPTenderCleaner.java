@@ -6,6 +6,7 @@ import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
 import eu.dl.dataaccess.dto.codetables.BuyerType;
 import eu.dl.dataaccess.dto.codetables.CountryCode;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
+import eu.dl.dataaccess.dto.codetables.SelectionMethod;
 import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.clean.plugin.AddressPlugin;
@@ -18,10 +19,13 @@ import eu.dl.worker.clean.plugin.IntegerPlugin;
 import eu.dl.worker.clean.plugin.LotPlugin;
 import eu.dl.worker.clean.plugin.PricePlugin;
 import eu.dl.worker.clean.plugin.PublicationPlugin;
+import eu.dl.worker.clean.plugin.SelectionMethodPlugin;
 import eu.dl.worker.clean.plugin.TenderSupplyTypePlugin;
 
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,10 +43,18 @@ public class AOPTenderCleaner extends BaseDatlabTenderCleaner {
     
     private static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance(LOCALE);
 
-    private static final DateTimeFormatter DATETIME_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/uuuu ");
-
-    private static final List<DateTimeFormatter> DATE_FORMATTERS= Arrays.asList(DateTimeFormatter.ofPattern("dd/MM/uuuu"),
-        DateTimeFormatter.ofPattern("dd.MM.uuuu г."));
+    private static final List<DateTimeFormatter> DATETIME_FORMATTERS = Arrays.asList(
+        new DateTimeFormatterBuilder()
+            .appendPattern("['Дата:' ]dd/MM/uuuu[ 'г.'][ '00:00'][ 'Час:' HH:mm]")
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .toFormatter(LOCALE),
+        new DateTimeFormatterBuilder()
+            .appendPattern("['Дата:' ]dd.MM.uuuu[ 'г.'][ '00:00'][ 'Час:' HH:mm]")
+            .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+            .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+            .toFormatter(LOCALE)
+    );
 
     @SuppressWarnings("unchecked")
     @Override
@@ -52,16 +64,28 @@ public class AOPTenderCleaner extends BaseDatlabTenderCleaner {
 
         pluginRegistry
             .registerPlugin("integerPlugin", new IntegerPlugin(NUMBER_FORMAT))
-            .registerPlugin("date", new DatePlugin(DATETIME_FORMATTER))
-            .registerPlugin("datetime", new DateTimePlugin(DATETIME_FORMATTER))
+            .registerPlugin("date", new DatePlugin(DATETIME_FORMATTERS))
+            .registerPlugin("datetime", new DateTimePlugin(DATETIME_FORMATTERS))
             .registerPlugin("supplyType", new TenderSupplyTypePlugin(supplyTypeMapping()))
             .registerPlugin("bodies", new BodyPlugin(bodyTypeMapping(), bodyActivityMapping(), countryMapping()))
-            .registerPlugin("lots", new LotPlugin(NUMBER_FORMAT, DATE_FORMATTERS, lotMappings))
+            .registerPlugin("lots", new LotPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, lotMappings))
             .registerPlugin("prices", new PricePlugin(NUMBER_FORMAT))
             .registerPlugin("fundings", new FundingsPlugin(NUMBER_FORMAT))
             .registerPlugin("address", new AddressPlugin())
             .registerPlugin("awardCriteria", new AwardCriteriaPlugin(NUMBER_FORMAT))
-            .registerPlugin("publications", new PublicationPlugin(NUMBER_FORMAT, DATE_FORMATTERS, formTypeMapping()));
+            .registerPlugin("publications", new PublicationPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, formTypeMapping()))
+            .registerPlugin("selectionMethod", new SelectionMethodPlugin(selectionMethodMapping()));
+    }
+
+    /**
+     * @return selection method mapping
+     */
+    private Map<Enum, List<String>> selectionMethodMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(SelectionMethod.LOWEST_PRICE, Arrays.asList("Най-ниска цена"));
+
+        return mapping;
     }
 
     /**
@@ -102,12 +126,12 @@ public class AOPTenderCleaner extends BaseDatlabTenderCleaner {
         mapping.put(BuyerActivityType.URBAN_TRANSPORT, Arrays.asList("Градски железопътни, трамвайни, тролейбусни " +
                 "или автобусни услуги", "Поддържане на жп инфраструктур"));
         mapping.put(BuyerActivityType.GENERAL_PUBLIC_SERVICES, Arrays.asList("CTOПAHИCBAHE, ПOДДЪPЖAHE И OTДABAH" +
-                "E ПOД HAEM HA OTKPИTИ И ЗAKPИTИ TЪPГOBCKИ ПЛOЩИ И CЪOPЪЖEHИЯ"));
+                "E ПOД HAEM HA OTKPИTИ И ЗAKPИTИ TЪPГOBCKИ ПЛOЩИ И CЪOPЪЖEHИЯ", "Обществени услуги"));
         mapping.put(BuyerActivityType.HEALTH, Arrays.asList("Kонтрол по безопасност на храните", "областта на " +
                 "пристанищата", "здравеопазване"));
         mapping.put(BuyerActivityType.GENERAL_PUBLIC_SERVICES, Arrays.asList("административни"));
         mapping.put(BuyerActivityType.ENVIRONMENT, Arrays.asList("Горско стопанство", "СТопанисване на горите"));
-        mapping.put(BuyerActivityType.ELECTRICITY, Arrays.asList("Електро", "Енергетика"));
+        mapping.put(BuyerActivityType.ELECTRICITY, Arrays.asList("Електро", "Енергетика", "Електрическа енергия"));
         mapping.put(BuyerActivityType.EDUCATION, Arrays.asList("образование", "Общинска Администрация"));
 
         return mapping;
@@ -119,7 +143,7 @@ public class AOPTenderCleaner extends BaseDatlabTenderCleaner {
     private Map<Enum, List<String>> bodyTypeMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
-        mapping.put(BuyerType.REGIONAL_AUTHORITY, Arrays.asList("районна администрация"));
+        mapping.put(BuyerType.REGIONAL_AUTHORITY, Arrays.asList("районна администрация", "Регионален или местен орган"));
 
         return mapping;
     }

@@ -80,6 +80,11 @@ public class GovUKArchiveTenderParser extends BaseDatlabTenderParser {
 
         String procedureType = parseNationalProcedureType(element);
 
+        String awardDecisionDate = selectNonEmptyText("AwardedDate", element);
+        if (awardDecisionDate == null) {
+            awardDecisionDate = selectLocalDate("CONTRACT_AWARD_DATE", element);
+        }
+
         final ParsedTender parsedTender = new ParsedTender()
                 .setSize(selectNonEmptyAttribute("CONTRACTS_FINDER_NOTICE_GROUP", element))
                 .setIsOnBehalfOf(selectNonEmptyAttribute("PURCHASING_ON_BEHALF", "VALUE", element))
@@ -89,7 +94,7 @@ public class GovUKArchiveTenderParser extends BaseDatlabTenderParser {
                 .setEstimatedStartDate(parseEstimatedStartDate(element))
                 .setEstimatedCompletionDate(parseEstimatedCompletionDate(element))
                 .setBidDeadline(parseBidDeadline(element))
-                .setAwardDecisionDate(selectNonEmptyText("AwardedDate", element))
+                .setAwardDecisionDate(awardDecisionDate)
                 .setBuyerAssignedId(selectNonEmptyText("file_reference_number", element))
                 .setEstimatedDurationInDays(selectNonEmptyText("PERIOD_WORK_DATE_STARTING > DAYS", element))
                 .setEstimatedDurationInMonths(selectNonEmptyText("PERIOD_WORK_DATE_STARTING > MONTHS", element))
@@ -119,7 +124,7 @@ public class GovUKArchiveTenderParser extends BaseDatlabTenderParser {
                         .setSource(PublicationSources.UK_GOV)
                         .setIsIncluded(false))
                 .addBuyer(parseBuyer(JsoupUtils.selectFirst("CONTRACTING_AUTHORITY_INFORMATION,"
-                        + " AUTHORITY_PRIOR_INFORMATION", element), element))
+                        + " AUTHORITY_PRIOR_INFORMATION, SYSTEM", element), element))
                 .setAddressOfImplementation(new ParsedAddress()
                         .setRawAddress(selectNonEmptyText("SITE_OR_LOCATION > LABEL > p", element))
                         .addNuts(selectNonEmptyAttribute("NUTS", "CODE", element))

@@ -2,6 +2,7 @@ package eu.dl.dataaccess.dto.utils;
 
 import eu.dl.core.UnrecoverableException;
 import eu.dl.core.config.Config;
+import eu.dl.dataaccess.dto.StorableDTO;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 import eu.dl.dataaccess.dto.codetables.OCDSAwardCriteria;
 import eu.dl.dataaccess.dto.codetables.OCDSBidStatisticMeasure;
@@ -50,6 +51,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -545,14 +548,20 @@ public final class OCDSUtils {
         OCDSReleasePackage ocdsPackage = new OCDSReleasePackage()
             .addExtension(OCDSLot.EXTENSION_URL)
             .addExtension(OCDSBid.EXTENSION_URL)
-            .addExtension("https://raw.githubusercontent.com/open-contracting/ocds_requirements_extension/master/"
-                + "extension.json")
+            .addExtension("https://raw.githubusercontent.com/open-contracting/ocds_requirements_extension/master/extension.json")
             .setUri(uri)
             .setPublisher(new OCDSPublisher().setName(Config.getInstance().getParam("ocds.publisher")))
             .setPublished(LocalDateTime.now())
             .setVersion("1.1");
 
         if (tenders != null) {
+            LocalDateTime lastModified = tenders.stream()
+                .map(StorableDTO::getModified)
+                .max(LocalDateTime::compareTo)
+                .orElse(null);
+
+            ocdsPackage.setMetaData(Collections.singletonMap("lastModified", lastModified));
+
             tenders.stream()
                 .forEach(t -> {
                     OCDSRelease release = getOCDSRelease(t);
@@ -772,6 +781,11 @@ public final class OCDSUtils {
                     ? includedPublication.getPublicationDate().atStartOfDay() : null)
                 .setLanguage(includedPublication.getLanguage());
         }
+
+        // additional fields
+        Map<String, Object> metaData = new HashMap<>();
+        metaData.put("modified", tender.getModified());
+        ocds.setMetaData(metaData);
 
         // BUYER
         ocds.setBuyer(OCDSUtils.getOCDSOrganizationReference(ocdsBuyer));

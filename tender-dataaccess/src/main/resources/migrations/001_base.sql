@@ -1,4 +1,4 @@
-SET search_path TO tender_development;
+SET search_path TO tender_production;
 
 CREATE TABLE crawler_audit_record (
     id character varying(255) PRIMARY KEY,

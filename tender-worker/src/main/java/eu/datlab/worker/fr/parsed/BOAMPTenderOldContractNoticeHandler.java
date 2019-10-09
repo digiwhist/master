@@ -302,12 +302,12 @@ final class BOAMPTenderOldContractNoticeHandler {
             </autres>
           </delai>
         */
-        final Elements bidDeadlineDateElements = JsoupUtils.select("DONNEES > DELAI > RECEPT_OFFRES",
-                publicationElement);
-        assert bidDeadlineDateElements.size() <= 1;
-        if (bidDeadlineDateElements.isEmpty()) {
+        final Elements bidDeadlineDateElements = JsoupUtils.select(publicationElement, "DONNEES > DELAI > RECEPT_OFFRES",
+            " DONNEES > DELAI > RECEPT_CANDIDAT", "GESTION > K9");
+        if (bidDeadlineDateElements == null || bidDeadlineDateElements.isEmpty()) {
             return null;
         }
+
         final Element bidDeadlineDateElement = bidDeadlineDateElements.get(0);
         final Element bidDeadlineTimeElement = bidDeadlineDateElement.nextElementSibling();
         return bidDeadlineTimeElement == null || !bidDeadlineTimeElement.tagName().equals("autres")
@@ -325,16 +325,12 @@ final class BOAMPTenderOldContractNoticeHandler {
      * @return award criterion list or Null
      */
     private static ParsedAddress parseTenderDocumentsLocation(final Element publicationElement) {
-        Elements documentsElements = JsoupUtils.select("DONNEES > DOCUMENTS:has(OBTENUS)", publicationElement);
-        if (documentsElements.isEmpty()) {
+        Element documentsElement = JsoupUtils.selectFirst("DONNEES > DOCUMENTS:has(OBTENUS), CORRESPONDANTS > ADMIN_TECH:has(OBTENUS)",
+            publicationElement);
+        if (documentsElement == null) {
             return null;
         }
-        assert documentsElements.size() == 1;
-        Element documentsElement = documentsElements.get(0);
 
-        return new ParsedAddress()
-                .setRawAddress(JsoupUtils.selectText("ADRESSE", documentsElement))
-                .setPostcode(JsoupUtils.selectText("CP", documentsElement))
-                .setCity(JsoupUtils.selectText("VILLE", documentsElement));
+        return BOAMPTenderParserUtils.parseAddress(documentsElement);
     }
 }

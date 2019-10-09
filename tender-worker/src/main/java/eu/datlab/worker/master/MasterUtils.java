@@ -4,6 +4,7 @@ import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.master.MasterTender;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
+import eu.dl.dataaccess.dto.utils.DTOUtils;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -43,21 +44,27 @@ public final class MasterUtils {
     public static List<MatchedTender> reduceContractAwards(final List<MatchedTender> matchedTenders, final MasterTender masterTender) {
         List<MatchedTender> reducedList = new ArrayList<>();
 
-        if (masterTender.getIsFrameworkAgreement() != null && masterTender.getIsFrameworkAgreement()) {
+        if (Boolean.TRUE.equals(masterTender.getIsFrameworkAgreement()) || Boolean.TRUE.equals(masterTender.getIsDps())) {
             LocalDate minAwardPublicationDate = null;
             for (MatchedTender matchedTender : matchedTenders) {
                 if (isContractAward(matchedTender)) {
-                    if (minAwardPublicationDate == null) {
-                        minAwardPublicationDate = matchedTender.getPublicationDate();
-                    } else if (minAwardPublicationDate.compareTo(matchedTender.getPublicationDate()) > 0) {
-                        minAwardPublicationDate = matchedTender.getPublicationDate();
+                    LocalDate publicationDate = DTOUtils.getPublicationDate(matchedTender);
+
+                    if (publicationDate != null) {
+                        if (minAwardPublicationDate == null) {
+                            minAwardPublicationDate = publicationDate;
+                        } else if (minAwardPublicationDate.isAfter(publicationDate)) {
+                            minAwardPublicationDate = publicationDate;
+                        }
                     }
                 }
             }
 
             for (MatchedTender matchedTender : matchedTenders) {
+                LocalDate publicationDate = DTOUtils.getPublicationDate(matchedTender);
+
                 if (!isContractAward(matchedTender) || !isFromNewVestnik(matchedTender)
-                    || matchedTender.getPublicationDate().compareTo(minAwardPublicationDate) <= 0) {
+                    || (publicationDate != null && minAwardPublicationDate != null && !publicationDate.isAfter(minAwardPublicationDate))) {
                     reducedList.add(matchedTender);
                 }
             }

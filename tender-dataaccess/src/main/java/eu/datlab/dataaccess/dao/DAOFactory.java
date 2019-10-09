@@ -313,7 +313,24 @@ public abstract class DAOFactory {
     /**
      * Gets zIndex indicator DAO.
      *
+     * @param workerName
+     *         name of the worker manipulating with data via this DAO
+     * @param workerVersion
+     *         version of the worker manipulating with data via this DAO
+     *
      * @return DAO obejct for managing zIndex indicator
      */
-    public abstract ZIndexIndicatorDAO getZIndexIndicatorDAO();
+    public abstract ZIndexIndicatorDAO getZIndexIndicatorDAO(String workerName, String workerVersion);
+
+    /**
+     * Gets master tender indicator DAO.
+     *
+     * @param workerName
+     *         name of the worker manipulating with data via this DAO
+     * @param workerVersion
+     *         version of the worker manipulating with data via this DAO
+     *
+     * @return DAO object for managing master tenders in zindex indicator plugins
+     */
+    public abstract MasterTenderZIndexIndicatorDAO getMasterTenderZIndexIndicatorDAO(String workerName, String workerVersion);
 }

@@ -254,7 +254,6 @@ public abstract class StorableDTO {
     /**
      * @param persistentId the persistentId to set
      */
-    @SystemProperty
     public final void setPersistentId(final String persistentId) {
         this.persistentId = persistentId;
     }

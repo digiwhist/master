@@ -66,9 +66,7 @@ final class UvoTenderOldOzHandler {
                     .setLotNumber(parseLotNumber(lot))
                     .setTitle(getFirstValueFromElement(lot, "div:has(span:containsOwn(NÁZOV)) + div"))
                     .setDescription(getFirstValueFromElement(lot, "div:has(span:containsOwn(STRUČNÝ OPIS)) + div"))
-                    .addCpv(new ParsedCPV()
-                            .setIsMain(String.valueOf(true))
-                            .setCode(parseCpvCode(lot)))
+                    .setCpvs(parseCpvs(lot))
                     .setEstimatedPrice(parseEstimatedLotPrice(lot))
                     .setEstimatedDurationInMonths(getFirstValueFromElement(lot, "div:has(span:containsOwn(v " +
                             "mesiacoch)) + div > span")));
@@ -115,21 +113,38 @@ final class UvoTenderOldOzHandler {
     }
 
     /**
-     * Parse cpv code.
+     * Parses cpv codes.
      *
      * @param lot
      *         lot to parse from
      *
-     * @return parsed cpv code
+     * @return list of parsed cpv codes or null
      */
-    private static String parseCpvCode(final Element lot) {
-        String cpvCode = getFirstValueFromElement(lot, "span:containsOwn(Hlavný slovník:)");
+    private static List<ParsedCPV> parseCpvs(final Element lot) {
+        List<ParsedCPV> cpvs = new ArrayList<>();
 
-        if (cpvCode == null) {
-            return null;
-        } else {
-            return cpvCode.replace("Hlavný slovník:", "").replaceAll("\\.+$", "");
+        String mainCpv = getFirstValueFromElement(lot, "span:containsOwn(Hlavný slovník)");
+        if (mainCpv != null) {
+            mainCpv = mainCpv.replace("Hlavný slovník:", "");
+            cpvs.add(new ParsedCPV()
+                .setIsMain(String.valueOf(true))
+                .setCode(mainCpv.replace("Hlavný slovník:", "")));
         }
+
+        String additionalCpv = getFirstValueFromElement(lot, " div:containsOwn(Doplňujúce predmety) + div:containsOwn(Hlavný slovník)");
+        if (additionalCpv != null) {
+            additionalCpv = additionalCpv.replace("Hlavný slovník:", "");
+            for (String n : additionalCpv.split(",")) {
+                cpvs.add(new ParsedCPV()
+                    .setIsMain(String.valueOf(false))
+                    .setCode(n));
+            }
+        }
+
+
+        cpvs.forEach(n -> n.setCode(n.getCode().replaceAll("\\.+$", "")));
+
+        return cpvs.isEmpty() ? null : cpvs;
     }
 
     /**

@@ -54,11 +54,11 @@ public final class BASENoticeTenderParser extends BaseDatlabTenderParser {
                 .setHumanReadableUrl(raw.getSourceUrl().toString())
                 .setSource(PublicationSources.PT_BASE)
                 .setPublicationDate(publicationDate))
-            .setSupplyType(BASETenderParserUtils.getFirstValueByLabel(table, "Tipo de contrato"))
+            .setSupplyType(BASETenderParserUtils.getFirstValueByLabel(table, "Tipo(\\(s\\))? de contrato"))
             .setNationalProcedureType(procedureType)
             .setProcedureType(procedureType)
             .addBuyer(BASETenderParserUtils.parseBody(
-                JsoupUtils.getFirstLabeledValueNode(table, "Entidade emissora - Nome, NIF")))
+                JsoupUtils.getFirstLabeledValueNode(table, "Entidade emissora \\- Nome, NIF")))
             .setDescription(BASETenderParserUtils.getFirstValueByLabel(table, "Descrição"))
             .setEstimatedPrice(BASETenderParserUtils.parsePrice(
                 JsoupUtils.getFirstLabeledValueNode(table, "Preço base")))

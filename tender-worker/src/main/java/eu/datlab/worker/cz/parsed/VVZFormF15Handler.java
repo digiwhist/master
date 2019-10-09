@@ -91,7 +91,7 @@ final class VVZFormF15Handler extends VVZContractAwardHandler {
         parsedTender.addPublication(parsePreviousTedPublication(sectionIV));
 
         // SECTION V
-        parsedTender.addLots(parseF15LotsAwards(form));
+        parsedTender.addLots(parseF15LotsAwards(form, Boolean.TRUE.toString().equals(parsedTender.getIsFrameworkAgreement())));
 
         // SECTION VI
 
@@ -209,10 +209,11 @@ final class VVZFormF15Handler extends VVZContractAwardHandler {
      *
      * @param form
      *         form html
-     *
+     * @param isFrameworkAgreement
+     *      whether the parsed is framework agreement
      * @return lots with award info
      */
-    private static List<ParsedTenderLot> parseF15LotsAwards(final Document form) {
+    private static List<ParsedTenderLot> parseF15LotsAwards(final Document form, final boolean isFrameworkAgreement) {
         List<ParsedTenderLot> lots = new ArrayList<>();
         Elements lotsHtmls = VVZTenderParser.getLotsAwardsHtmls(form);
 
@@ -232,7 +233,7 @@ final class VVZFormF15Handler extends VVZContractAwardHandler {
             parsedLot.setContractSignatureDate(VVZTenderParser.parseLotAwardContractSignatureDate(lotHtml));
 
             // parse bid info (V.2.3, V.2.4, V.2.5)
-            parsedLot.addBid(parseLotAwardWinningBid(lotHtml));
+            parsedLot.setBids(parseLotAwardWinningBids(lotHtml, isFrameworkAgreement));
 
             // subsection V.2.4)
             parsedLot.setEstimatedPrice(parseLotAwardEstimatedPrice(lotHtml));

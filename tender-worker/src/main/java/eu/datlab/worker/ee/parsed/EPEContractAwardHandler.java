@@ -3,7 +3,7 @@ package eu.datlab.worker.ee.parsed;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import eu.dl.core.UnrecoverableException;
-import eu.dl.dataaccess.dto.parsed.ParsedAwardCriterion;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -17,11 +17,6 @@ import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Contract award handler for E-procurement in Estonia.
@@ -50,106 +45,70 @@ public final class EPEContractAwardHandler {
      */
     public static ParsedTender parse(final Document doc, final String publicationDate) {
         Element context = EPEParserUtils.getDataTable(doc);
-
-        return EPEParserUtils.parseNoticeAwardCommonData(doc, publicationDate)
-            .setIsDps(EPEParserUtils.parseBoolean("^VI\\.6\\)", context))
+        ParsedTender parsedTender = new ParsedTender();
+        parsedTender =  EPEParserUtils.parseNoticeAwardCommonData(doc, publicationDate)
             .setDescription(EPEParserUtils.tableValueByLabel("^II\\.1\\.4\\)", context))
             .setCpvs(EPEParserUtils.parseCPVs("^II\\.1\\.5\\)", context))
             .setIsCoveredByGpa(EPEParserUtils.parseBoolean("^II\\.1\\.6\\)", context))
             .addPublication(parseContractNotice(context))
             .setAppealBodyName(EPEParserUtils.parseAppealBodyName("^VI\\.3\\.3\\)", context))
-            .setLots(EPEParserUtils.parseLots(
+            .addLots(EPEParserUtils.parseContractAwardsLots(
                 EPEContractAwardHandler::parseLot,
                 JsoupUtils.selectFirst("tr:matches(^V OSA:) + tr", context),
-                JsoupUtils.selectFirst("tr:matches(^VI OSA:)", context),
-                Collections.singletonMap("criteria", EPEParserUtils.parseLotsRelatedCriteria(context))))
+                JsoupUtils.selectFirst("tr:matches(^VI OSA:)", context)))
             .addFunding(EPEParserUtils.parseEUFunding("^VI\\.1\\)", context))
             .setFinalPrice(EPEParserUtils.parsePrice("^II\\.2\\.1\\)", context));
+        return  parsedTender;
     }
 
     /**
+     * The method parses one lot form "contract award".
+     *
      * @param node
-     *      node that includes lot data
-     * @param metaData
-     *      meta data
-     * @return parsed lot or null
+     *         node that includes lot data
+     * @return parsed lot (ParsedTenderLot)
      */
-    private static List<ParsedTenderLot> parseLot(final Element node, final Map<String, Object> metaData) {
-        if (node == null) {
-            return null;
+    private static ParsedTenderLot parseLot(final Element node) {
+
+        ParsedTenderLot lot = new ParsedTenderLot();
+        StringBuilder title = new StringBuilder();
+        String foundTitle = EPEParserUtils.tableValueByLabel("Seotud hanke osad", node);
+        String nexRowTitle;
+        while (foundTitle != null) {
+            title.append(foundTitle);
+            nexRowTitle = EPEParserUtils.nextNNodeValueFromNextTableRowByValue(foundTitle, 0, node);
+            if (nexRowTitle != null && !nexRowTitle.isEmpty() && !nexRowTitle.equals(" ")) {
+                break;
+            }
+            foundTitle = foundTitle.replace("(", "\\(").replace(")", "\\)");
+            foundTitle = EPEParserUtils.tableValueByLabel(foundTitle, node);
         }
+        // text of first row includes number, remove non-digit characters
+        lot.setLotNumber(JsoupUtils.selectText("tr", node).replaceAll("\\D", ""))
+                .setAwardDecisionDate(EPEParserUtils.parseDateTime("^V\\.1\\.1\\)", node))
+                .setBidsCount(EPEParserUtils.regexValueByLabel("^V\\.1\\.2\\)", "(?<value>\\d+)", node))
+                .setTitle(title.toString())
+                .addBid(new ParsedBid()
+                        .setIsWinning(Boolean.TRUE.toString())
+                        .addBidder(EPEParserUtils.parseBody("^V\\.1\\.3\\)", node))
+                        .setIsSubcontracted(EPEParserUtils.parseBoolean("^V\\.1\\.5\\)", node))
+                        .setSubcontractedValue(EPEParserUtils.parsePrice("^V\\.1\\.5\\)", node)))
+                .setEstimatedCompletionDate(EPEParserUtils.parseDateTime("^V\\.1\\.6\\)", node))
+                .setSelectionMethod(EPEParserUtils.tableValueByLabel("^V\\.2\\.6\\)", node))
+                .setAwardCriteria(EPEParserUtils.parseAwardCriteria("^V\\.2\\.6\\)", node))
+                .setEstimatedPrice(EPEParserUtils.parsePrice("^V\\.1\\.4\\)", node));
 
-        ParsedTenderLot lot = new ParsedTenderLot()
-            // text of first row includes number, remove non-digit characters
-            .setLotNumber(JsoupUtils.selectText("tr", node).replaceAll("\\D", ""))
-            .setTitle(EPEParserUtils.regexValueByLabel("Nimetus", "(?<value>.+)", node))
-            .setAwardDecisionDate(EPEParserUtils.parseDateTime("^V\\.1\\.1\\)", node))
-            .setBidsCount(EPEParserUtils.regexValueByLabel("^V\\.1\\.2\\)", "(?<value>\\d+)", node))
-            .addBid(new ParsedBid()
-                .setIsWinning(Boolean.TRUE.toString())
-                .addBidder(EPEParserUtils.parseBody("^V\\.1\\.3\\)", node))
-                .setPrice(EPEParserUtils.parsePrice("^V\\.1\\.4\\)", node))
-                .setIsSubcontracted(EPEParserUtils.parseBoolean("^V\\.1\\.5\\)", node))
-                .setSubcontractedValue(EPEParserUtils.parsePrice("^V\\.1\\.5\\)", node)))
-            .setEstimatedCompletionDate(EPEParserUtils.parseDateTime("^V\\.1\\.6\\)", node))
-            .setSelectionMethod(EPEParserUtils.tableValueByLabel("^V\\.2\\.6\\)", node))
-            .setAwardCriteria(EPEParserUtils.parseAwardCriteria("^V\\.2\\.6\\)", node));
-
-
+        // test on serialisable
         ObjectMapper mapper = new ObjectMapper();
-        String serializedLot = null;
         try {
-            serializedLot = mapper.writeValueAsString(lot);
+            mapper.writeValueAsString(lot);
         } catch (JsonProcessingException ex) {
             logger.error("Unable to serialize lot", ex);
             throw new UnrecoverableException("Unable to serialize lot", ex);
         }
 
-        try {
-            Map<String, List<ParsedAwardCriterion>> criteria = null;
-            if (metaData != null) {
-                criteria = (Map<String, List<ParsedAwardCriterion>>) metaData.get("criteria");
-            }
+        return lot;
 
-            Element relatedPart = JsoupUtils.selectFirst("tr:contains(Seotud hanke osad) + tr", node);
-            List<ParsedTenderLot> lots = new ArrayList<>();
-            if (relatedPart != null) {
-                // for each related part add one lot
-                Pattern p = Pattern.compile("Osa (?<number>[0-9]+): (?<title>.+)");
-                while (relatedPart != null && p.matcher(relatedPart.text()).matches()) {
-                    ParsedTenderLot newLot = mapper.readValue(serializedLot, ParsedTenderLot.class);
-                    // set lot number and title from related part
-                    Matcher m = p.matcher(relatedPart.text());
-                    if (m.find()) {
-                        newLot.setLotNumber(m.group("number"))
-                            .setTitle(m.group("title"));
-                    } else {
-                        logger.error("Lot related part has unexpected format, {}", relatedPart.text());
-                        throw new UnrecoverableException("Lot related part has unexpected format");
-                    }
-
-                    // append lot related award criteria
-                    if (criteria != null && newLot.getLotNumber() != null) {
-                        newLot.addAwardCriteria(criteria.get(newLot.getLotNumber()));
-                    }
-                    lots.add(newLot);
-
-                    // attempt to find next related part
-                    relatedPart = relatedPart.nextElementSibling();
-                }
-            } else {
-                ParsedTenderLot newLot = mapper.readValue(serializedLot, ParsedTenderLot.class);
-                if (criteria != null && newLot.getLotNumber() != null) {
-                    newLot.addAwardCriteria(criteria.get(newLot.getLotNumber()));
-                }
-                lots.add(newLot);
-            }
-
-            return lots;
-        } catch (IOException ex) {
-            logger.error("Unable to deserialize '{}' as lot", serializedLot, ex);
-            throw new UnrecoverableException("Unable to deserialize lot", ex);
-        }
     }
 
     /**

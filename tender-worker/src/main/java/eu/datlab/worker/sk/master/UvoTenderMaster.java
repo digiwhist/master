@@ -10,7 +10,10 @@ import eu.dl.dataaccess.dto.matched.MatchedTender;
  * Master for UVO tenders.
  */
 public class UvoTenderMaster extends BaseDatlabTenderMaster {
-    private static final String VERSION = "1.0";
+    /**
+     * Worker version.
+     */
+    public static final String VERSION = "1.0";
 
     @Override
     protected final String getVersion() {

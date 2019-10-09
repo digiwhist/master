@@ -254,7 +254,7 @@ public final class TenderApi extends BaseServer {
 
         populateUtils = new PopulateUtils(masterBodyDao);
 
-        zindexDao = DAOFactory.getDAOFactory().getZIndexIndicatorDAO();
+        zindexDao = DAOFactory.getDAOFactory().getZIndexIndicatorDAO(NAME, VERSION);
     }
 
     /**

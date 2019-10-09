@@ -53,9 +53,9 @@ public final class AmendmentUtils {
                 .setExcessiveFrameworkAgreementJustification(
                         StringUtils.cleanLongString(amendment.getExcessiveFrameworkAgreementJustification()))
                 .setOriginalPrice(PriceUtils.cleanPrice(amendment.getOriginalPrice(), numberFormat, country))
-                .setUpdatedPrice(PriceUtils.cleanPrice(amendment.getFinalPrice(), numberFormat, country))
+                .setUpdatedPrice(PriceUtils.cleanPrice(amendment.getUpdatedPrice(), numberFormat, country))
                 .setModificationReason(StringUtils.cleanLongString(amendment.getModificationReason()))
-                .setModificationReasonShortDescription(StringUtils.cleanLongString(amendment.getModificationReasonShortDescription()))
+                .setModificationShortDescription(StringUtils.cleanLongString(amendment.getModificationShortDescription()))
                 .setModificationReasonDescription(StringUtils.cleanLongString(amendment.getModificationReasonDescription()));
     }
 

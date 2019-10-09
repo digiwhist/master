@@ -91,7 +91,7 @@ final class VVZFormF06Handler extends VVZContractAwardHandler {
         parsedTender = parseDPSCancellationInfo(sectionIV, parsedTender, form);
 
         // SECTION V
-        parsedTender.addLots(parseLotsAwards(form));
+        parsedTender.addLots(parseLotsAwards(form, Boolean.TRUE.toString().equals(parsedTender.getIsFrameworkAgreement())));
 
         // SECTION VI
 

@@ -5,7 +5,7 @@ package eu.dl.dataaccess.dto.parsed;
  * @param <T>
  *         extending class (for fluent interface purposes)
  */
-abstract class BaseParsedPrice<T extends BaseParsedPrice> {
+public abstract class BaseParsedPrice<T extends BaseParsedPrice> {
 
     /**
      * Price without VAT.
@@ -35,7 +35,7 @@ abstract class BaseParsedPrice<T extends BaseParsedPrice> {
     /**
      * @return price without VAT
      */
-    public String getNetAmount() {
+    public final String getNetAmount() {
         return netAmount;
     }
 

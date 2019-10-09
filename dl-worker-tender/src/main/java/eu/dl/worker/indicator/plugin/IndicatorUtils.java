@@ -1,6 +1,9 @@
 package eu.dl.worker.indicator.plugin;
 
+import eu.dl.core.config.Config;
 import eu.dl.core.config.MisconfigurationException;
+import eu.dl.dataaccess.dto.codetables.PublicationFormType;
+import eu.dl.dataaccess.dto.master.MasterTender;
 
 /**
  * Utils class for indicator calculations.
@@ -39,5 +42,47 @@ public final class IndicatorUtils {
         }
 
         return false;
+    }
+
+    /**
+     * Checks whether missing bidDeadline means red flag for a given country.
+     *
+     * @param country
+     *      country code
+     * @return true if missing bid deadline is considered red flag
+     */
+    public static boolean isMissingBidDeadlineRedFlag(final String country) {
+        String value = Config.getInstance().getParam("indicator." + country + ".decisionPeriod.missing");
+        return value != null && value.equals("1");
+    }
+
+    /**
+     * Checks whether the decision period is of problematic length.
+     *
+     * @param countryCode
+     *      country code
+     * @param periodLength
+     *      decision period length
+     *
+     * @return true if the decision period length is considered problematic
+     */
+    public static boolean checkDecisionPeriod(final String countryCode, final Long periodLength) {
+        String value = Config.getInstance().getParam("indicator." + countryCode + ".decisionPeriod.length");
+        return IndicatorUtils.isValueInPeriod(value, periodLength);
+    }
+
+    /**
+     * @param tender
+     *      master tender
+     * @return true if the tender includes at least one included CONTRACT_AWARD publication, otherwise false
+     */
+    public static boolean hasAward(final MasterTender tender) {
+        if (tender.getPublications() == null) {
+            return false;
+        }
+
+        return tender.getPublications().stream()
+            .filter(n -> Boolean.TRUE.equals(n.getIsIncluded()))
+            .anyMatch(n -> n.getFormType() == PublicationFormType.CONTRACT_AWARD);
     }
 }

@@ -21,18 +21,16 @@ public class EnglishLanguageIndicatorPlugin extends BaseIndicatorPlugin implemen
             return insufficient();
         }
 
-        List<String> enVersions = Arrays.asList("en", "english", "englisch");
-        List<String> ieVersions = Arrays.asList("ie");
+        List<String> enLanguages = Arrays.asList("en", "english", "englisch", "ie", "uk");
+        List<String> enCountries = Arrays.asList("ie", "uk", "en");
 
-        if (enVersions.contains(tender.getCountry().toLowerCase())
-                || ieVersions.contains(tender.getCountry().toLowerCase())) {
+        if (enCountries.contains(tender.getCountry().toLowerCase())) {
             return undefined();
         }
 
         HashMap<String, Object> metaData = new HashMap<String, Object>();
         metaData.put("eligibleBidLanguages", tender.getEligibleBidLanguages());
-        if (tender.getEligibleBidLanguages().stream().anyMatch(s -> enVersions.contains(s.toLowerCase()))
-                || tender.getEligibleBidLanguages().stream().anyMatch(s -> ieVersions.contains(s.toLowerCase()))) {
+        if (tender.getEligibleBidLanguages().stream().anyMatch(s -> enLanguages.contains(s.toLowerCase()))) {
             return calculated(100d, metaData);
         } else {
             return calculated(0d, metaData);

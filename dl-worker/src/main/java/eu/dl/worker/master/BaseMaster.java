@@ -66,6 +66,8 @@ public abstract class BaseMaster<T extends Matchable & MasterablePart, V extends
         final String groupId = message.getValue("groupId");
         ThreadContext.put("group_id", groupId);
 
+        logger.info("Mastering of group {} starts.", groupId);
+
         // get the matched items
         long selectStartTime = System.currentTimeMillis();
         List<T> matchedItems = matchedDAO.getByGroupId(groupId);

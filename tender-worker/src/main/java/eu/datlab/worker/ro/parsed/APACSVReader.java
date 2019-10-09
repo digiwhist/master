@@ -36,8 +36,8 @@ public class APACSVReader extends BufferedReader {
         if (line != null && !line.isEmpty()) {
             int matches = StringUtils.countMatches(line, DELIMITER) + 1;
             if (matches < columns) {
-                logger.warn("Line '{}' doesn't include required number of columns.", line);
-                line += StringUtils.repeat(DELIMITER, columns - matches);
+                logger.warn("Line '{}' doesn't include required number of columns. This line will be missed.", line);
+                line = "";
             }
         }
 

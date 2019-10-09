@@ -104,6 +104,8 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
 
     private String hashCachePrefix = "hash::";
 
+    private String etalonCachePrefix = "etalon::";
+
     /**
      * Default constructor.
      */
@@ -352,10 +354,10 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
                                 // save results to cache
                                 if (matchingResult.getMatchedBy().equals(ExactMatchingEtalonPlugin.MATCHED_BY)
                                         || matchingResult.getMatchedBy().equals(ApproximateMatchingEtalonPlugin.MATCHED_BY)) {
-                                    hashCache.put(hashCachePrefix.concat(matchingResult.getGroupId()), "true");
-                                    putToCache(hashCachePrefix.concat(matchingResult.getGroupId()), matchingResult.getMatchedBody());
+                                    hashCache.put(etalonCachePrefix.concat(matchingResult.getGroupId()), "true");
+                                    putToCache(matchingResult.getGroupId(), matchingResult.getMatchedBody());
                                 } else {
-                                    hashCache.put(matchingResult.getGroupId(), "false");
+                                    hashCache.put(etalonCachePrefix.concat(matchingResult.getGroupId()), "false");
                                 }
                             }
 
@@ -485,7 +487,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
             groupId = hashCache.get(hashCachePrefix.concat(hash.getHash()));
 
             if (groupId != null) {
-            		String isEtalonGroup = hashCache.get(hashCachePrefix.concat(groupId));
+            		String isEtalonGroup = hashCache.get(etalonCachePrefix.concat(groupId));
 
             		if (isEtalonGroup != null && isEtalonGroup.equals("true")) {
     					// etalon wins, no need to wait
@@ -762,7 +764,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
         logger.info("Populating etalon cache.");
         List<String> list = matchedBodyDao.getEtalonGroupIds();
 		for (String groupId : list) {
-			hashCache.put(hashCachePrefix.concat(groupId), "true");
+			hashCache.put(etalonCachePrefix.concat(groupId), "true");
 		}
 		logger.info("Etalon cache populated.");
 	}

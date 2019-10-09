@@ -19,8 +19,6 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static eu.datlab.worker.si.parsed.ENarocanjeTenderParser.NBSP_CHARACTER;
-
 import java.util.ArrayList;
 import java.util.List;
 import org.jsoup.nodes.Node;
@@ -34,68 +32,49 @@ import java.util.stream.Collectors;
 abstract class BaseENarocanjeFormInDivsHandler {
     private static final Logger logger = LoggerFactory.getLogger(BaseENarocanjeFormInDivsHandler.class);
 
-    static final String SUBSECTION_I_1_CONTENT_SELECTOR = "div.tab-content > div > h5:containsOwn(I.1"
-            + NBSP_CHARACTER + "Ime in naslovi) + div";
-    static final String SUBSECTION_I_4_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(I.4"
-            + NBSP_CHARACTER + "Vrsta javnega naročnika)";
+    static final String SUBSECTION_I_1_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(I.1 Ime in naslovi)";
+    static final String SUBSECTION_I_4_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(I.4 Vrsta javnega naročnika)";
     // probably form contains subsection I.5 or I.6, not both. And in both cases there is the same info
-    static final String SUBSECTION_I_5_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(I.5"
-            + NBSP_CHARACTER + "Glavna področja dejavnosti)";
-    static final String SUBSECTION_I_6_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(I.6"
-            + NBSP_CHARACTER + "Glavna področja dejavnosti)";
-    static final String SUBSECTION_II_1_1_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.1"
-            + NBSP_CHARACTER + "Naslov)";
-    static final String SUBSECTION_II_1_2_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.2"
-            + NBSP_CHARACTER + "Glavna koda CPV)";
+    static final String SUBSECTION_I_5_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(I.5 Glavna področja dejavnosti)";
+    static final String SUBSECTION_I_6_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(I.6 Glavna področja dejavnosti)";
+    static final String SUBSECTION_II_1_1_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.1 Naslov)";
+    static final String SUBSECTION_II_1_2_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.2 Glavna koda CPV)";
     static final String SUBSECTION_II_1_2_CONTENT_SELECTOR = SUBSECTION_II_1_2_TITLE_SELECTOR + " + table";
-    static final String SUBSECTION_II_1_3_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.3"
-            + NBSP_CHARACTER + "Vrsta naročila)";
-    static final String SUBSECTION_II_1_4_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.4"
-            + NBSP_CHARACTER + "Kratek opis)";
-    static final String SUBSECTION_II_1_5_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.5"
-            + NBSP_CHARACTER + "Ocenjena skupna vrednost)";
-    static final String SUBSECTION_II_1_6_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.6"
-            + NBSP_CHARACTER + "Informacije o sklopih)";
-    static final String SUBSECTION_II_1_7_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.7"
-            + NBSP_CHARACTER + "Skupna vrednost javnega naročila)";
-    static final String SUBSECTION_II_2_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.2"
-            + NBSP_CHARACTER + "Opis)";
-    static final String SUBSECTION_III_1_1_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(III.1.1"
-            + NBSP_CHARACTER + "Ustreznost za opravljanje poklicne dejavnosti, vključno z " +
-            "zahtevami v zvezi z vpisom v register poklicev ali trgovski register)";
-    static final String SUBSECTION_III_1_2_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(III.1.2"
-            + NBSP_CHARACTER + "Poslovno in finančno stanje";
-    static final String SUBSECTION_III_1_3_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(III.1.3"
-            + NBSP_CHARACTER + "Tehnična in strokovna sposobnost";
-    static final String SUBSECTION_III_1_4_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(III.1.4"
-            + NBSP_CHARACTER + "Objektivna pravila in merila za sodelovanje";
-    static final String SUBSECTION_IV_1_1_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.1.1"
-            + NBSP_CHARACTER + "Vrsta postopka)";
-    static final String SUBSECTION_IV_1_3_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.1.3"
-            + NBSP_CHARACTER
-            + "Informacije o okvirnem sporazumu ali dinamičnem nabavnem sistemu)";
-    static final String SUBSECTION_IV_1_4_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.1.4"
-            + NBSP_CHARACTER
-            + "Informacije o zmanjšanju števila rešitev ali ponudb med pogajanji ali dialogom)";
-    static final String SUBSECTION_IV_1_8_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.1.8"
-            + NBSP_CHARACTER + "Informacije o Sporazumu o vladnih naročilih)";
-    static final String SUBSECTION_IV_2_1_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.2.1"
-            + NBSP_CHARACTER + "Prejšnja objava v zvezi s tem postopkom)";
-    static final String SUBSECTION_IV_2_2_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.2.2"
-            + NBSP_CHARACTER + "Rok za prejem ponudb ali prijav za sodelovanje)";
-    static final String SUBSECTION_IV_2_3_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.2.3"
-            + NBSP_CHARACTER
-            + "Predvideni datum pošiljanja povabil k oddaji ponudbe ali sodelovanju izbranim kandidatom)";
-    static final String SUBSECTION_IV_2_4_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.2.4"
-            + NBSP_CHARACTER
-            + "Jeziki, v katerih se predložijo ponudbe ali prijave za sodelovanje)";
-    static final String SUBSECTION_IV_2_6_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.2.6"
-            + NBSP_CHARACTER
-            + "Minimalni časovni okvir, v katerem mora ponudnik zagotavljati veljavnost ponudbe)";
-    static final String SUBSECTION_IV_2_7_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.2.7"
-            + NBSP_CHARACTER + "Način odpiranja ponudb)";
-    static final String SUBSECTION_VI_5_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(VI.5"
-            + NBSP_CHARACTER + "Datum pošiljanja tega obvestila)";
+    static final String SUBSECTION_II_1_3_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.3 Vrsta naročila)";
+    static final String SUBSECTION_II_1_4_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.4 Kratek opis)";
+    static final String SUBSECTION_II_1_5_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.5 Ocenjena skupna" +
+        " vrednost)";
+    static final String SUBSECTION_II_1_6_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.6 Informacije o" +
+        " sklopih)";
+    static final String SUBSECTION_II_1_7_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.1.7 Skupna vrednost" +
+        " javnega naročila)";
+    static final String SUBSECTION_II_2_TITLE_SELECTOR = "div.tab-content > div > div > div > h5:containsOwn(II.2 Opis)";
+    static final String SUBSECTION_III_1_1_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(III.1.1 Ustreznost za opravljanje" +
+        " poklicne dejavnosti, vključno z zahtevami v zvezi z vpisom v register poklicev ali trgovski register)";
+    static final String SUBSECTION_III_1_2_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(III.1.2 Poslovno in finančno stanje)";
+    static final String SUBSECTION_III_1_3_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(III.1.3 Tehnična in strokovna" +
+        " sposobnost)";
+    static final String SUBSECTION_III_1_4_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(III.1.4 Objektivna pravila in merila" +
+        " za sodelovanje)";
+    static final String SUBSECTION_IV_1_1_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.1.1 Vrsta postopka)";
+    static final String SUBSECTION_IV_1_3_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.1.3 Informacije o okvirnem" +
+        " sporazumu ali dinamičnem nabavnem sistemu)";
+    static final String SUBSECTION_IV_1_4_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.1.4 Informacije o zmanjšanju" +
+        " števila rešitev ali ponudb med pogajanji ali dialogom)";
+    static final String SUBSECTION_IV_1_8_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.1.8 Informacije o Sporazumu o" +
+        " vladnih naročilih)";
+    static final String SUBSECTION_IV_2_1_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.2.1 Prejšnja objava v zvezi s tem" +
+        " postopkom)";
+    static final String SUBSECTION_IV_2_2_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.2.2 Rok za prejem ponudb ali prijav" +
+        " za sodelovanje)";
+    static final String SUBSECTION_IV_2_3_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.2.3 Predvideni datum pošiljanja" +
+        " povabil k oddaji ponudbe ali sodelovanju izbranim kandidatom)";
+    static final String SUBSECTION_IV_2_4_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.2.4 Jeziki, v katerih se predložijo" +
+        " ponudbe ali prijave za sodelovanje)";
+    static final String SUBSECTION_IV_2_6_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.2.6 Minimalni časovni okvir, v" +
+        " katerem mora ponudnik zagotavljati veljavnost ponudbe)";
+    static final String SUBSECTION_IV_2_7_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(IV.2.7 Način odpiranja ponudb)";
+    static final String SUBSECTION_VI_5_TITLE_SELECTOR = "div.tab-content > div > h5:containsOwn(VI.5 Datum pošiljanja tega obvestila)";
 
     /**
      * Parses common attributes and updates the passed tender.
@@ -112,7 +91,12 @@ abstract class BaseENarocanjeFormInDivsHandler {
         final Element sectionII2TitleElement = JsoupUtils.selectFirst(SUBSECTION_II_2_TITLE_SELECTOR, form);
         final Element sectionII15TitleElement = JsoupUtils.selectFirst(SUBSECTION_II_1_5_TITLE_SELECTOR, form);
         final Element sectionII16TitleElement = JsoupUtils.selectFirst(SUBSECTION_II_1_6_TITLE_SELECTOR, form);
-        final Element sectionI1 = JsoupUtils.selectFirst(SUBSECTION_I_1_CONTENT_SELECTOR, form);
+
+        //final Element sectionI1 = JsoupUtils.selectFirst(SUBSECTION_I_1_TITLE_SELECTOR, form);
+        final Element sectionI1 = ParserUtils.getSubsectionOfNodes(
+            JsoupUtils.selectFirst(SUBSECTION_I_1_TITLE_SELECTOR, form),
+            JsoupUtils.selectFirst(SUBSECTION_I_1_TITLE_SELECTOR + " ~ h5", form));
+
         final Element sectionI4 = ParserUtils.getSubsectionOfNodes(
                 JsoupUtils.selectFirst(SUBSECTION_I_4_TITLE_SELECTOR, form),
                 JsoupUtils.selectFirst(SUBSECTION_I_5_TITLE_SELECTOR, form));        
@@ -160,34 +144,32 @@ abstract class BaseENarocanjeFormInDivsHandler {
             JsoupUtils.selectFirst(SUBSECTION_I_5_TITLE_SELECTOR, form),
             JsoupUtils.selectFirst(SUBSECTION_I_6_TITLE_SELECTOR, form));
         if (buyerActivityNode == null) {
-            buyerActivityNode = ParserUtils.getSubsectionOfNodes(
-                JsoupUtils.selectFirst(SUBSECTION_I_6_TITLE_SELECTOR, form), null);
+            buyerActivityNode = ParserUtils.getSubsectionOfNodes(JsoupUtils.selectFirst(SUBSECTION_I_6_TITLE_SELECTOR, form), null);
         }
 
         tender
-                .addBuyer(parseBuyer(sectionI1, sectionI4, buyerActivityNode))
-                .setTitle(ParserUtils.getFromContent(sectionII11, null, "Naslov:"))
-                .setCpvs(parseTenderCpvs(sectionII12))
-                .setNationalProcedureType(procedureType)
-                .setProcedureType(procedureType)
-                .setLots(parseLots(form))
-                .setHasLots(BooleanUtils.toStringTrueFalse(ENarocanjeTenderFormUtils.meansYes(
-                        ParserUtils.getFromContent(sectionII16, null, "Naročilo je razdeljeno na sklope:"))))
-                .setIsFrameworkAgreement(BooleanUtils.toStringTrueFalse(ENarocanjeTenderFormUtils.meansYes(
-                        ParserUtils.getFromContent(sectionIV13, null, "sporazum:"))))
-                .setDescription(sectionII14.ownText())
-                .setIsCoveredByGpa(BooleanUtils.toStringTrueFalse(ENarocanjeTenderFormUtils.meansYes(
-                        ParserUtils.getFromContent(sectionIV18, null,
-                                "Naročilo ureja Sporazum o vladnih naročilih:"))))
-                .setPersonalRequirements(sectionIII11 == null ? null : sectionIII11.ownText())
-                .setEconomicRequirements(sectionIII12 == null ? null : sectionIII12.ownText())
-                .setTechnicalRequirements(sectionIII13 == null ? null : sectionIII13.ownText())
-                .addEligibleBidLanguage(sectionIV24 == null ? null : sectionIV24.ownText());
+            .setBuyers(parseBuyer(sectionI1, sectionI4, buyerActivityNode))
+            .setTitle(ParserUtils.getFromContent(sectionII11, null, "Naslov:"))
+            .setCpvs(parseTenderCpvs(sectionII12))
+            .setNationalProcedureType(procedureType)
+            .setProcedureType(procedureType)
+            .setLots(parseLots(form))
+            .setHasLots(BooleanUtils.toStringTrueFalse(ENarocanjeTenderFormUtils.meansYes(
+                ParserUtils.getFromContent(sectionII16, null, "Naročilo je razdeljeno na sklope:"))))
+            .setIsFrameworkAgreement(BooleanUtils.toStringTrueFalse(ENarocanjeTenderFormUtils.meansYes(
+                ParserUtils.getFromContent(sectionIV13, null, "sporazum:"))))
+            .setDescription(sectionII14.ownText())
+            .setIsCoveredByGpa(BooleanUtils.toStringTrueFalse(ENarocanjeTenderFormUtils.meansYes(
+                ParserUtils.getFromContent(sectionIV18, null, "Naročilo ureja Sporazum o vladnih naročilih:"))))
+            .setPersonalRequirements(sectionIII11 == null ? null : sectionIII11.ownText())
+            .setEconomicRequirements(sectionIII12 == null ? null : sectionIII12.ownText())
+            .setTechnicalRequirements(sectionIII13 == null ? null : sectionIII13.ownText())
+            .addEligibleBidLanguage(sectionIV24 == null ? null : sectionIV24.ownText());
 
         assert tender.getPublications().get(0).getIsIncluded().equals(Boolean.toString(true));
         tender.getPublications().get(0)
-                .setBuyerAssignedId(ParserUtils.getFromContent(sectionII11, null, "Referenčna številka dokumenta:"))
-                .setPublicationDate(sectionVI5.ownText());
+            .setBuyerAssignedId(ParserUtils.getFromContent(sectionII11, null, "Referenčna številka dokumenta:"))
+            .setPublicationDate(sectionVI5.ownText());
 
         parseDispatchDateOfPreviousPublication(tender, sectionIV21);
 
@@ -330,28 +312,26 @@ abstract class BaseENarocanjeFormInDivsHandler {
      * @return list of all parsed lots or empty list if no lots specified
      */
     private static List<ParsedTenderLot> parseLots(final Element form) {
-        final Elements lotElements = JsoupUtils.select("div.tab-content > div > div > div > h5:containsOwn(II.2"
-                + NBSP_CHARACTER + "Opis) ~ div", form);
+        final Elements lotElements = JsoupUtils.select("div.tab-content > div > div > div > h5:containsOwn(II.2 Opis) ~ div", form);
         if (lotElements.isEmpty()) {
             return null;
         }
 
         final String lotTitleSelector = "h4:containsOwn(Sklop)";
-        final String sectionII21TitleSelector = "h5:containsOwn(II.2.1" + NBSP_CHARACTER + "Naslov)";
-        final String sectionII22TitleSelector = "h5:containsOwn(II.2.2" + NBSP_CHARACTER + "Dodatna(-e) koda(-e) CPV)";
+        final String sectionII21TitleSelector = "h5:containsOwn(II.2.1 Naslov)";
+        final String sectionII22TitleSelector = "h5:containsOwn(II.2.2 Dodatna(-e) koda(-e) CPV)";
         final String sectionII22TableSelector = sectionII22TitleSelector + " + table";
-        final String sectionII23TitleSelector = "h5:containsOwn(II.2.3" + NBSP_CHARACTER + "Kraj izvedbe)";
-        final String sectionII24TitleSelector = "h5:containsOwn(II.2.4" + NBSP_CHARACTER + "Opis javnega naročila)";
-        final String sectionII25TitleSelector = "h5:containsOwn(II.2.5" + NBSP_CHARACTER + "Merila za izbiro ponudbe)";
-        final String sectionII26TitleSelector = "h5:containsOwn(II.2.6" + NBSP_CHARACTER + "Ocenjena vrednost)";
-        final String sectionII27TitleSelector = "h5:containsOwn(II.2.7" + NBSP_CHARACTER + "Trajanje naročila)";
-        final String sectionII29TitleSelector = "h5:containsOwn(II.2.9" + NBSP_CHARACTER
-                + "Informacije o omejitvah števila kandidatov, ki bodo povabljeni k sodelovanju)";
-        final String sectionII210TitleSelector = "h5:containsOwn(II.2.10" + NBSP_CHARACTER + "Informacije o variantah)";
-        final String sectionII211TitleSelector = "h5:containsOwn(II.2.11" + NBSP_CHARACTER + "Informacije o variantah)";
-        final String sectionII213TitleSelector = "h5:containsOwn(II.2.13" + NBSP_CHARACTER + "Informacije o sredstvih"
-            + " EU)";
-        final String sectionII214TitleSelector = "h5:containsOwn(II.2.14" + NBSP_CHARACTER + "Dodatne informacije)";
+        final String sectionII23TitleSelector = "h5:containsOwn(II.2.3 Kraj izvedbe)";
+        final String sectionII24TitleSelector = "h5:containsOwn(II.2.4 Opis javnega naročila)";
+        final String sectionII25TitleSelector = "h5:containsOwn(II.2.5 Merila za izbiro ponudbe)";
+        final String sectionII26TitleSelector = "h5:containsOwn(II.2.6 Ocenjena vrednost)";
+        final String sectionII27TitleSelector = "h5:containsOwn(II.2.7 Trajanje naročila)";
+        final String sectionII29TitleSelector = "h5:containsOwn(II.2.9 Informacije o omejitvah števila kandidatov, ki bodo povabljeni" +
+            " k sodelovanju)";
+        final String sectionII210TitleSelector = "h5:containsOwn(II.2.10 Informacije o variantah)";
+        final String sectionII211TitleSelector = "h5:containsOwn(II.2.11 Informacije o variantah)";
+        final String sectionII213TitleSelector = "h5:containsOwn(II.2.13 Informacije o sredstvih EU)";
+        final String sectionII214TitleSelector = "h5:containsOwn(II.2.14 Dodatne informacije)";
         
         List<ParsedTenderLot> lots = new ArrayList<>();
         for (Element lotElement : lotElements) {
@@ -360,7 +340,7 @@ abstract class BaseENarocanjeFormInDivsHandler {
                     JsoupUtils.selectFirst(sectionII22TitleSelector, lotElement));
             final Element sectionII23 = ParserUtils.getSubsectionOfNodes(
                     JsoupUtils.selectFirst(sectionII23TitleSelector, lotElement),
-                    JsoupUtils.selectFirst(sectionII24TitleSelector, lotElement));
+                    JsoupUtils.selectFirst(sectionII24TitleSelector + "," + sectionII25TitleSelector, lotElement));
             final Element sectionII24 = ParserUtils.getSubsectionOfNodes(
                     JsoupUtils.selectFirst(sectionII24TitleSelector, lotElement),
                     JsoupUtils.selectFirst(sectionII25TitleSelector, lotElement));
@@ -459,7 +439,7 @@ abstract class BaseENarocanjeFormInDivsHandler {
                     if (sibl.toString().contains("Številka naročila:")) {
                         lot.setContractNumber(sibl.toString().split(":")[1].trim());
                     }
-                    if (sibl.toString().contains("V.2.1&nbsp;Datum sklenitve pogodbe")) {
+                    if (sibl.toString().contains("V.2.1 Datum sklenitve pogodbe")) {
                         sibl = sibl.nextSibling();
                         if (sibl.nodeName().equals("#text")) {
                             lot.setAwardDecisionDate(sibl.toString());
@@ -514,7 +494,7 @@ abstract class BaseENarocanjeFormInDivsHandler {
     }
 
     /**
-     * Parses buyer info.
+     * Parses buyers.
      *
      * @param sectionI1
      *         html for section I.1 (with buyer info)
@@ -522,17 +502,28 @@ abstract class BaseENarocanjeFormInDivsHandler {
      *         html for section I.4 (with buyer info)
      * @param sectionI5
      *         html for section I.5 (with buyer info)
-     * @return parsed buyer info
+     * @return list of parsed buyers
      */
-    private static ParsedBody parseBuyer(final Element sectionI1, final Element sectionI4, final Element sectionI5) {
-        final ParsedBody buyer = parseCommonBodyAttributes(sectionI1);
+    private static List<ParsedBody> parseBuyer(final Element sectionI1, final Element sectionI4, final Element sectionI5) {
+        Elements nodes = JsoupUtils.select(":root > div", sectionI1);
+        if (nodes == null && nodes.isEmpty()) {
+            return null;
+        }
+        String buyerType = sectionI4 == null ? null : StringUtils.removeDotsAtTheEnd(sectionI4.ownText());
+        String mainActivity = sectionI5 == null ? null : StringUtils.removeDotsAtTheEnd(sectionI5.ownText());
 
-        buyer.getAddress()
-                .setUrl(JsoupUtils.selectText("label:containsOwn(Glavni naslov (URL):) + a", sectionI1));
-        
-        return buyer
-                .setBuyerType(sectionI4 == null ? null : StringUtils.removeDotsAtTheEnd(sectionI4.ownText()))
-                .addMainActivity(sectionI5 == null ? null : StringUtils.removeDotsAtTheEnd(sectionI5.ownText()));
+        List<ParsedBody> buyers = new ArrayList<>();
+        for (Element n : nodes) {
+            final ParsedBody buyer = parseCommonBodyAttributes(n)
+                .setBuyerType(buyerType)
+                .addMainActivity(mainActivity);
+
+            buyer.getAddress().setUrl(JsoupUtils.selectText("label:containsOwn(Glavni naslov (URL):) + a", n));
+
+            buyers.add(buyer);
+        }
+
+        return buyers;
     }
 
     /**

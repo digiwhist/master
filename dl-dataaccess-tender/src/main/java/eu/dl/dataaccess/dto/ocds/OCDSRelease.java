@@ -8,6 +8,7 @@ import eu.dl.dataaccess.dto.codetables.OCDSReleaseTag;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * OCDS release. This object doesn't cover full OCDS schema.
@@ -41,6 +42,11 @@ public class OCDSRelease {
     private OCDSBid bids;
 
     private OCDSPlanning planning;
+
+    /**
+     * Record's metaData. Is not in OCDS scheme.
+     */
+    private Map<String, Object> metaData;
 
     /**
      * @return OCDS id
@@ -358,6 +364,24 @@ public class OCDSRelease {
      */
     public final OCDSRelease setPlanning(final OCDSPlanning planning) {
         this.planning = planning;
+        return this;
+    }
+
+    /**
+     * @return record metaData
+     */
+    public final Map<String, Object> getMetaData() {
+        return metaData;
+    }
+
+    /**
+     * @param metaData
+     *      metadata to be set
+     * @return
+     *      this instance for chaining
+     */
+    public final OCDSRelease setMetaData(final Map<String, Object> metaData) {
+        this.metaData = metaData;
         return this;
     }
 }

@@ -23,5 +23,9 @@ public enum BudgetItemReportType {
     /**
      * Cash flow.
      */
-    CASH_FLOW
+    CASH_FLOW,
+    /**
+     * FINSTAT (SK).
+     */
+    FINSTAT
 }
