@@ -55,11 +55,10 @@ public final class ContractImplementationUtils {
                                 if (masterBid.getPayments() == null || masterBid.getPayments().isEmpty()) {
                                     masterBid.setPayments(bid.getPayments());
                                 } else {
-                                    masterBid.setPayments(addPayments(
-                                            masterBid.getPayments(), bid.getPayments()));
+                                    masterBid.setPayments(addPayments(masterBid.getPayments(), bid.getPayments()));
                                 }
 
-                                tender.setPublications(addPublications(getIsIncludedPublications(tender),
+                                tender.setPublications(addPublications(tender.getPublications(),
                                         getIsIncludedPublications(contractImplementation)));
 
                                 break;
@@ -89,7 +88,6 @@ public final class ContractImplementationUtils {
                                 && bid.getPayments() != null && !bid.getPayments().isEmpty()) {
 
                             result.add(bid);
-                            break;
                         }
                     }
                 }
@@ -112,11 +110,8 @@ public final class ContractImplementationUtils {
             for (MasterTenderLot lot : tender.getLots()) {
                 if (lot.getBids() != null) {
                     for (MasterBid bid : lot.getBids()) {
-                        if (bid.getIsWinning()
-                                && bid.getBidders() != null && !bid.getBidders().isEmpty()) {
-
+                        if (bid.getIsWinning() && bid.getBidders() != null && !bid.getBidders().isEmpty()) {
                             result.add(bid);
-                            break;
                         }
                     }
                 }

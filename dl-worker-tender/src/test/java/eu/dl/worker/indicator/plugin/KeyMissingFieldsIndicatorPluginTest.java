@@ -100,7 +100,7 @@ public final class KeyMissingFieldsIndicatorPluginTest {
         Indicator indicator = plugin.evaluate(masterTender);
         assertEquals(TenderIndicatorType.TRANSPARENCY_NUMBER_OF_KEY_MISSING_FIELDS.name(), indicator.getType());
         assertEquals(IndicatorStatus.CALCULATED, indicator.getStatus());
-        assertEquals(new Double(40), indicator.getValue());
+        assertEquals(Double.valueOf(40), indicator.getValue());
     }
 
     /**

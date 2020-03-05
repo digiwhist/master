@@ -60,7 +60,7 @@ public final class PoliticalConnectionsOfSuppliers extends BaseIndicatorPlugin i
 
     @Override
     public String getType() {
-        return TenderIndicatorType.TRANSPARENCY_NUMBER_OF_KEY_MISSING_FIELDS.name();
+        return TenderIndicatorType.INTEGRITY_POLITICAL_CONNECTIONS.name();
     }
 
     /**

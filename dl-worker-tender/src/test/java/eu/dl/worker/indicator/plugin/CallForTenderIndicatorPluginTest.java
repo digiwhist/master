@@ -81,22 +81,22 @@ public final class CallForTenderIndicatorPluginTest {
     @Test
     public void calculatedIndicatorTest() {
         assertEquals(plugin.evaluate(tender2).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender2).getValue(), new Double(100d));
+        assertEquals(plugin.evaluate(tender2).getValue(), Double.valueOf(100d));
 
         assertEquals(plugin.evaluate(tender3).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender3).getValue(), new Double(0d));
+        assertEquals(plugin.evaluate(tender3).getValue(), Double.valueOf(0d));
 
         assertEquals(plugin.evaluate(tender4).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender4).getValue(), new Double(0d));
+        assertEquals(plugin.evaluate(tender4).getValue(), Double.valueOf(0d));
 
         assertEquals(plugin.evaluate(tender5).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender5).getValue(), new Double(100d));
+        assertEquals(plugin.evaluate(tender5).getValue(), Double.valueOf(100d));
 
         assertEquals(plugin.evaluate(tender6).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender6).getValue(), new Double(100d));
+        assertEquals(plugin.evaluate(tender6).getValue(), Double.valueOf(100d));
 
         assertEquals(plugin.evaluate(tender7).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender7).getValue(), new Double(100d));
+        assertEquals(plugin.evaluate(tender7).getValue(), Double.valueOf(100d));
     }
 
 }

@@ -778,7 +778,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
      */
 	private void logMatchingData(final long pluginStartTime, final long pluginEndTime, final String pluginName) {
         long executionTime = pluginEndTime - pluginStartTime;
-        ThreadContext.put("matching_time", new Long(executionTime).toString());
+        ThreadContext.put("matching_time", Long.toString(executionTime));
         ThreadContext.put("matching_plugin_name", "manual");
         logger.error("Execution of body match plugin {} took {} ms.", pluginName, executionTime);
     }

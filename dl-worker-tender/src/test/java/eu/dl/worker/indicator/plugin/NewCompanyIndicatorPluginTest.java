@@ -181,13 +181,13 @@ public final class NewCompanyIndicatorPluginTest {
     @Test
     public void calculatedIndicatorTest() {
         assertEquals(plugin.evaluate(tender5).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender5).getValue(), new Double(0d));
+        assertEquals(plugin.evaluate(tender5).getValue(), Double.valueOf(0d));
 
         assertEquals(plugin.evaluate(tender6).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender6).getValue(), new Double(100d));
+        assertEquals(plugin.evaluate(tender6).getValue(), Double.valueOf(100d));
 
         assertEquals(plugin.evaluate(tender7).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender7).getValue(), new Double(0d));
+        assertEquals(plugin.evaluate(tender7).getValue(), Double.valueOf(0d));
     }
 
     /**

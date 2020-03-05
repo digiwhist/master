@@ -183,13 +183,13 @@ public final class LotNewCompanyIndicatorPluginTest {
     @Test
     public void calculatedIndicatorTest() {
         assertEquals(plugin.evaluate(tender5.getLots().get(0), tender5).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender5.getLots().get(0), tender5).getValue(), new Double(0d));
+        assertEquals(plugin.evaluate(tender5.getLots().get(0), tender5).getValue(), Double.valueOf(0d));
 
         assertEquals(plugin.evaluate(tender6.getLots().get(0), tender6).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender6.getLots().get(0), tender6).getValue(), new Double(100d));
+        assertEquals(plugin.evaluate(tender6.getLots().get(0), tender6).getValue(), Double.valueOf(100d));
 
         assertEquals(plugin.evaluate(tender7.getLots().get(0), tender7).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender7.getLots().get(0), tender7).getValue(), new Double(0d));
+        assertEquals(plugin.evaluate(tender7.getLots().get(0), tender7).getValue(), Double.valueOf(0d));
     }
 
     /**

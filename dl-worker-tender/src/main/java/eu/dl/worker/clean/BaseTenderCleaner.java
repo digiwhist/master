@@ -10,6 +10,7 @@ import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
 import eu.dl.dataaccess.dto.generic.AwardCriterion;
 import eu.dl.dataaccess.dto.generic.Payment;
+import eu.dl.dataaccess.dto.generic.Price;
 import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.utils.DTOUtils;
@@ -18,7 +19,8 @@ import eu.dl.worker.clean.plugin.CpvPlugin;
 import eu.dl.worker.clean.plugin.LongTextPlugin;
 import eu.dl.worker.clean.plugin.ShortTextPlugin;
 import eu.dl.worker.clean.plugin.URLPlugin;
-import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -206,22 +208,17 @@ public abstract class BaseTenderCleaner extends BaseCleaner<ParsedTender, CleanT
             // phase 2) create payments for winning bids
             if (includedContractImplementationsFound && cleanTender.getLots() != null) {
                 for (CleanTenderLot lot : cleanTender.getLots()) {
+                    LocalDate paymentDate = ObjectUtils.firstNonNull(lot.getContractSignatureDate(), lot.getAwardDecisionDate(),
+                        cleanTender.getContractSignatureDate(), cleanTender.getAwardDecisionDate(), publicationDate);
+
                     if (lot.getBids() != null) {
                         for (CleanBid bid : lot.getBids()) {
-                            if (Boolean.TRUE.equals(bid.getIsWinning())
-                                    && (bid.getPayments() == null || bid.getPayments().isEmpty())) {
-                                Payment payment = new Payment();
+                            if (Boolean.TRUE.equals(bid.getIsWinning()) && (bid.getPayments() == null || bid.getPayments().isEmpty())) {
+                                Price paymentPrice = bid.getPrice() != null ? bid.getPrice() : cleanTender.getFinalPrice();
 
-                                // get price from winning bid or tender overall price
-                                if (bid.getPrice() != null) {
-                                    payment.setPrice(bid.getPrice());
-                                } else {
-                                    payment.setPrice(cleanTender.getFinalPrice());
-                                }
-
-                                payment.setPaymentDate(publicationDate);
-
-                                bid.setPayments(new ArrayList(Collections.singletonList(payment)));
+                                bid.setPayments(new ArrayList(Collections.singletonList(
+                                    new Payment().setPrice(paymentPrice).setPaymentDate(paymentDate)
+                                )));
                             }
                         }
                     }

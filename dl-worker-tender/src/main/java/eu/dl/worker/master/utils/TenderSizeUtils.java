@@ -15,7 +15,7 @@ import eu.dl.dataaccess.dto.master.MasterTender;
 import eu.dl.dataaccess.dto.master.MasterTenderLot;
 import eu.dl.utils.currency.CurrencyService;
 import eu.dl.utils.currency.CurrencyServiceFactory;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

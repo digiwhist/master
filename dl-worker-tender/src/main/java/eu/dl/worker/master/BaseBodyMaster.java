@@ -34,8 +34,7 @@ public abstract class BaseBodyMaster<T extends MatchedBody, V extends MasterBody
                         new TenderConverter()))
                 .registerPlugin("address", new AddressPlugin<>(Arrays.asList("address")))
                 .registerPlugin("fields", new LogicalORPlugin<>(
-                        Arrays.asList("isPublic", "isSubsidized", "isSectoral", "isSme")))
-                .registerPlugin("metaData", new MetaDataPlugin());
+                        Arrays.asList("isPublic", "isSubsidized", "isSectoral", "isSme")));
         logger.debug("Registered body master common plugins to registry.");
     }
 

@@ -87,17 +87,17 @@ public final class SingleBidIndicatorPluginTest {
         Indicator indicator = plugin.evaluate(tender3);
         assertEquals(TenderIndicatorType.INTEGRITY_SINGLE_BID.name(), indicator.getType());
         assertEquals(IndicatorStatus.CALCULATED, indicator.getStatus());
-        assertEquals(new Double(0), indicator.getValue());
+        assertEquals(Double.valueOf(0), indicator.getValue());
 
         indicator = plugin.evaluate(tender5);
         assertEquals(TenderIndicatorType.INTEGRITY_SINGLE_BID.name(), indicator.getType());
         assertEquals(IndicatorStatus.CALCULATED, indicator.getStatus());
-        assertEquals(new Double(0), indicator.getValue());
+        assertEquals(Double.valueOf(0), indicator.getValue());
 
         indicator = plugin.evaluate(tender2);
         assertEquals(TenderIndicatorType.INTEGRITY_SINGLE_BID.name(), indicator.getType());
         assertEquals(IndicatorStatus.CALCULATED, indicator.getStatus());
-        assertEquals(new Double(100), indicator.getValue());
+        assertEquals(Double.valueOf(100), indicator.getValue());
     }
 
     /**

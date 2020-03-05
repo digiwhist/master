@@ -92,7 +92,7 @@ public final class TaxHavenIndicatorPluginTest {
     @Test
     public void calculatedIndicatorTest() {
         assertEquals(plugin.evaluate(tender2).getStatus(), IndicatorStatus.CALCULATED);
-        assertEquals(plugin.evaluate(tender2).getValue(), new Double(0d));
+        assertEquals(plugin.evaluate(tender2).getValue(), Double.valueOf(0d));
     }
 
 }

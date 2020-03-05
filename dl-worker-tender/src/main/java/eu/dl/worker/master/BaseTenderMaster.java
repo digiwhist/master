@@ -1,5 +1,7 @@
 package eu.dl.worker.master;
 
+import eu.dl.dataaccess.dao.MasterTenderDAO;
+import eu.dl.dataaccess.dto.StorableDTO;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
 import eu.dl.dataaccess.dto.generic.Amendment;
@@ -21,14 +23,16 @@ import eu.dl.utils.currency.CurrencyServiceFactory;
 import eu.dl.utils.currency.UnconvertableException;
 import eu.dl.worker.master.plugin.specific.CorrigendumPlugin;
 import eu.dl.worker.master.plugin.specific.DigiwhistPricePlugin;
+import eu.dl.worker.master.plugin.specific.FrameworkAgreementAndDpsRobustPricePlugin;
 import eu.dl.worker.master.plugin.specific.NoLotStatusPlugin;
 import eu.dl.worker.master.utils.ContractImplementationUtils;
 import eu.dl.worker.master.utils.MasterUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Currency;
 import java.util.List;
 import java.util.function.Predicate;
@@ -53,6 +57,8 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
 
     private final CorrigendumPlugin corrigendumPlugin;
 
+    private final FrameworkAgreementAndDpsRobustPricePlugin frameworkAgreementAndDpsRobustPricePlugin;
+
     /**
      * Initialization of everything.
      */
@@ -65,6 +71,8 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
         noLotStatusPlugin = new NoLotStatusPlugin();
 
         corrigendumPlugin = new CorrigendumPlugin();
+
+        frameworkAgreementAndDpsRobustPricePlugin = new FrameworkAgreementAndDpsRobustPricePlugin((MasterTenderDAO) getMasterDAO());
     }
 
     @Override
@@ -273,23 +281,14 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
 
     @Override
     protected final String getPersistentId(final List<T> matchedItems) {
-        String persistentId = null;
-        LocalDate min = null;
-
-        for (T t : matchedItems) {
-            for (Publication publication : t.getPublications()) {
-                if (publication.getIsIncluded() != null && publication.getIsIncluded()) {
-                    if ((min == null)
-                            || (publication.getPublicationDate() != null
-                            && min.isAfter(publication.getPublicationDate()))) {
-                        min = publication.getPublicationDate();
-                        persistentId = t.getPersistentId();
-                    }
-                }
-            }
+        if (matchedItems == null) {
+            return null;
         }
 
-        return persistentId;
+        return matchedItems.stream()
+            .min(Comparator.comparing(StorableDTO::getProcessingOrder))
+            .map(StorableDTO::getPersistentId)
+            .orElse(null);
     }
 
     /**
@@ -341,17 +340,21 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
     }
 
     @Override
-    protected final V postProcessMasterRecord(final V masterTender,
-                                              final List<T> matchedTenders) {
+    protected final V postProcessMasterRecord(final V masterTender, final List<T> matchedTenders) {
+        MasterTender tender = masterTender;
+
         processContractImplementation(masterTender, matchedTenders);
 
         updateLotStatus(masterTender);
 
-        convertPrices(masterTender);
-
+        // must precede the framework agreement/dps robust price calculation
         MasterUtils.calculateEstimatedDurationInDays(masterTender);
 
-        MasterTender tender = masterTender;
+        tender = frameworkAgreementAndDpsRobustPricePlugin.master(null, tender, null);
+
+        // must follow the framework agreement/dps robust price calculation
+        convertPrices(masterTender);
+
         tender = digiwhistPricePlugin.master(null, tender, null);
         tender = noLotStatusPlugin.master(null, tender, null);
         tender = corrigendumPlugin.master(null, tender, null);
@@ -375,6 +378,19 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
         // lot status update for whole cancelled tender
         if (Boolean.TRUE.equals(tender.getIsWholeTenderCancelled())) {
             tender.getLots().forEach(l -> l.setStatus(TenderLotStatus.CANCELLED));
+        } else {
+            int cancelled = 0, other = 0;
+            for (MasterTenderLot l : tender.getLots()) {
+                if (l.getStatus() == TenderLotStatus.CANCELLED) {
+                    cancelled++;
+                } else if (l.getStatus() != TenderLotStatus.ANNOUNCED) {
+                    other++;
+                }
+            }
+
+            if (cancelled == 1 && other == 0) {
+                tender.getLots().forEach(l -> l.setStatus(TenderLotStatus.CANCELLED));
+            }
         }
     }
 

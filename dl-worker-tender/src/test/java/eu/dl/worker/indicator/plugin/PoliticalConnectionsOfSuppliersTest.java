@@ -198,9 +198,7 @@ public class PoliticalConnectionsOfSuppliersTest {
     @Test
     public final void getTypeTest() {
         assertEquals(pluginTrue.getType(),
-                TenderIndicatorType.TRANSPARENCY_NUMBER_OF_KEY_MISSING_FIELDS.name());
-        assertEquals(pluginFalse.getType(),
-                TenderIndicatorType.TRANSPARENCY_NUMBER_OF_KEY_MISSING_FIELDS.name());
+                TenderIndicatorType.INTEGRITY_POLITICAL_CONNECTIONS.name());
     }
 
     /**
@@ -235,6 +233,22 @@ public class PoliticalConnectionsOfSuppliersTest {
 
         @Override
         public List getByGroupIds(final Collection groupIds) {
+            return null;
+        }
+
+        @Override
+        public List getModifiedAfter(final LocalDateTime timestamp, final Integer page, final Integer pageSize) {
+            return null;
+        }
+
+        @Override
+        public List getModifiedAfter(final LocalDateTime timestamp, final String modifiedBy, final Integer page, final Integer pageSize) {
+            return null;
+        }
+
+        @Override
+        public List getModifiedAfter(final LocalDateTime timestamp, final String modifiedBy, final String country, final Integer page,
+                                     final Integer pageSize) {
             return null;
         }
 

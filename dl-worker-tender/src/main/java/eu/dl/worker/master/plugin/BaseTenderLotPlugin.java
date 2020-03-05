@@ -305,7 +305,7 @@ public abstract class BaseTenderLotPlugin<T extends MatchedTender, W extends Mas
             // two lots of the pair belong to some group(s), because the pair is valid (invalid pairs were previously
             // deleted)
 
-            if (lotPairRatio.getMatchingRatio().compareTo(new Double(0.5)) >= 0) {
+            if (lotPairRatio.getMatchingRatio().compareTo(0.5) >= 0) {
                 boolean createNewGroup = true;
 
                 for (int i = 0; i < lotOverviewGroups.size(); ++i) {
@@ -418,18 +418,44 @@ public abstract class BaseTenderLotPlugin<T extends MatchedTender, W extends Mas
     private void addLotToGroup(final MatchedTenderLotOverview lot,
                                final List<MatchedTenderLotOverviewGroup> groups,
                                final int groupIndex) {
-        // add lot which is not in group
-        groups.get(groupIndex).addLotOverview(lot);
-
+        boolean addLot = true;
         // it is possible that the pair joined two groups, so try to join
         for (int j = groupIndex + 1; j < groups.size(); ++j) {
             MatchedTenderLotOverviewGroup lotOverviewGroup = groups.get(j);
             if (lotOverviewGroup.contains(lot)) {
                 // JOIN THE TWO GROUPS
-                groups.get(groupIndex).join(lotOverviewGroup);
-                groups.remove(j);
+                if (isGroupJoinValid(groups.get(groupIndex), lotOverviewGroup)) {
+                    groups.get(groupIndex).join(lotOverviewGroup);
+                    groups.remove(j);
+                } else {
+                    addLot = false;
+                }
                 break;
             }
         }
+        
+        if (addLot) {
+            // add lot which is not in group
+            groups.get(groupIndex).addLotOverview(lot);
+        }
+    }
+
+    /**
+     * Two groups cannot be joined if the final group will contain two different lots from the same tender.
+     * @param groupOne First group to be joined
+     * @param groupTwo Second group to be joined
+     * @return <code>TRUE</code> if the groups can be joined, otherwise <code>FALSE</code>
+     */
+    private boolean isGroupJoinValid(final MatchedTenderLotOverviewGroup groupOne, final MatchedTenderLotOverviewGroup groupTwo) {
+        for(Map.Entry<String, MatchedTenderLotOverview> lotOverviewOne : groupOne.getLotOverviews().entrySet()) {
+            for(Map.Entry<String, MatchedTenderLotOverview> lotOverviewTwo : groupTwo.getLotOverviews().entrySet()) {
+                if ((lotOverviewOne.getValue().getTenderIndex() == lotOverviewTwo.getValue().getTenderIndex()) 
+                        && lotOverviewOne.getValue().getLotIndex() != lotOverviewTwo.getValue().getLotIndex()) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }
