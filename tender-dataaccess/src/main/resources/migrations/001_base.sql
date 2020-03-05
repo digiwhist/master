@@ -31,6 +31,7 @@ CREATE INDEX raw_data_modified_idx ON raw_data (modified);
 CREATE INDEX raw_data_modifiedby_idx ON raw_data (modifiedby);
 CREATE INDEX raw_data_modifiedbyversion_idx ON raw_data (modifiedbyversion);
 CREATE INDEX raw_dada_persistentid_idx ON raw_data ((data->>'persistentId'));
+CREATE INDEX raw_data_sourceurl_idx ON raw_data ((data->>'sourceUrl'));
 
 
 CREATE TABLE parsed_tender (
@@ -156,6 +157,7 @@ CREATE INDEX master_body_createdby_idx ON master_body (createdby);
 CREATE INDEX master_body_modified_idx ON master_body (modified);
 CREATE INDEX master_body_modifiedby_idx ON master_body (modifiedby);
 CREATE INDEX master_body_modifiedbyversion_idx ON master_body (modifiedbyversion);
+CREATE INDEX master_body_groupid_idx ON master_body ((data->>'groupId'));
 
 
 CREATE TABLE manual_match (

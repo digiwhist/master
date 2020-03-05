@@ -67,6 +67,7 @@ CREATE TABLE clean_tender_analytics
   subcontracted_proportion double precision,
   is_consortium boolean,
   source text,
+  src text,
   form_type text,
   source_form_type text,
   form_type_combined text,
@@ -150,6 +151,9 @@ CREATE INDEX analytics_cta_tender_year_idx
   ON clean_tender_analytics
   USING btree
   (year);
+  
+    CREATE INDEX analytics_cta_src_idx ON clean_tender_analytics (src);
+
 
   -- Table: matched_tender_analytics
 DROP TABLE if exists matched_tender_analytics;
@@ -163,6 +167,7 @@ CREATE TABLE matched_tender_analytics
   buyer_group_id text,
   bidder_group_id text,
   source text,
+  src text,
   publication_formtype text,
   created timestamp with time zone,
   createdby text,
@@ -203,6 +208,9 @@ CREATE INDEX analytics_mta_tpi_idx
   ON matched_tender_analytics
   USING btree
   (persistent_id COLLATE pg_catalog."default");
+  
+  CREATE INDEX analytics_mta_tfi_idx ON matched_tender_analytics (src);
+
 
 
 
@@ -299,6 +307,7 @@ CREATE TABLE master_tender_analytics
   subcontracted_proportion double precision,
   is_consortium boolean,
   source text,
+  src text,
   included_publications text,
   included_publication_count integer,
   year integer,
@@ -418,6 +427,9 @@ CREATE INDEX analytics_mta_buyer_id_idx
   ON master_tender_analytics
   USING btree
   (tender_country COLLATE pg_catalog."default");
+  
+  CREATE INDEX analytics_mta_src_idx ON master_tender_analytics (src);
+
 
 
 DROP TABLE if exists matched_body_analytics;

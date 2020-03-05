@@ -163,6 +163,11 @@ public final class PublicationSources {
     public static final String UG_GPP = "http://gpp.ppda.go.ug/";
 
     /**
+     * Uganda - transparency international.
+     */
+    public static final String UG_GPP_TI = "http://gpp.ppda.go.ug/TI";
+
+    /**
      * Indonesia.
      */
     public static final String ID_LPSE = "http://inaproc.id/lpse/";
