@@ -40,6 +40,11 @@ public enum TenderIndicatorType {
     INTEGRITY_TAX_HAVEN,
 
     /**
+     * Corruption - political connections of suppliers.
+     */
+    INTEGRITY_POLITICAL_CONNECTIONS,
+
+    /**
      * Administrative capacity - centralized procurement.
      */
     ADMINISTRATIVE_CENTRALIZED_PROCUREMENT,

@@ -1,6 +1,6 @@
 package eu.dl.dataaccess.dto.codetables;
 
-import org.apache.commons.lang3.text.WordUtils;
+import org.apache.commons.text.WordUtils;
 
 /**
  * Utils class for OCDS enumerations.

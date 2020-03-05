@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>eu.dl</groupId>
 	<artifactId>dl-dataaccess-tender</artifactId>
-	<version>2.0.2</version>
+	<version>2.0.3</version>
 	<name>dl-dataaccess-tender</name>
 	<packaging>jar</packaging>
 
@@ -17,34 +17,34 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.9.6</version>
+			<version>2.10.0.pr3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
-			<version>2.9.6</version>
+			<version>2.10.0.pr3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>2.9.6</version>
+			<version>2.10.0.pr3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
-			<version>2.9.6</version>
+			<version>2.10.0.pr3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>eu.dl</groupId>
 			<artifactId>dl-core</artifactId>
-			<version>2.0.2</version>
+			<version>2.0.3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>eu.dl</groupId>
 			<artifactId>dl-dataaccess</artifactId>
-			<version>2.0.2</version>
+			<version>2.0.3</version>
 			<exclusions>
 				<exclusion>
 					<groupId>javax.persistence</groupId>
@@ -55,7 +55,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>3.8</version>
+			<version>3.9</version>
 		</dependency>
 	</dependencies>
 

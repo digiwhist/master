@@ -31,8 +31,21 @@ public interface CleanTenderDAO<T extends CleanTender> extends CleanDAO<T> {
      *            ISO country code
      * @param page
      *            page number
-     *
+     * @param pageSize
+     *      page size
      * @return paged list of clean items from given country
+     */
+    List<T> getByCountry(String countryCode, Integer page, Integer pageSize);
+
+    /**
+     * Same as {@link CleanTenderDAO#getByCountry(String, Integer, Integer)} nut uses default page size.
+     *
+     * @param countryCode
+     *            ISO country code
+     * @param page
+     *            page number
+     *
+     * @return paged list of master items from given country
      */
     List<T> getByCountry(String countryCode, Integer page);
 

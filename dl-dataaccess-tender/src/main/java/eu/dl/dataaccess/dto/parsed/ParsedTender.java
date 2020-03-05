@@ -293,6 +293,11 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
     private LocalDateTime createdRaw;
 
     /**
+     * Checksum of parsed tender.
+     */
+    private String hash;
+
+    /**
      * @return the buyerAssignedId
      */
     public final String getBuyerAssignedId() {
@@ -1635,6 +1640,23 @@ public class ParsedTender extends BaseParsedTenderLot<ParsedTender> implements P
 
             this.lots.addAll(newLots);
         }
+        return this;
+    }
+
+    /**
+     * @return checksum of tender
+     */
+    public final String getHash() {
+        return hash;
+    }
+
+    /**
+     * @param hash
+     *      checksum to be set
+     * @return this instance for chaining
+     */
+    public final ParsedTender setHash(final String hash) {
+        this.hash = hash;
         return this;
     }
 }
