@@ -5,7 +5,7 @@ import eu.datlab.dataaccess.dao.ZIndexIndicatorDAO;
 import eu.datlab.dataaccess.dto.zindex.ZIndexIndicator;
 import eu.dl.dataaccess.dao.CleanTenderDAO;
 import eu.dl.dataaccess.dao.MasterBodyDAO;
-import eu.dl.dataaccess.dao.MasterTenderOpentenderDAO;
+import eu.dl.dataaccess.dao.MasterTenderApiDAO;
 import eu.dl.dataaccess.dao.TransactionUtils;
 import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.master.MasterBid;
@@ -46,7 +46,7 @@ public final class TenderApi extends BaseServer {
 
     private CleanTenderDAO cleanDao;
 
-    private MasterTenderOpentenderDAO masterDao;
+    private MasterTenderApiDAO masterDao;
 
     private MasterBodyDAO masterBodyDao;
 
@@ -202,6 +202,21 @@ public final class TenderApi extends BaseServer {
             transactionUtils.commit();
             return result;
         }, new JsonTransformer());
+
+        get("/protected/master_tender/buyer_profile_matching", "application/json", (request, response) -> {
+            LocalDateTime timestamp = getDate(request.queryParams("timestamp"));
+            Integer page = getInteger(request.queryParams("page"));
+            String source = request.queryParams("source");
+
+            transactionUtils.begin();
+
+            List<MasterTender> result = masterDao.getModifiedAfterForBuyerProfileMatching(timestamp, source, page);
+
+            populateUtils.populateBodies(result);
+            transactionUtils.commit();
+
+            return result;
+        }, new JsonTransformer());
     }
 
     /**
@@ -248,7 +263,7 @@ public final class TenderApi extends BaseServer {
 
         cleanDao = DAOFactory.getDAOFactory().getCleanTenderDAO(NAME, VERSION);
 
-        masterDao = (MasterTenderOpentenderDAO) DAOFactory.getDAOFactory().getMasterTenderDAO(NAME, VERSION);
+        masterDao = (MasterTenderApiDAO) DAOFactory.getDAOFactory().getMasterTenderDAO(NAME, VERSION);
 
         masterBodyDao = DAOFactory.getDAOFactory().getMasterBodyDAO(NAME, VERSION);
 

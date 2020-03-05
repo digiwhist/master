@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>eu.datlab</groupId>
 	<artifactId>tender-api</artifactId>
-	<version>2.0.2</version>
+	<version>2.0.3</version>
 	<name>tender-api</name>
 	<packaging>jar</packaging>
 	<properties>
@@ -17,47 +17,47 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>2.9.6</version>
+			<version>2.10.0.pr3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
-			<version>2.9.6</version>
+			<version>2.10.0.pr3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
-			<version>2.9.6</version>
+			<version>2.10.0.pr3</version>
 		</dependency>
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.9.6</version>
+			<version>2.10.0.pr3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>
-			<version>20180813</version>
+			<version>20190722</version>
 		</dependency>
 
 		<!-- LOGGING -->
 		<dependency>
 			<groupId>biz.paluch.logging</groupId>
 			<artifactId>logstash-gelf</artifactId>
-			<version>1.12.0</version>
+			<version>1.13.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>eu.dl</groupId>
 			<artifactId>dl-core</artifactId>
-			<version>2.0.2</version>
+			<version>2.0.3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>eu.dl</groupId>
 			<artifactId>dl-dataaccess</artifactId>
-			<version>2.0.2</version>
+			<version>2.0.3</version>
 			<exclusions>
 				<exclusion>
 					<groupId>javax.persistence</groupId>
@@ -69,19 +69,19 @@
 		<dependency>
 			<groupId>eu.dl</groupId>
 			<artifactId>dl-dataaccess-tender</artifactId>
-			<version>2.0.2</version>
+			<version>2.0.3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>eu.dl</groupId>
 			<artifactId>dl-api</artifactId>
-			<version>2.0.2</version>
+			<version>2.0.3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>eu.datlab</groupId>
 			<artifactId>tender-dataaccess</artifactId>
-			<version>2.0.2</version>
+			<version>2.0.3</version>
 		</dependency>
 	</dependencies>
 
