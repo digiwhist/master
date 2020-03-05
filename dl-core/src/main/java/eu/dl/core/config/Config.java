@@ -3,6 +3,7 @@ package eu.dl.core.config;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -87,7 +88,7 @@ public enum Config {
     public <T extends Collection> T getParamValueAsList(final String paramName, final String delimiter, final Class<T> collectionClass) {
         return getParamValueAs(paramName, n -> {
             try {
-                T list = collectionClass.newInstance();
+                T list = collectionClass.getDeclaredConstructor().newInstance();
 
                 if (n != null) {
                     list.addAll(Arrays.asList(n.split(delimiter)).stream()
@@ -95,7 +96,7 @@ public enum Config {
                 }
 
                 return list;
-            } catch (IllegalAccessException | InstantiationException e) {
+            } catch (IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException e) {
                 throw new RuntimeException("Failure during parsing param as collection:", e);
             }
         });

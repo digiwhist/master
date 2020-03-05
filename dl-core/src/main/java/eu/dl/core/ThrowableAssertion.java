@@ -1,7 +1,7 @@
 package eu.dl.core;
 
 import org.hamcrest.CoreMatchers;
-import org.junit.Assert;
+import org.hamcrest.MatcherAssert;
 
 /**
  * Extension to easily assert exception in jUnit tests.
@@ -46,7 +46,7 @@ public final class ThrowableAssertion {
      */
     // CHECKSTYLE:OFF
     public ThrowableAssertion isInstanceOf(final Class<? extends Throwable> exceptionClass) {
-        Assert.assertThat(caught, CoreMatchers.isA((Class<Throwable>) exceptionClass));
+        MatcherAssert.assertThat(caught, CoreMatchers.isA((Class<Throwable>) exceptionClass));
         return this;
     }
     // CHECKSTYLE:ON
@@ -59,7 +59,7 @@ public final class ThrowableAssertion {
      * @return itself for fluent interface
      */
     public ThrowableAssertion hasMessage(final String expectedMessage) {
-        Assert.assertThat(caught.getMessage(), CoreMatchers.equalTo(expectedMessage));
+        MatcherAssert.assertThat(caught.getMessage(), CoreMatchers.equalTo(expectedMessage));
         return this;
     }
 
@@ -69,7 +69,7 @@ public final class ThrowableAssertion {
      * @return itself for fluent interface
      */
     public ThrowableAssertion hasNoCause() {
-        Assert.assertThat(caught.getCause(), CoreMatchers.nullValue());
+        MatcherAssert.assertThat(caught.getCause(), CoreMatchers.nullValue());
         return this;
     }
 
@@ -83,8 +83,8 @@ public final class ThrowableAssertion {
     // CHECKSTYLE:OFF
     public ThrowableAssertion hasCauseInstanceOf(final Class<? extends Throwable> exceptionClass) {
 
-        Assert.assertThat(caught.getCause(), CoreMatchers.notNullValue());
-        Assert.assertThat(caught.getCause(), CoreMatchers.isA((Class<Throwable>) exceptionClass));
+        MatcherAssert.assertThat(caught.getCause(), CoreMatchers.notNullValue());
+        MatcherAssert.assertThat(caught.getCause(), CoreMatchers.isA((Class<Throwable>) exceptionClass));
         return this;
     }
     // CHECKSTYLE:ON
