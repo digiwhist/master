@@ -1,5 +1,6 @@
 package eu.dl.worker.runner;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,7 +59,7 @@ final class Runner {
             // get the worker via reflection
             try {
                 @SuppressWarnings("rawtypes") final Class workerClass = Class.forName(workerName);
-                final Worker worker = (Worker) workerClass.newInstance();
+                final Worker worker = (Worker) workerClass.getDeclaredConstructor().newInstance(); // ???
                 worker.startWork();
                 logger.info("Starting worker {}", workerName);
             } catch (final ClassNotFoundException e) {
@@ -73,6 +74,8 @@ final class Runner {
                 logger.error("Unable to access the worker '{}' exception {}", workerName, e.toString());
                 e.printStackTrace();
                 System.exit(1);
+            } catch (NoSuchMethodException | InvocationTargetException e) {
+                e.printStackTrace();
             }
         }
     }

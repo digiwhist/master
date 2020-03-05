@@ -45,7 +45,7 @@ public class StringComparator<T> implements Comparator<T> {
                 return 1;
             }
 
-            return new Integer(value1.length()).compareTo(value2.length());
+            return Integer.compare(value1.length(), value2.length());
 
         } catch (Exception e) {
             e.printStackTrace();

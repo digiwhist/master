@@ -5,6 +5,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,7 @@ public final class URLUtils {
      */
     public static String getUrlParameter(final String url, final String parameterName) {
         try {
-            final List<NameValuePair> parameters = URLEncodedUtils.parse(new URI(url), "UTF-8");
+            final List<NameValuePair> parameters = URLEncodedUtils.parse(new URI(url), StandardCharsets.UTF_8);
             for (NameValuePair parameter : parameters) {
                 if (parameter.getName().equalsIgnoreCase(parameterName)) {
                     return parameter.getValue();
@@ -132,7 +133,7 @@ public final class URLUtils {
      */
     public static HashMap<String, Object> getAllUrlParameters(final String url) {
         try {
-            final List<NameValuePair> parameters = URLEncodedUtils.parse(new URI(url), "UTF-8");
+            final List<NameValuePair> parameters = URLEncodedUtils.parse(new URI(url), StandardCharsets.UTF_8);
             final HashMap<String, Object> allParameters = new HashMap<>();
             for (NameValuePair parameter : parameters) {
                 allParameters.put(parameter.getName(), parameter.getValue());

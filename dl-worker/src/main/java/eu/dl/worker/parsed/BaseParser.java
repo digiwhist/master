@@ -28,9 +28,9 @@ public abstract class BaseParser<V extends Raw, T extends Parsable> extends Base
 
     private static final String INCOMING_EXCHANGE_NAME = "raw";
 
-    private final RawDAO<V> rawDao = getRawDAO();
+    protected final RawDAO<V> rawDao = getRawDAO();
 
-    private final ParsedDAO<T> parsedDao = getParsedDAO();
+    protected final ParsedDAO<T> parsedDao = getParsedDAO();
 
     @Override
     public final void doWork(final Message message) {

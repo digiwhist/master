@@ -15,6 +15,8 @@ import eu.dl.worker.master.plugin.generic.converter.Converter;
 import eu.dl.worker.utils.ArrayUtils;
 
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -112,7 +114,13 @@ public final class UnionPlugin<T extends MasterablePart, V, U>
                             return true;
                         }
 
-                        return ArrayUtils.distinct(tt -> ((Payment) tt).getPaymentDate()).test(t);
+                        return ArrayUtils.distinct(tt -> {
+                            Payment p = (Payment) tt;
+                            LocalDate date = p.getPaymentDate();
+                            BigDecimal amount = p.getPrice() != null ? p.getPrice().getNetAmount() : null;
+
+                            return date + "|" + amount;
+                        }).test(t);
                     }).collect(Collectors.toList());
                 // BodyIds
                 } else if (fieldName.toLowerCase().equals("bodyids")) {

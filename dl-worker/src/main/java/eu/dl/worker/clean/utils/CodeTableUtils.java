@@ -2,7 +2,7 @@ package eu.dl.worker.clean.utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import static org.apache.commons.lang3.StringUtils.getLevenshteinDistance;
+import org.apache.commons.text.similarity.LevenshteinDistance;
 
 import java.util.HashMap;
 import java.util.List;
@@ -99,7 +99,8 @@ public final class CodeTableUtils {
                         return key;
                     } else {
                         // get Levenshtein distance between strings
-                        Integer lDistance = getLevenshteinDistance(inputForCleaning.toLowerCase(), value.toLowerCase());
+                        Integer lDistance = LevenshteinDistance.getDefaultInstance()
+                                .apply(inputForCleaning.toLowerCase(), value.toLowerCase());
                         if (lDistance < LEVENSHTEIN_THRESHOLD) {
                             // great, the distance is lower then threshold
 

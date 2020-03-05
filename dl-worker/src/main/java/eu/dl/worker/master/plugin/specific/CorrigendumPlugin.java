@@ -56,7 +56,7 @@ public final class CorrigendumPlugin extends BasePlugin implements MasterPlugin<
             return null;
         }
 
-        String section = c.getSectionNumber().replaceAll("^([IV]+(\\.\\d)+).*", "$1");
+        String section = c.getSectionNumber().replaceAll("^([IV]+(\\.\\d+)+).*", "$1");
 
         switch (section) {
             case "III.3.1":

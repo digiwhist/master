@@ -62,7 +62,7 @@ public final class CorrigendumUtils {
         if (corrigendum.getSectionNumber() != null && corrigendum.getReplacement() != null && corrigendum.getOriginalDate() == null
             && corrigendum.getReplacementDate() == null)
         {
-            String section = corrigendum.getSectionNumber().replaceAll("^([IV]+(\\.\\d)+).*", "$1");
+            String section = corrigendum.getSectionNumber().replaceAll("^([IV]+(\\.\\d+)+).*", "$1");
 
             switch (section) {
                 // -- DATETIME --

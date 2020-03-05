@@ -17,7 +17,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import eu.dl.core.UnrecoverableException;
-import java.io.IOException;
 
 /**
  * Represents default message with fluent interface. Method to string is able to
@@ -69,7 +68,7 @@ public class SimpleMessage implements Message {
     @Override
     public final void init(final String json) {
         try {
-            data = mapper.readValue(json, new TypeReference<Map<String, Object>>() {
+            data = (HashMap<String, Object>) mapper.readValue(json, new TypeReference<Map<String, Object>>() {
             });
         } catch (final Exception ex) {
             logger.error("Unable to create from json", ex);
@@ -103,9 +102,6 @@ public class SimpleMessage implements Message {
         } catch (JsonProcessingException ex) {
             logger.error("Unable to create json from {}", data.get(key), ex);
             throw new UnrecoverableException("Unable to create json from message property", ex);
-        } catch (IOException ex) {
-            logger.error("Unable to create {} instance from json {}", cls.getName(), json, ex);
-            throw new UnrecoverableException("Unable to create new instance from message property", ex);
         }
     }
 
@@ -122,9 +118,6 @@ public class SimpleMessage implements Message {
         } catch (JsonProcessingException ex) {
             logger.error("Unable to create json from {}", data.get(key), ex);
             throw new UnrecoverableException("Unable to create json from message property", ex);
-        } catch (IOException ex) {
-            logger.error("Unable to create list of {} instances from json {}", cls.getName(), json, ex);
-            throw new UnrecoverableException("Unable to create list from message property", ex);
         }
     }
 }

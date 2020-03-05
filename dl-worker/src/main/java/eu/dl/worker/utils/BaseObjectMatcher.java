@@ -7,15 +7,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Matches object T with list of objects U (pool) and returns best match.
+ * Matches object T with list of objects U (pool) and returns best match V.
  *
  * @param <T>
  *      left-side item class
  * @param <U>
  *      right-side item class
+ * @param <V>
+ *      output item class
  * @author Tomas Mrazek
  */
-public abstract class BaseObjectMatcher<T, U> {
+public abstract class BaseObjectMatcher<T, U, V> {
     protected final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     /**
@@ -31,12 +33,12 @@ public abstract class BaseObjectMatcher<T, U> {
      *      matched item
      * @return best match or null if no match was found
      */
-    public final U match(final T input) {
+    public final V match(final T input) {
         if (input == null) {
             return null;
         }
 
-        U bestMatch = preprocess(input);
+        V bestMatch = preprocess(input);
         if (bestMatch != null) {
             logger.info("Best match {} for {} found in preprocessing", bestMatch, input);
             return bestMatch;
@@ -79,7 +81,7 @@ public abstract class BaseObjectMatcher<T, U> {
      *      matched item
      * @return best match or null
      */
-    protected abstract U preprocess(T input);
+    protected abstract V preprocess(T input);
 
     /**
      * Postprocessing of the best match. This is the last step before commit and best match returning. So this function can be used
@@ -91,7 +93,7 @@ public abstract class BaseObjectMatcher<T, U> {
      *      best match for input
      * @return best match
      */
-    protected abstract U postprocess(T input, U bestMatch);
+    protected abstract V postprocess(T input, U bestMatch);
 
     /**
      * Returns list of items which are matched with input.
