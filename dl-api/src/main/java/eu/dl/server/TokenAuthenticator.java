@@ -11,7 +11,6 @@ import org.pac4j.core.credentials.Credentials;
 import org.pac4j.core.credentials.TokenCredentials;
 import org.pac4j.core.credentials.authenticator.Authenticator;
 import org.pac4j.core.exception.CredentialsException;
-import org.pac4j.core.exception.HttpAction;
 import org.pac4j.core.profile.CommonProfile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +27,7 @@ public class TokenAuthenticator implements Authenticator {
     private final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     @Override
-    public final void validate(final Credentials credentials, final WebContext context) throws HttpAction, CredentialsException {
+    public final void validate(final Credentials credentials, final WebContext context) throws CredentialsException {
         try {
             String token = ((TokenCredentials) credentials).getToken();
             if (token == null || token.isEmpty()) {

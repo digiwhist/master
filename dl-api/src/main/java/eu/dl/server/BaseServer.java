@@ -9,10 +9,12 @@ import eu.dl.server.exceptions.NotFoundException;
 import eu.dl.server.exceptions.ParameterFormattingException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.mindrot.jbcrypt.BCrypt;
 import org.pac4j.sparkjava.SecurityFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.Request;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -95,6 +97,10 @@ public abstract class BaseServer implements Server {
      * Register endpoint relevant for authentication.
      */
     private void registerSecurityEndpoints() {
+        before("*", (request, response) -> {
+            logger.info("Requested url {}", request.url());
+        });
+
         before("/protected/*", new SecurityFilter(serverConfig, "parameterClient"));
 
         post("/login", (request, response) -> {
@@ -202,6 +208,9 @@ public abstract class BaseServer implements Server {
     private void registerErrorHandling() {
         exception(ParameterFormattingException.class, (exception, request, response) -> {
             logger.debug("Execution of request {} ended with an exception {}", request.queryString(), exception);
+
+            logFailedRequest(request, exception);
+
             response.type("application/json");
             response.status(400);
             response.body(String.format("{\"message\":\"%s\"}", exception.getMessage()));
@@ -209,12 +218,17 @@ public abstract class BaseServer implements Server {
 
         exception(NotFoundException.class, (exception, request, response) -> {
             logger.debug("Execution of request {} ended with an exception {}", request.queryString(), exception);
+
+            logFailedRequest(request, exception);
+
             response.type("application/json");
             response.status(404);
             response.body("{\"message\":\"Sorry, but no such item found.\"}");
         });
 
         notFound((request, response) -> {
+            logger.error("Source on {} not found", request.url());
+
             response.type("application/json");
             response.status(404);
             return "{\"message\":\"Sorry, but we haven't found you are asking for.\"}";
@@ -222,6 +236,8 @@ public abstract class BaseServer implements Server {
 
         exception(NotAuthorizedException.class, (exception, request, response) -> {
             logger.debug("Execution of request {} ended with an exception {}", request.queryString(), exception);
+            logFailedRequest(request, exception);
+
             response.type("application/json");
             response.status(401);
             response.body("{\"message\":\"Sorry, but you are not authorized for this type of actions.\"}");
@@ -229,6 +245,8 @@ public abstract class BaseServer implements Server {
 
         exception(NotAuthenticatedException.class, (exception, request, response) -> {
             logger.debug("Execution of request {} ended with an exception {}", request.queryString(), exception);
+            logFailedRequest(request, exception);
+
             response.type("application/json");
             response.status(401);
             response.body(String.format("{\"message\":\"Sorry, but something went wrong with authentication. %s\"}",
@@ -237,10 +255,20 @@ public abstract class BaseServer implements Server {
 
         internalServerError((request, response) -> {
             logger.debug("Execution of request {} ended with an internal error", request.queryString());
+
             response.type("application/json");
             return "{\"message\":\"Something went wrong. A team of skilled unicorns has been called to duty. " +
                     "Please, keep calm and relax.\"}";
         });
+    }
 
+    /**
+     * @param r
+     *      request
+     * @param t
+     *      throwable
+     */
+    private void logFailedRequest(final Request r, final Throwable t) {
+        logger.error("Request on {} failed\n{}\n{}", r.url(), t.getMessage(), ExceptionUtils.getStackTrace(t));
     }
 }

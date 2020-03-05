@@ -13,6 +13,8 @@ import spark.http.matching.MatcherFilter;
 import spark.route.Routes;
 import spark.staticfiles.StaticFilesConfiguration;
 
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * This is runner for our workers. Should be used from CLI.
  *
@@ -85,7 +87,7 @@ final class ServerRunner {
         // get the worker via reflection
         try {
             @SuppressWarnings("rawtypes") final Class serverClass = Class.forName(serverName);
-            final Server server = (Server) serverClass.newInstance();
+            final Server server = (Server) serverClass.getDeclaredConstructor().newInstance();
             server.start();
             logger.info("Starting server {}", serverName);
         } catch (final ClassNotFoundException e) {
@@ -100,6 +102,10 @@ final class ServerRunner {
             logger.error("Unable to access the server '{}' exception {}", serverName, e.toString());
             e.printStackTrace();
             System.exit(1);
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
         }
     }
 
