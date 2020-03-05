@@ -3,6 +3,7 @@ package eu.datlab.worker.ro.parsed;
 import eu.datlab.dataaccess.dto.codetables.PublicationSources;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
+import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
@@ -120,7 +121,9 @@ public final class APATenderCsvCFTHandler {
                             .addPublication(new ParsedPublication()
                                     .setBuyerAssignedId(tender.get(BUYER_ASSIGNED_ID))
                                     .setPublicationDate(tender.get(PUBLICATION_DATE))
-                                    .setSourceFormType(isNew ? tender.get(FORM_TYPE) : "CONTRACT_NOTICE")
+                                    .setSourceFormType(isNew
+                                            ? tender.get(FORM_TYPE)
+                                            : String.valueOf(PublicationFormType.CONTRACT_NOTICE))
                                     .setIsIncluded(true)
                                     .setSource(PublicationSources.RO_APA))
                             .addFunding(new ParsedFunding()

@@ -5,11 +5,11 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -71,7 +71,8 @@ public final class EOJNTenderDownloader extends BaseDownloader<RawData> {
         // options.addArguments("--headless");
         // options.addArguments("--disable-gpu");
 
-        DesiredCapabilities cap = DesiredCapabilities.chrome();
+        DesiredCapabilities cap = new DesiredCapabilities();
+        cap.setBrowserName("chrome");
         cap.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true);
         cap.setCapability(ChromeOptions.CAPABILITY, options);
 
@@ -114,15 +115,15 @@ public final class EOJNTenderDownloader extends BaseDownloader<RawData> {
         driver.get(url);
 
         // wait until button is visible
-        WebDriverWait waitForDownloadButton = new WebDriverWait(driver, 30);
+        WebDriverWait waitForDownloadButton = new WebDriverWait(driver, Duration.ofSeconds(30));
         WebElement downloadButton = waitForDownloadButton.until(
                 ExpectedConditions.visibilityOfElementLocated(By.id(WHOLE_FORM_BUTTON_ID)));
 
         downloadButton.click();
 
         Wait<String> waitFowDownload = new FluentWait<String>(downloadFilepath)
-                .withTimeout(120, TimeUnit.SECONDS)
-                .pollingEvery(500, TimeUnit.MILLISECONDS);
+                .withTimeout(Duration.ofSeconds(120))
+                .pollingEvery(Duration.ofMillis(500));
 
         String fileContent = waitFowDownload.until(new Function<String, String>() {
             public String apply(final String downloadPath) {

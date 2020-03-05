@@ -7,11 +7,19 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
-import eu.dl.dataaccess.dto.parsed.*;
+import eu.dl.dataaccess.dto.parsed.ParsedAddress;
+import eu.dl.dataaccess.dto.parsed.ParsedAwardCriterion;
+import eu.dl.dataaccess.dto.parsed.ParsedBid;
+import eu.dl.dataaccess.dto.parsed.ParsedBody;
+import eu.dl.dataaccess.dto.parsed.ParsedCPV;
+import eu.dl.dataaccess.dto.parsed.ParsedFunding;
+import eu.dl.dataaccess.dto.parsed.ParsedPrice;
+import eu.dl.dataaccess.dto.parsed.ParsedPublication;
+import eu.dl.dataaccess.dto.parsed.ParsedTender;
+import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

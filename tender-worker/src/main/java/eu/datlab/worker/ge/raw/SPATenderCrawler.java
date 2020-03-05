@@ -18,7 +18,14 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.format.DateTimeFormatter;
@@ -43,7 +50,6 @@ import java.util.stream.Collectors;
 public final class SPATenderCrawler extends BaseDatlabIncrementalCrawler {
     private static final String VERSION = "6";
     private static final String FIRST_PAGE_URL = PublicationSources.GE_SPA + "/public?lang=en";
-    private static final boolean VALIDATE_CERTIFICATES = false;
     private static final int DOWNLOAD_TIMEOUT = 30000;
     /**
      * Start date for crawling.
@@ -360,6 +366,33 @@ public final class SPATenderCrawler extends BaseDatlabIncrementalCrawler {
     }
 
     /**
+     * Checks SSL certificates.
+     * @return socketFactory
+     */
+    private static SSLSocketFactory socketFactory() {
+        TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+
+            public void checkClientTrusted(final X509Certificate[] certs, final String authType) {
+            }
+
+            public void checkServerTrusted(final X509Certificate[] certs, final String authType) {
+            }
+        }};
+
+        try {
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            return sslContext.getSocketFactory();
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            throw new RuntimeException("Failed to create a SSL socket factory", e);
+        }
+    }
+
+
+    /**
      * Returns response content of given controller action as Jsoup Document.
      *
      * @param url
@@ -378,7 +411,7 @@ public final class SPATenderCrawler extends BaseDatlabIncrementalCrawler {
                     .header("User-Agent", getWebClient().getBrowserVersion().getUserAgent())
                     .cookies(cookies)
                     .timeout(DOWNLOAD_TIMEOUT)
-                    .validateTLSCertificates(VALIDATE_CERTIFICATES)
+                    .sslSocketFactory(socketFactory())
                     .post();
         } catch (IOException e) {
             logger.warn("Controller action {} fails with exception {}.", url, e);

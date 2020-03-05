@@ -7,7 +7,7 @@ import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
 import eu.dl.worker.parsed.utils.ParserUtils;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
-import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.jsoup.nodes.Element;
 
 import static eu.datlab.worker.nl.parsed.TenderNedTenderAncientFormUtils.ANCIENT_SECTION_B_FIRST_ELEMENT_OF_FIRST_LOT_SELECTOR;

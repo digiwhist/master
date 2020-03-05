@@ -88,7 +88,14 @@ public class SimapTenderParser extends BaseDatlabTenderParser {
      * @return String or null
      */
     public static String selectTextUnderHeader(final String selector, final Element element) {
-        return selectText("h3:containsOwn(" + selector + ") + dl > dd", element);
+        String text = null;
+        for(String partOfSelector: selector.split(", ")){
+            text = selectText("h3:containsOwn(" + partOfSelector + ") + dl > dd", element);
+            if(text != null){
+                return text;
+            }
+        }
+        return null;
     }
 
     /**
@@ -153,7 +160,7 @@ public class SimapTenderParser extends BaseDatlabTenderParser {
         final List<Node> siblings = sibling.parentNode().childNodes();
 
         if (siblings != null && siblings.size() > siblingIndex && siblings.get(siblingIndex) != null) {
-            return siblings.get(siblingIndex).toString();
+            return siblings.get(siblingIndex).toString().replace("&nbsp;", "");
         } else {
             return null;
         }

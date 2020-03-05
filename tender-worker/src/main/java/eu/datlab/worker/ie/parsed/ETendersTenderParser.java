@@ -66,9 +66,7 @@ public class ETendersTenderParser extends BaseDatlabTenderParser {
         final List<String> buyer = selectNodeTexts("td.tblcell:has(span.celllbl:containsOwn(Contracting authority))",
                 document);
         String buyerName = null;
-        String buyerStreet = null;
-        String buyerCity = null;
-        String buyerCountry = null;
+        String buyerAddress = null;
 
         // check for duplicate last values
         if (buyer != null && buyer.size() > 4 && buyer.get(buyer.size() - 1).equals(buyer.get(buyer.size() - 2))) {
@@ -77,9 +75,12 @@ public class ETendersTenderParser extends BaseDatlabTenderParser {
 
         if (buyer != null && buyer.size() > 3) {
             buyerName = buyer.get(0);
-            buyerStreet = buyer.get(buyer.size() - 3);
-            buyerCity = buyer.get(buyer.size() - 2);
-            buyerCountry = buyer.get(buyer.size() - 1);
+            if(buyer.size() > 4){
+                buyerAddress = buyer.get(buyer.size() - 4) + " ";
+            } else {
+                buyerAddress = "";
+            }
+            buyerAddress += buyer.get(buyer.size() - 3) + " " + buyer.get(buyer.size() - 2) + " " + buyer.get(buyer.size() - 1);
         }
 
         // additional buyer info might be in profile view, which is downloaded as attachment
@@ -87,9 +88,11 @@ public class ETendersTenderParser extends BaseDatlabTenderParser {
                 .get("additionalUrls");
         final Element profileView = Jsoup.parse(additionalUrls.values().iterator().next());
 
-        final String contactName = JsoupUtils.selectText("td.tblcell:contains(contact)", document);
-        final String bidDeadline = JsoupUtils.selectText("td.tblcell:contains(Response deadline)", document);
-        final String title = JsoupUtils.selectText("i.icon-sign-blank.icon-right-space.yellow-icon + span", document);
+        final String bidDeadline = JsoupUtils.selectOwnText("td.tblcell:contains(Response deadline)", document);
+        String title = JsoupUtils.selectText("td.tblcell:has(*:containsOwn(Short description))", document);
+        if(title != null && !title.isEmpty()) {
+            title = title.split(" Detailed description")[0].replace("Short description ", "");
+        }
 
         return Collections.singletonList(new ParsedTender()
                 .setDescription(description)
@@ -102,11 +105,15 @@ public class ETendersTenderParser extends BaseDatlabTenderParser {
                                         profileView))
                                 .setScope(BodyIdentifier.Scope.IE)
                                 .setType(BodyIdentifier.Type.ORGANIZATION_ID))
+                        .setBuyerType(JsoupUtils.selectOwnText("div.span10:contains(Type of the contracting authority) ul li",
+                                profileView))
+                        .setEmail(JsoupUtils.selectOwnText("div.span4 div.span12:has(i.icon-envelope-alt) a",
+                                profileView))
                         .setAddress(new ParsedAddress()
-                                .setCity(buyerCity)
-                                .setStreet(buyerStreet)
-                                .setCountry(buyerCountry))
-                        .setContactName(contactName))
+                                .setRawAddress(buyerAddress))
+                        .setContactName(JsoupUtils.selectOwnText("div.span4 div.span12:has(i.icon-user)", profileView))
+                        .addMainActivity(JsoupUtils.selectOwnText("div.span10:contains(Main activity) ul li",
+                                profileView)))
                 .setBidDeadline(bidDeadline)
                 .setCpvs(parseCPVs(document))
                 .setPublications(parsePublications(document, raw.getSourceUrl().toString(), raw.getMetaData()))
@@ -122,24 +129,39 @@ public class ETendersTenderParser extends BaseDatlabTenderParser {
      * @return List<ParsedTenderLot> or null
      */
     private List<ParsedTenderLot> parseLots(final Element document) {
-        final Elements lots = JsoupUtils.select("td.tblcell:contains(Awarded supplier) > table > tr", document);
-
         final List<ParsedTenderLot> parsedLots = new ArrayList<>();
-
-        // increment by 2, every first line is title, every second is bodyId
-        for (int position = 0; position < lots.size(); position = position + 2) {
-            parsedLots.add(new ParsedTenderLot()
-                    .addBid(new ParsedBid()
-                            .addBidder(new ParsedBody()
-                                    .setName(lots.get(position).text())
-                                    .addBodyId(!(position + 1 < lots.size()) ? null : new BodyIdentifier()
-                                            .setId(lots.get(position + 1).text())
-                                            .setScope(BodyIdentifier.Scope.IE)
-                                            .setType(BodyIdentifier.Type.ORGANIZATION_ID)
-                                    )
-                            )
-                    )
-            );
+        Elements lots = JsoupUtils.select("td.tblcell:contains(Awarded supplier) > table > tr", document);
+        if(lots != null && !lots.isEmpty()){
+            // increment by 2, every first line is title, every second is bodyId
+            for (int position = 0; position < lots.size(); position = position + 2) {
+                parsedLots.add(new ParsedTenderLot()
+                        .addBid(new ParsedBid()
+                                .addBidder(new ParsedBody()
+                                        .setName(lots.get(position).text())
+                                        .addBodyId(!(position + 1 < lots.size()) ? null : new BodyIdentifier()
+                                                .setId(lots.get(position + 1).text())
+                                                .setScope(BodyIdentifier.Scope.IE)
+                                                .setType(BodyIdentifier.Type.ORGANIZATION_ID)
+                                        )
+                                )
+                        )
+                );
+            }
+        } else {
+            lots = JsoupUtils.select("table:has(td.tblcollbl:containsOwn(Lots)) ~ div", document);
+            if(lots != null && !lots.isEmpty()){
+                for(int i = 0; i < lots.size(); i++){
+                    ParsedTenderLot parsedLot = new ParsedTenderLot();
+                    String title = JsoupUtils.selectText("span", lots.get(i));
+                    parsedLot.setTitle(title);
+                    parsedLot.setLotNumber(String.valueOf(i + 1));
+                    String address = JsoupUtils.selectText("td:contains(Tender mailing address)", lots.get(i));
+                    if(address != null && !address.isEmpty()){
+                        address = address.replace("Tender mailing address", "");
+                    }
+                    parsedLots.add(parsedLot);
+                }
+            }
         }
 
         return parsedLots.isEmpty() ? null : parsedLots;
@@ -185,11 +207,26 @@ public class ETendersTenderParser extends BaseDatlabTenderParser {
      * @return List<ParsedCPV> or null
      */
     private List<ParsedCPV> parseCPVs(final Element document) {
+        List<ParsedCPV> cpvs = null;
         final List<String> result = selectNodeTexts("td.tblcell:contains(CPV codes)", document);
+        final List<String> mainCpv = selectNodeTexts("td.tblcell:contains(Main CPV code)", document);
+        if(mainCpv != null && !mainCpv.isEmpty()){
+            cpvs = new ArrayList<>();
+            cpvs.add(new ParsedCPV().setCode(mainCpv.get(0)).setIsMain(String.valueOf(true)));
+        }
+        if(result != null && !result.isEmpty()){
+            if(cpvs == null){
+                cpvs = new ArrayList<>();
+            }
+            cpvs.addAll(result.stream().map(cpv -> new ParsedCPV()
+                    .setCode(cpv)
+                    .setIsMain(String.valueOf(false))).collect(Collectors.toList()));
+            if(mainCpv == null || mainCpv.isEmpty()){
+                cpvs.get(0).setIsMain(String.valueOf(true));
+            }
+        }
 
-        return result == null ? null : result.stream().map(cpv -> new ParsedCPV()
-                .setCode(cpv)
-                .setIsMain(String.valueOf(true))).collect(Collectors.toList());
+        return cpvs;
     }
 
     /**

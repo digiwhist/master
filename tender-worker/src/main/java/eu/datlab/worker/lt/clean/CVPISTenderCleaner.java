@@ -8,6 +8,7 @@ import eu.dl.dataaccess.dto.codetables.CountryCode;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.codetables.SelectionMethod;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
+import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
 import eu.dl.dataaccess.dto.parsed.ParsedBid;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedCPV;
@@ -29,14 +30,18 @@ import eu.dl.worker.clean.plugin.PricePlugin;
 import eu.dl.worker.clean.plugin.PublicationPlugin;
 import eu.dl.worker.clean.plugin.SelectionMethodPlugin;
 import eu.dl.worker.clean.plugin.TenderProcedureTypePlugin;
-import org.apache.commons.lang.StringUtils;
+import eu.dl.worker.clean.plugin.TenderSupplyTypePlugin;
+import org.apache.commons.lang3.StringUtils;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -45,7 +50,14 @@ import java.util.Map;
 public class CVPISTenderCleaner extends BaseDatlabTenderCleaner {
     private static final String VERSION = "1.0";
 
-    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance();
+    private static final Locale LOCALE = new Locale("lt");
+    private static final List<NumberFormat> NUMBER_FORMATS = new ArrayList<>();
+    static {
+        DecimalFormatSymbols formatSymbols = new DecimalFormatSymbols(LOCALE);
+        formatSymbols.setDecimalSeparator(',');
+        formatSymbols.setGroupingSeparator('.');
+        NUMBER_FORMATS.add(new DecimalFormat("#,##0.0##", formatSymbols));
+    }
     private static final List<DateTimeFormatter> DATE_FORMATTER = Arrays.asList(
             DateTimeFormatter.ofPattern("uuuu-MM-dd"),
             DateTimeFormatter.ofPattern("uuuu.MM.dd"));
@@ -61,22 +73,40 @@ public class CVPISTenderCleaner extends BaseDatlabTenderCleaner {
         lotMappings.put("countryMapping", countryMapping());
 
         pluginRegistry
-                .registerPlugin("integerPlugin", new IntegerPlugin(NUMBER_FORMAT))
+                .registerPlugin("integerPlugin", new IntegerPlugin(NUMBER_FORMATS))
                 .registerPlugin("procedureType",
                         new TenderProcedureTypePlugin(procedureTypeMapping(), Arrays.asList("5. Pagreitintų derybų")))
                 .registerPlugin("date", new DatePlugin(DATETIME_FORMATTER))
                 .registerPlugin("datetime", new DateTimePlugin(DATETIME_FORMATTER))
                 .registerPlugin("bodies", new BodyPlugin(bodyTypeMapping(), bodyActivityMapping(), countryMapping()))
-                .registerPlugin("lots", new LotPlugin(NUMBER_FORMAT, DATE_FORMATTER, lotMappings))
-                .registerPlugin("documents", new DocumentPlugin(NUMBER_FORMAT, DATE_FORMATTER, null))
-                .registerPlugin("prices", new PricePlugin(NUMBER_FORMAT))
-                .registerPlugin("fundings", new FundingsPlugin(NUMBER_FORMAT))
-                .registerPlugin("corrections", new CorrigendumPlugin(NUMBER_FORMAT, DATE_FORMATTER))
+                .registerPlugin("lots", new LotPlugin(NUMBER_FORMATS, DATE_FORMATTER, lotMappings))
+                .registerPlugin("documents", new DocumentPlugin(NUMBER_FORMATS, DATE_FORMATTER, null))
+                .registerPlugin("prices", new PricePlugin(NUMBER_FORMATS))
+                .registerPlugin("fundings", new FundingsPlugin(NUMBER_FORMATS))
+                .registerPlugin("corrections", new CorrigendumPlugin(NUMBER_FORMATS, DATE_FORMATTER))
                 .registerPlugin("address", new AddressPlugin())
                 .registerPlugin("selectionMethod", new SelectionMethodPlugin(selectionMethodMapping()))
-                .registerPlugin("awardCriteria", new AwardCriteriaPlugin(NUMBER_FORMAT))
+                .registerPlugin("awardCriteria", new AwardCriteriaPlugin(NUMBER_FORMATS))
                 .registerPlugin("publications",
-                        new PublicationPlugin(NUMBER_FORMAT, DATE_FORMATTER, formTypeMapping()));
+                        new PublicationPlugin(NUMBER_FORMATS, DATE_FORMATTER, formTypeMapping()))
+                .registerPlugin("supplyType", new TenderSupplyTypePlugin(supplyTypeMapping()));
+    }
+
+    /**
+     * @return form supply type mapping
+     */
+    private Map<Enum, List<String>> supplyTypeMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(TenderSupplyType.SUPPLIES, Arrays.asList("Pirkimas", "Nuoma",
+                "Lizingas", "Pirkimas išsimokėtinai", "Mišrus"));
+        mapping.put(TenderSupplyType.WORKS, Arrays.asList("Atlikti darbus", "Atlikti ir suprojektuoti darbus",
+                "Bet kokiomis priemonėmis atlikti darbus, atitinkankčius perkančiosios organizacijos " +
+                        "nustatytus reikalavimus"));
+        mapping.put(TenderSupplyType.SERVICES, Arrays.asList("SERVICES"));
+        // services should be default value
+
+        return mapping;
     }
 
     /**
@@ -85,10 +115,18 @@ public class CVPISTenderCleaner extends BaseDatlabTenderCleaner {
     private Map<Enum, List<String>> formTypeMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
 
-        mapping.put(PublicationFormType.CONTRACT_NOTICE, Arrays.asList("APIE PIRKIMA"));
-        mapping.put(PublicationFormType.CONTRACT_UPDATE, Arrays.asList("PATAISOS"));
-        mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("APIE SUTARTIES SUDARYMĄ"));
-        mapping.put(PublicationFormType.PRIOR_INFORMATION_NOTICE, Arrays.asList("ŠANKSTINIS INFORMACINIS SKELBIMAS"));
+        mapping.put(PublicationFormType.CONTRACT_NOTICE, Arrays.asList("SKELBIMAS APIE SUPAPRASTINTÄ„ PIRKIMÄ„",
+                "SKELBIMAS APIE SUPAPRASTINTÄ„ MAĹ˝OS VERTÄ–S PIRKIMÄ„", "SKELBIMAS APIE PIRKIMÄ„", "SKELBIMAS APIE PIRKIMďż˝",
+                "SKELBIMAS APIE PIRKIMÄ„ - KOMUNALINÄ–S PASLAUGOS", "SKELBIMAS APIE PIRKIMÄ„ GYNYBOS IR SAUGUMO SRITYJE",
+                "SKELBIMAS APIE SUPAPRASTINTĄ MAŽOS VERTĖS PIRKIMĄ", "SKELBIMAS APIE SUPAPRASTINTĄ PIRKIMĄ"));
+        mapping.put(PublicationFormType.CONTRACT_UPDATE, Arrays.asList("SKELBIMAS DÄ–L PAPILDOMOS INFORMACIJOS ARBA PATAISOS",
+                "SKELBIMAS DĖL PAPILDOMOS INFORMACIJOS ARBA PATAISOS",
+                "SKELBIMAS DÄ–L PAPILDOMOS INFORMACIJOS ARBA PATAISOS", // ?
+                "SKELBIMAS, SUSIJĘS SU PAPILDOMA INFORMACIJA, INFORMACIJA APIE NEUŽBAIGTĄ PROCEDŪRĄ ARBA PATAISA")); // ?
+        mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("Skelbimas apie sutarties sudarymÄ…",
+                "SKELBIMAS APIE SUTARTIES SUDARYMÄ„- KOMUNALINÄ–S PASLAUGOS", "At-8"));
+        mapping.put(PublicationFormType.PRIOR_INFORMATION_NOTICE, Arrays.asList("ŠANKSTINIS INFORMACINIS SKELBIMAS",
+                "IĹ ANKSTINIS INFORMACINIS SKELBIMAS", "IŠANKSTINIS INFORMACINIS SKELBIMAS"));
 
         return mapping;
     }
@@ -237,13 +275,14 @@ public class CVPISTenderCleaner extends BaseDatlabTenderCleaner {
 
         // cpvs
         if (parsedItem.getCpvs() != null && !parsedItem.getCpvs().isEmpty() && parsedItem.getCpvs().get(0).getCode()
-        != null) {
+                != null && parsedItem.getCpvs().get(0).getCode().contains(",")) {
             final String[] cpvs = parsedItem.getCpvs().get(0).getCode().split(",");
 
             final List<ParsedCPV> parsedCPVs = new ArrayList<>();
-
+            boolean isMain = true;
             for (String cpv : cpvs) {
-                parsedCPVs.add(parsedItem.getCpvs().get(0).setCode(cpv));
+                parsedCPVs.add(parsedItem.getCpvs().get(0).setCode(cpv).setIsMain(Boolean.toString(isMain)));
+                isMain = false;
             }
 
             parsedItem.setCpvs(parsedCPVs);
@@ -296,7 +335,6 @@ public class CVPISTenderCleaner extends BaseDatlabTenderCleaner {
      * Clean body.
      *
      * @param body to clean
-     *
      * @return ParsedBody
      */
     private static ParsedBody cleanBody(final ParsedBody body) {
@@ -336,7 +374,6 @@ public class CVPISTenderCleaner extends BaseDatlabTenderCleaner {
      * Clean price.
      *
      * @param parsedPrice price to clean
-     *
      * @return ParsedPrice
      */
     private static ParsedPrice cleanPrice(final ParsedPrice parsedPrice) {
@@ -367,7 +404,6 @@ public class CVPISTenderCleaner extends BaseDatlabTenderCleaner {
      * Check weather string contains text parsable to boolean.
      *
      * @param string string to clean
-     *
      * @return String or null
      */
     private static String parseToBoolean(final String string) {

@@ -13,6 +13,8 @@ import org.jsoup.nodes.Element;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getFirstValueFromElement;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getValuesFromElement;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.parsePrice;
+import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.removeFakeLots;
+import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.parseLotNumber;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -91,17 +93,6 @@ final class UvoTenderNewOzHandler {
     }
 
     /**
-     * Parse lot number from lot.
-     *
-     * @param lot lot to parse from
-     * @return String or null
-     */
-    private static String parseLotNumber(final Element lot) {
-        final String lotNumber = getFirstValueFromElement(lot, "span:containsOwn(Časť:)");
-        return lotNumber == null ? null : lotNumber.replace("Časť:", "");
-    }
-
-    /**
      * Create element for each lot in OZ form.
      *
      * @param document
@@ -121,7 +112,8 @@ final class UvoTenderNewOzHandler {
             return null;
         }
 
-        List<Element> lotFirstLines = root.select("span:containsOwn(Časť:)");
+        removeFakeLots(document);
+        List<Element> lotFirstLines = root.select("span:matchesOwn(Časť: ?\\d+)");
 
         if (lotFirstLines == null || lotFirstLines.isEmpty()) {
             return Arrays.asList(root);

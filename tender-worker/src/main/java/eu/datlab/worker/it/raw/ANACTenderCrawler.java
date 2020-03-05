@@ -1,6 +1,9 @@
 package eu.datlab.worker.it.raw;
 
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,6 +18,11 @@ import eu.dl.dataaccess.dao.TransactionUtils;
 import eu.dl.worker.Message;
 import eu.dl.worker.raw.BaseCrawler;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 /**
  * Searches http://dati.anticorruzione.it for tender xml url.
  *
@@ -25,7 +33,6 @@ public final class ANACTenderCrawler extends BaseCrawler {
 
     private static final int DOWNLOAD_TIMEOUT = 30000;
 
-    private static final boolean VALIDATE_CERTIFICATES = false;
 
     private static final boolean IGNORE_CONTENT_TYPE = true;
     /**
@@ -113,6 +120,32 @@ public final class ANACTenderCrawler extends BaseCrawler {
     }
 
     /**
+     * Checks SSL certificates.
+     * @return socketFactory
+     */
+    private static SSLSocketFactory socketFactory() {
+        TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+
+            public void checkClientTrusted(final X509Certificate[] certs, final String authType) {
+            }
+
+            public void checkServerTrusted(final X509Certificate[] certs, final String authType) {
+            }
+        }};
+
+        try {
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            return sslContext.getSocketFactory();
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            throw new RuntimeException("Failed to create a SSL socket factory", e);
+        }
+    }
+
+    /**
      * Returns json tender list for given year.
      *
      * @param year
@@ -126,7 +159,7 @@ public final class ANACTenderCrawler extends BaseCrawler {
         try {
             return Jsoup.connect(url)
                     .timeout(DOWNLOAD_TIMEOUT)
-                    .validateTLSCertificates(VALIDATE_CERTIFICATES)
+                    .sslSocketFactory(socketFactory())
                     .ignoreContentType(IGNORE_CONTENT_TYPE)
                     .maxBodySize(MAX_BODY_SIZE)
                     .execute()

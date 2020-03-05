@@ -6,6 +6,7 @@ import eu.dl.dataaccess.dto.clean.CleanTenderLot;
 import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
 import eu.dl.dataaccess.dto.codetables.BuyerType;
 import eu.dl.dataaccess.dto.codetables.CountryCode;
+import eu.dl.dataaccess.dto.codetables.NpwpReason;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.codetables.SelectionMethod;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
@@ -25,6 +26,7 @@ import eu.dl.worker.clean.plugin.CorrigendumPlugin;
 import eu.dl.worker.clean.plugin.DocumentPlugin;
 import eu.dl.worker.clean.plugin.FundingsPlugin;
 import eu.dl.worker.clean.plugin.IntegerPlugin;
+import eu.dl.worker.clean.plugin.NpwpReasonPlugin;
 import eu.dl.worker.clean.plugin.SelectionMethodPlugin;
 import eu.dl.worker.clean.plugin.TenderSupplyTypePlugin;
 
@@ -187,7 +189,28 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
             .registerPlugin("address", new AddressPlugin())
             .registerPlugin("selectionMethod", new SelectionMethodPlugin(selectionMethodMapping()))
             .registerPlugin("awardCriteria", new AwardCriteriaPlugin(NUMBER_FORMAT))
-            .registerPlugin("publications", new UvoTenderPublicationPlugin(NUMBER_FORMAT, DATE_FORMATTERS, formTypeMapping()));
+            .registerPlugin("publications", new UvoTenderPublicationPlugin(NUMBER_FORMAT, DATE_FORMATTERS, formTypeMapping()))
+            .registerPlugin("npwpReason", new NpwpReasonPlugin(npwpMapping()));
+    }
+
+    /**
+     * @return selection Method mapping for cleaning process
+     */
+    private Map<Enum, List<String>> npwpMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(NpwpReason.RESEARCH_PROCUREMENT, Arrays.asList("b)"));
+        mapping.put(NpwpReason.AUTHORSHIP_RIGHTS_EXCLUSIVITY, Arrays.asList("c3)"));
+        mapping.put(NpwpReason.ADVANTAGEOUS_CONDITIONS, Arrays.asList("i)"));
+        mapping.put(NpwpReason.TECHNICAL_EXCLUSIVITY, Arrays.asList("c1)"));
+        mapping.put(NpwpReason.NO_VALID_OFFERS_IN_PRECEEDING_PROCUREMENT, Arrays.asList("a)", "a1)", "a2)"));
+        mapping.put(NpwpReason.EMERGENCY, Arrays.asList("d)"));
+        mapping.put(NpwpReason.COMMODITY_MARKET, Arrays.asList("h)"));
+        mapping.put(NpwpReason.ADDITIONAL_WORK, Arrays.asList("e)", "f)", "e2)"));
+        mapping.put(NpwpReason.PROPOSAL_CONTEST_FOLLOW_UP, Arrays.asList("g)"));
+        mapping.put(NpwpReason.ART_EXCLUSIVITY, Arrays.asList("c2)"));
+
+        return mapping;
     }
 
     /**
@@ -394,8 +417,9 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
      */
     private Map<Enum, List<String>> formTypeMapping() {
         final Map<Enum, List<String>> mapping = new HashMap<>();
+        mapping.put(PublicationFormType.PRIOR_INFORMATION_NOTICE, Arrays.asList("POT", "POS", "POP", "POX"));
         mapping.put(PublicationFormType.CONTRACT_NOTICE, Arrays.asList(
-                "MDP", "MDS", "MDT", "MNA", "MRP", "MRS", "MRT", "MSP", "MSS", "MST", "MUP", "MUS", "MUT", "POT",
+                "MDP", "MDS", "MDT", "MNA", "MRP", "MRS", "MRT", "MSP", "MSS", "MST", "MUP", "MUS", "MUT",
                 "WYP", "WYS", "WYT"));
         mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList(
                 "IPP", "IPS", "IPT", "VBP", "VBS", "VBT", "VDP", "VDS", "VDT", "VEP", "VKP", "VKS", "VNA", "VNS",
@@ -407,7 +431,7 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
                 "VZP", "VZS", "VZT"));
         mapping.put(PublicationFormType.OTHER, Arrays.asList(
                 "DEP", "DES", "DET", "IBP", "IBS", "IBT", "IDS", "IDT", "IDP", "INO", "IZP",
-                "IZS", "IZT", "KOP", "KOS", "KPS", "KSP", "KSS", "KST", "NSS", "PKT", "POP", "POS", "POX", "PRP",
+                "IZS", "IZT", "KOP", "KOS", "KPS", "KSP", "KSS", "KST", "NSS", "PKT", "PRP",
                 "PRS", "PRT"));
         mapping.put(PublicationFormType.CONTRACT_UPDATE, Arrays.asList(PublicationFormType.CONTRACT_UPDATE.name()));
         mapping.put(PublicationFormType.CONTRACT_AMENDMENT, Arrays.asList("DOP", "DOS", "DOT"));

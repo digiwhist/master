@@ -10,7 +10,7 @@ import eu.dl.worker.utils.jsoup.JsoupUtils;
 import static eu.datlab.worker.si.parsed.BaseENarocanjeFormInTableHandler.parsePrice;
 
 import java.util.Arrays;
-import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.TextNode;
 

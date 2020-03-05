@@ -8,6 +8,7 @@ import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.codetables.SelectionMethod;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
 import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
+import eu.dl.dataaccess.dto.codetables.BuyerActivityType;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.clean.plugin.AddressPlugin;
 import eu.dl.worker.clean.plugin.BodyPlugin;
@@ -20,6 +21,7 @@ import eu.dl.worker.clean.plugin.PublicationPlugin;
 import eu.dl.worker.clean.plugin.SelectionMethodPlugin;
 import eu.dl.worker.clean.plugin.TenderProcedureTypePlugin;
 import eu.dl.worker.clean.plugin.TenderSupplyTypePlugin;
+import eu.dl.worker.clean.plugin.AwardCriteriaPlugin;
 
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
@@ -72,17 +74,18 @@ public class DOFFINTenderCleaner extends BaseDatlabTenderCleaner {
         lotMappings.put("selectionMethod", selectionMethodMapping());
 
         pluginRegistry
-            .registerPlugin("integerPlugin", new IntegerPlugin(NUMBER_FORMAT))
-            .registerPlugin("date", new DatePlugin<>(DATE_FORMATTERS))
-            .registerPlugin("datetime", new DateTimePlugin<>(DATETIME_FORMATTERS))
-            .registerPlugin("publications", new PublicationPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, formTypeMapping()))
-            .registerPlugin("lots", new LotPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, lotMappings))
-            .registerPlugin("prices", new PricePlugin(NUMBER_FORMAT))
-            .registerPlugin("address", new AddressPlugin())
-            .registerPlugin("bodies", new BodyPlugin(bodyTypeMapping(), null, countryMapping()))
-            .registerPlugin("supplyType", new TenderSupplyTypePlugin(supplyTypeMapping()))
-            .registerPlugin("selectionMethod", new SelectionMethodPlugin(selectionMethodMapping()))
-            .registerPlugin("procedureType", new TenderProcedureTypePlugin(procedureTypeMapping()));
+                .registerPlugin("integerPlugin", new IntegerPlugin(NUMBER_FORMAT))
+                .registerPlugin("date", new DatePlugin<>(DATE_FORMATTERS))
+                .registerPlugin("datetime", new DateTimePlugin<>(DATETIME_FORMATTERS))
+                .registerPlugin("publications", new PublicationPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, formTypeMapping()))
+                .registerPlugin("lots", new LotPlugin(NUMBER_FORMAT, DATETIME_FORMATTERS, lotMappings))
+                .registerPlugin("prices", new PricePlugin(NUMBER_FORMAT))
+                .registerPlugin("address", new AddressPlugin())
+                .registerPlugin("bodies", new BodyPlugin(bodyTypeMapping(), mainActivitiesMapping(), countryMapping()))
+                .registerPlugin("supplyType", new TenderSupplyTypePlugin(supplyTypeMapping()))
+                .registerPlugin("selectionMethod", new SelectionMethodPlugin(selectionMethodMapping()))
+                .registerPlugin("procedureType", new TenderProcedureTypePlugin(procedureTypeMapping()))
+                .registerPlugin("awardCriteria", new AwardCriteriaPlugin(NUMBER_FORMAT));
     }
 
     /**
@@ -122,9 +125,20 @@ public class DOFFINTenderCleaner extends BaseDatlabTenderCleaner {
         mapping.put(SelectionMethod.LOWEST_PRICE, Arrays.asList(SelectionMethod.LOWEST_PRICE.name()));
         mapping.put(SelectionMethod.MEAT, Arrays.asList(SelectionMethod.MEAT.name(),
             "MOST_ECONOMICALLY_ADVANTAGEOUS_TENDER", "MOST_ECONOMICALLY_ADVANTAGEOUS_TENDER_SHORT"));
-        
+
         return mapping;
     }
+
+    /**
+     * @return main activities mapping.
+     */
+    private Map<Enum, List<String>> mainActivitiesMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(BuyerActivityType.GENERAL_PUBLIC_SERVICES, Arrays.asList("GENERAL_PUBLIC_SERVICES"));
+        return mapping;
+    }
+
 
     /**
      * @return form type mapping.

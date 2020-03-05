@@ -7,7 +7,10 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Utils for UVO tender parsed.
@@ -15,6 +18,8 @@ import java.util.List;
  * @author Michal Riha
  */
 public final class UvoTenderParserUtils {
+
+    static final Pattern NPWP_REASONS_REGEX = Pattern.compile("[a-i]\\d?\\)");
 
     /**
      * Suppress default constructor for noninstantiability.
@@ -460,5 +465,72 @@ public final class UvoTenderParserUtils {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Parses npwp reasons from input string.
+     *
+     * @param input
+     *      input string to be searched
+     * @return list of reasons
+     */
+    public static List<String> getNpwpReasons(final String input) {
+        List<String> reasons = new ArrayList<>();
+
+        Matcher m = NPWP_REASONS_REGEX.matcher(input);
+        while (m.find()) {
+            reasons.add(m.group());
+        }
+
+        return reasons;
+    }
+
+    /**
+     * Removes lot subtitles from subsection II.2.2). In this section subtitle 'Časť:' doesn't mean lot.
+     *
+     * @param document
+     *      document
+     */
+    public static void removeFakeLots(final Element document) {
+        List<String> selectors = Arrays.asList("div.subtitle:contains(II.2.2)", "div.subtitle:contains(V.2.3)",
+            "div.subtitle:contains(II.2.5)", "div.subtitle:contains(II.2.1)");
+
+        for (String selector : selectors) {
+            Element section = document.selectFirst(selector);
+            if (section == null) {
+                continue;
+            }
+
+            int sectionStart = section.siblingIndex();
+
+            Element endElement = document.selectFirst(selector + " ~ div.subtitle:matches([IVX]+\\.\\d)");
+            int sectionEnd = endElement != null ? endElement.siblingIndex() : section.lastElementSibling().siblingIndex();
+
+            Elements lots = document.select("span:containsOwn(Časť:), span:containsOwn(Časť č.:)");
+            for (Element l : lots) {
+                if (sectionEnd != -1 && l.siblingIndex() >= sectionEnd) {
+                    break;
+                }
+
+                if (l.siblingIndex() > sectionStart || l.siblingIndex() < sectionEnd) {
+                    l.text("");
+                }
+            }
+        }
+    }
+
+    /**
+     * Parse lot number or lot.
+     *
+     * @param lot lot to parse from
+     * @return String or null
+     */
+    public static String parseLotNumber(final Element lot) {
+        String lotNumber = getFirstValueFromElement(lot, "span:matchesOwn(Časť: ?\\d+)");
+        if (lotNumber == null) {
+            lotNumber = getFirstValueFromElement(lot, "div:matchesOwn(Časť č.: ?\\d+)");
+        }
+
+        return lotNumber == null ? null : lotNumber.replace("Časť:", "").replace("Časť č.:", "").trim();
     }
 }

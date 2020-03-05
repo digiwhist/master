@@ -3,6 +3,7 @@ package eu.datlab.worker.ro.parsed;
 import eu.datlab.dataaccess.dto.codetables.PublicationSources;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
+import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedBid;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
@@ -131,7 +132,7 @@ public final class APATenderCsvDirectContractHandler {
                                     .setBuyerAssignedId(tender.get(NUMAR_ANUNT))
                                     .setPublicationDate(tender.get(DATA_ANUNT))
                                     .setIsIncluded(true)
-                                    .setFormType("CONTRACT_AWARD")
+                                    .setSourceFormType(String.valueOf(PublicationFormType.CONTRACT_AWARD))
                                     .setSource(PublicationSources.RO_APA))
                             .setTitle(tender.get(TITLU_CONTRACT))
                             .addCpv(new ParsedCPV()

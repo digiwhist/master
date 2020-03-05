@@ -46,7 +46,7 @@ final class UvoTenderCorrectionHandler {
 
     private static final List<Pattern> BLACK_LIST_REGEX = Arrays.asList(
         Pattern.compile("OPRAVA DÁTUMU"),
-        Pattern.compile("Miesto, kde má byť dátum upravený:")
+        Pattern.compile("Miesto, kde má byť dátum upravený:$")
     );
 
     /**
@@ -105,6 +105,8 @@ final class UvoTenderCorrectionHandler {
                 final List<String> strings = nodes.stream()
                     .map(n -> n.text().trim())
                     .filter(n -> !n.isEmpty() && BLACK_LIST_REGEX.stream().noneMatch(r -> r.matcher(n).find()))
+                    .map(n -> n.replace("Miesto, kde má byť dátum upravený: ", ""))
+                    .map(n -> n.replace("Oddiel: ", ""))
                     .collect(Collectors.toList());
 
                 ParsedCorrigendum correction = null;

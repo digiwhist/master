@@ -6,7 +6,7 @@ import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.clean.plugin.CodeTablePlugin;
 import eu.dl.worker.clean.utils.CodeTableUtils;
-import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang3.BooleanUtils;
 
 import java.util.List;
 import java.util.Map;

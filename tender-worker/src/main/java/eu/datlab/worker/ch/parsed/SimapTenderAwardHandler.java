@@ -9,6 +9,7 @@ import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTenderLot;
+import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -71,22 +72,98 @@ public final class SimapTenderAwardHandler {
      * @return ParsedTenderLot
      */
     private static ParsedTenderLot parseLot(final Document document) {
+        List<ParsedBody> bidders = new ArrayList<>();
+        String name = parseAnythingRightUnder(
+                "h4:containsOwn(Liste des adjudicataires) + dl span:containsOwn" +
+                        "(Nom)", document);
+        String address = parseAnythingRightUnder(
+                "h4:containsOwn(Liste des adjudicataires) + dl " +
+                        "span:containsOwn(Nom)", document);
+        String price = parseAnythingRightUnder("h4:containsOwn(Liste des adjudicataires) + dl " +
+                "span:containsOwn(Prix)", document);
+        String vat = null;
+        ParsedPrice parsedPrice = new ParsedPrice().setNetAmount(price);
+        if(name != null && address != null){
+            bidders.add(new ParsedBody()
+                    .setName(name)
+                    .setAddress(new ParsedAddress().setRawAddress(address)));
+        } else {
+            Element biddersElem = JsoupUtils.selectFirst("h4:containsOwn(Liste der Anbieter)", document);
+            if(biddersElem == null){
+                return null;
+            }
+            biddersElem = biddersElem.parent().selectFirst("dl");
+            for(Element bidderElem: biddersElem.select("dd")){
+                String info = bidderElem.text();
+                String nameDelim = "Name: ", priceDelim = "Preis:";
+                if(!info.contains(nameDelim)){
+                    nameDelim = "";
+                }
+                if(!info.contains(priceDelim)){
+                    priceDelim = "Preisspanne der eingegangenen Angebote:";
+                }
+                if(nameDelim.isEmpty()){
+                    name = info.split("Preis:")[0].split(",")[0];
+                } else {
+                    name = info.split("Preis:")[0].split(nameDelim)[1].split(",")[0];
+                }
+                address = info.split(priceDelim)[0].split(nameDelim)[1].replace(name + ",", "");
+                if(info.contains(priceDelim)) {
+                    price = info.split(priceDelim)[1].split("Bemerkung")[0];
+                    if(priceDelim.equals("Preis:")){
+                        for(String part: price.split(" ")){
+                            if(part.isEmpty()){
+                                continue;
+                            } else if(!part.isEmpty() && part.equals(part.toUpperCase()) && parsedPrice.getCurrency() == null){
+                                parsedPrice.setCurrency(part);
+                            } else if(Character.isDigit(part.charAt(0))){
+                                parsedPrice.setNetAmount(part);
+                            } else if(part.equals("ohne")){
+                                vat = "false";
+                            } else if(part.contains("MWSt") && vat == null){
+                                vat = "true";
+                            }
+                        }
+                        parsedPrice.setVat(vat);
+                    } else {
+                        // parse interval
+                        boolean from = false;
+                        for(String part: price.split(" ")){
+                            if(part.isEmpty()){
+                                continue;
+                            } else if(part.equals(part.toUpperCase()) && parsedPrice.getCurrency() == null){
+                                parsedPrice.setCurrency(part);
+                            } else if(Character.isDigit(part.charAt(0))){
+                                if(!from){
+                                    parsedPrice.setMinNetAmount(part);
+                                } else {
+                                    parsedPrice.setMaxNetAmount(part);
+                                }
+                            } else if(part.equals("von")){
+                                from = false;
+                            } else if(part.contains("bis")){
+                                from = true;
+                            }
+                        }
+                    }
+
+                }
+                bidders.add(new ParsedBody().setName(name).setAddress(new ParsedAddress().setRawAddress(address)));
+            }
+
+        }
+
+        if(bidders.isEmpty()){
+            bidders = null;
+        }
         return new ParsedTenderLot()
-                .setBidsCount(selectTextUnderHeader("4.3", document))
+                .setBidsCount("1")
                 .addBid(new ParsedBid()
                         .setIsWinning(String.valueOf(true))
-                        .addBidder(new ParsedBody()
-                                .setName(parseAnythingRightUnder(
-                                        "h4:containsOwn(Liste des adjudicataires) + dl span:containsOwn" +
-                                                "(Nom)", document))
-                                .setAddress(new ParsedAddress()
-                                        .setRawAddress(parseAnythingRightUnder(
-                                                "h4:containsOwn(Liste des adjudicataires) + dl " +
-                                                        "span:containsOwn(Nom)", document))))
-                        .setPrice(new ParsedPrice()
-                                .setNetAmount(parseAnythingRightUnder("h4:containsOwn(Liste des adjudicataires) + dl " +
-                                        "span:containsOwn(Prix)", document))));
+                        .setBidders(bidders)
+                        .setPrice(parsedPrice));
     }
+
 
     /**
      * Parse additional publications.
@@ -135,8 +212,17 @@ public final class SimapTenderAwardHandler {
         final List<ParsedCPV> parsedCpvs = new ArrayList<>();
 
         for (Element cpv : cpvs) {
-            parsedCpvs.add(new ParsedCPV()
-                    .setCode(cpv.text()));
+            String code = cpv.text();
+            if(code != null && !code.isEmpty()){
+                for(String part: code.split(" ")){
+                    if(!part.isEmpty() && part.matches("[0-9]*")){
+                        code = part;
+                    }
+                }
+                parsedCpvs.add(new ParsedCPV()
+                        .setCode(code)
+                        .setIsMain(String.valueOf(parsedCpvs.isEmpty())));
+            }
         }
 
         return parsedCpvs;

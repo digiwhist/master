@@ -11,16 +11,24 @@ import eu.dl.worker.clean.plugin.AddressPlugin;
 import eu.dl.worker.clean.plugin.AwardCriteriaPlugin;
 import eu.dl.worker.clean.plugin.BodyPlugin;
 import eu.dl.worker.clean.plugin.CpvPlugin;
+import eu.dl.worker.clean.plugin.DatePlugin;
+import eu.dl.worker.clean.plugin.DateTimePlugin;
 import eu.dl.worker.clean.plugin.DocumentPlugin;
 import eu.dl.worker.clean.plugin.LotPlugin;
 import eu.dl.worker.clean.plugin.PublicationPlugin;
 import eu.dl.worker.clean.plugin.TenderSupplyTypePlugin;
+import org.apache.commons.lang3.StringUtils;
 
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.time.temporal.ChronoField;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -29,14 +37,35 @@ import java.util.Map;
 public class SimapTenderCleaner extends BaseDatlabTenderCleaner {
     private static final String VERSION = "1";
 
-    private static final NumberFormat NUMBER_FORMAT = NumberFormat.getInstance();
+    private static final NumberFormat NUMBER_FORMAT;
+
+    private static final Locale LOCALE = new Locale("ch");
+    static {
+        DecimalFormatSymbols formatSymbols = new DecimalFormatSymbols(LOCALE);
+        formatSymbols.setDecimalSeparator('.');
+        formatSymbols.setGroupingSeparator('\'');
+        NUMBER_FORMAT = new DecimalFormat("#,##0.###", formatSymbols);
+    }
 
     private static final List<DateTimeFormatter> DATE_FORMATTERS = Arrays.asList(
+            new DateTimeFormatterBuilder()
+                    .appendPattern("dd.MM.uuuu[ HH:mm[:s]]")
+                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+                    .toFormatter(LOCALE),
+            new DateTimeFormatterBuilder()
+                    .appendPattern("d. M. uuuu[ HH:mm[:s]]")
+                    .parseDefaulting(ChronoField.HOUR_OF_DAY, 0)
+                    .parseDefaulting(ChronoField.MINUTE_OF_HOUR, 0)
+                    .parseDefaulting(ChronoField.SECOND_OF_MINUTE, 0)
+                    .toFormatter(LOCALE),
             DateTimeFormatter.ofPattern("d. M. uuuu"),
             DateTimeFormatter.ofPattern("d. M. uuuu."),
             DateTimeFormatter.ofPattern("dd.MM.uuuu"),
             DateTimeFormatter.ofPattern("dd.MM.uuuu."),
             DateTimeFormatter.ofPattern("dd.MM.uuuu "));
+
 
     @SuppressWarnings("unchecked")
     @Override
@@ -50,7 +79,9 @@ public class SimapTenderCleaner extends BaseDatlabTenderCleaner {
                 .registerPlugin("awardCriteria", new AwardCriteriaPlugin(NUMBER_FORMAT))
                 .registerPlugin("documents", new DocumentPlugin(NUMBER_FORMAT, DATE_FORMATTERS, null))
                 .registerPlugin("supplyType", new TenderSupplyTypePlugin(supplyTypeMapping()))
-                .registerPlugin("lots", new LotPlugin(NUMBER_FORMAT, DATE_FORMATTERS, new HashMap<>()));
+                .registerPlugin("lots", new LotPlugin(NUMBER_FORMAT, DATE_FORMATTERS, new HashMap<>()))
+                .registerPlugin("date", new DatePlugin(DATE_FORMATTERS))
+                .registerPlugin("datetime", new DateTimePlugin(DATE_FORMATTERS));
     }
 
     @Override
@@ -80,6 +111,74 @@ public class SimapTenderCleaner extends BaseDatlabTenderCleaner {
                     publication.setSourceId(publication.getSourceId().replace("Notice no.", ""));
                 }
             }
+        }
+
+        if (parsedItem.getIsAcceleratedProcedure() != null) {
+            parsedItem.setIsAcceleratedProcedure(parseToBoolean(parsedItem.getIsAcceleratedProcedure()));
+        }
+
+        if (parsedItem.getIsAwarded() != null) {
+            parsedItem.setIsAwarded(parseToBoolean(parsedItem.getIsAwarded()));
+        }
+
+        if (parsedItem.getDocumentsPayable() != null) {
+            parsedItem.setDocumentsPayable(parseToBoolean(parsedItem.getDocumentsPayable()));
+        }
+
+        if (parsedItem.getIsDocumentsAccessRestricted() != null) {
+            parsedItem.setIsDocumentsAccessRestricted(parseToBoolean(parsedItem.getIsDocumentsAccessRestricted()));
+        }
+
+        if (parsedItem.getIsCentralProcurement() != null) {
+            parsedItem.setIsCentralProcurement(parseToBoolean(parsedItem.getIsCentralProcurement()));
+        }
+
+        if (parsedItem.getIsJointProcurement() != null) {
+            parsedItem.setIsJointProcurement(parseToBoolean(parsedItem.getIsJointProcurement()));
+        }
+
+        if (parsedItem.getIsOnBehalfOf() != null) {
+            parsedItem.setIsOnBehalfOf(parseToBoolean(parsedItem.getIsOnBehalfOf()));
+        }
+
+        if (parsedItem.getHasLots() != null) {
+            parsedItem.setHasLots(parseToBoolean(parsedItem.getHasLots()));
+        }
+
+        if (parsedItem.getAreVariantsAccepted() != null) {
+            parsedItem.setAreVariantsAccepted(parseToBoolean(parsedItem.getAreVariantsAccepted()));
+        }
+
+        if (parsedItem.getHasOptions() != null) {
+            parsedItem.setHasOptions(parseToBoolean(parsedItem.getHasOptions()));
+        }
+
+        if (parsedItem.getIsCoveredByGpa() != null) {
+            parsedItem.setIsCoveredByGpa(parseToBoolean(parsedItem.getIsCoveredByGpa()));
+        }
+
+        if (parsedItem.getIsFrameworkAgreement() != null) {
+            parsedItem.setIsFrameworkAgreement(parseToBoolean(parsedItem.getIsFrameworkAgreement()));
+        }
+
+        if (parsedItem.getIsDps() != null) {
+            parsedItem.setIsDps(parseToBoolean(parsedItem.getIsDps()));
+        }
+
+        if (parsedItem.getIsElectronicAuction() != null) {
+            parsedItem.setIsElectronicAuction(parseToBoolean(parsedItem.getIsElectronicAuction()));
+        }
+
+        if (parsedItem.getIsFrameworkAgreement() != null) {
+            parsedItem.setIsFrameworkAgreement(parseToBoolean(parsedItem.getIsFrameworkAgreement()));
+        }
+
+        if (parsedItem.getIsWholeTenderCancelled() != null) {
+            parsedItem.setIsWholeTenderCancelled(parseToBoolean(parsedItem.getIsWholeTenderCancelled()));
+        }
+
+        if (parsedItem.getIsEInvoiceAccepted() != null) {
+            parsedItem.setIsEInvoiceAccepted(parseToBoolean(parsedItem.getIsEInvoiceAccepted()));
         }
 
         return parsedItem;
@@ -149,5 +248,29 @@ public class SimapTenderCleaner extends BaseDatlabTenderCleaner {
         mapping.put(null, Arrays.asList("Ja", "Nein", "Non", "Yes", "No", "Oui"));
 
         return mapping;
+    }
+
+    /**
+     * Check weather string contains text parsable to boolean.
+     *
+     * @param string string to clean
+     * @return String or null
+     */
+    private static String parseToBoolean(final String string) {
+        if (string == null) {
+            return null;
+        } else if (StringUtils.containsIgnoreCase("Ja", string)
+                || StringUtils.containsIgnoreCase("True", string)
+                || StringUtils.containsIgnoreCase("Yes", string)
+                || StringUtils.containsIgnoreCase("Oui", string)) {
+            return Boolean.TRUE.toString();
+        } else if (StringUtils.containsIgnoreCase("Nein", string)
+                || StringUtils.containsIgnoreCase("False", string)
+                || StringUtils.containsIgnoreCase("No", string)
+                || StringUtils.containsIgnoreCase("Non", string)) {
+            return Boolean.FALSE.toString();
+        } else {
+            return string;
+        }
     }
 }

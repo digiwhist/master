@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>eu.datlab</groupId>
 	<artifactId>tender-worker</artifactId>
-	<version>2.0.2</version>
+	<version>2.0.3</version>
 	<name>tender-worker</name>
 	<packaging>jar</packaging>
 	<properties>
@@ -17,13 +17,13 @@
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-core</artifactId>
-			<version>2.9.6</version>
+			<version>2.10.0.pr3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-databind</artifactId>
-			<version>2.9.6</version>
+			<version>2.10.0.pr3</version>
 		</dependency>
 
 		<dependency>
@@ -35,13 +35,13 @@
 		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
-			<version>1.11</version>
+			<version>1.13</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.seleniumhq.selenium</groupId>
 			<artifactId>selenium-server</artifactId>
-			<version>3.14.0</version>
+			<version>4.0.0-alpha-2</version>
 		</dependency>
 
 		<!-- PARSING -->
@@ -49,13 +49,13 @@
 		<dependency>
 			<groupId>com.itextpdf</groupId>
 			<artifactId>itextpdf</artifactId>
-			<version>5.5.13</version>
+			<version>5.5.13.1</version>
 		</dependency>
 
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-csv</artifactId>
-			<version>1.5</version>
+			<version>1.7</version>
 		</dependency>
 
 		<dependency>
@@ -68,19 +68,19 @@
 		<dependency>
 			<groupId>biz.paluch.logging</groupId>
 			<artifactId>logstash-gelf</artifactId>
-			<version>1.12.0</version>
+			<version>1.13.0</version>
 		</dependency>
 
 		<dependency>
 			<groupId>eu.dl</groupId>
 			<artifactId>dl-core</artifactId>
-			<version>2.0.2</version>
+			<version>2.0.3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>eu.dl</groupId>
 			<artifactId>dl-dataaccess</artifactId>
-			<version>2.0.2</version>
+			<version>2.0.3</version>
 			<exclusions>
 				<exclusion>
 					<groupId>javax.persistence</groupId>
@@ -92,25 +92,25 @@
 		<dependency>
 			<groupId>eu.dl</groupId>
 			<artifactId>dl-dataaccess-tender</artifactId>
-			<version>2.0.2</version>
+			<version>2.0.3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>eu.dl</groupId>
 			<artifactId>dl-worker</artifactId>
-			<version>2.0.2</version>
+			<version>2.0.3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>eu.dl</groupId>
 			<artifactId>dl-worker-tender</artifactId>
-			<version>2.0.2</version>
+			<version>2.0.3</version>
 		</dependency>
 
 		<dependency>
 			<groupId>eu.datlab</groupId>
 			<artifactId>tender-dataaccess</artifactId>
-			<version>2.0.2</version>
+			<version>2.0.3</version>
 		</dependency>
 	</dependencies>
 

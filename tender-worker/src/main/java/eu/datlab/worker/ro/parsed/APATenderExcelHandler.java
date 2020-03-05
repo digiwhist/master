@@ -3,9 +3,9 @@ package eu.datlab.worker.ro.parsed;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.raw.RawData;
-import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.slf4j.Logger;
@@ -42,7 +42,7 @@ public final class APATenderExcelHandler {
         final InputStream myxls = new ByteArrayInputStream(raw.getSourceBinaryData());
         final Sheet sheet;
         try {
-            if(raw.getSourceUrl().toString().endsWith("xls")) {
+            if (raw.getSourceUrl().toString().endsWith("xls")) {
                 sheet = (new HSSFWorkbook(myxls)).getSheetAt(0);
             } else {  // Office 2007+ XML (ends with xlsx)
                 sheet = (new XSSFWorkbook(myxls)).getSheetAt(0);
@@ -50,12 +50,19 @@ public final class APATenderExcelHandler {
         } catch (IOException e) {
             logger.error("Unable to create Excel file from data", e);
             throw new UnrecoverableException("Unable to create Excel file from data", e);
+        } finally {
+            try {
+                myxls.close();
+            } catch (IOException e) {
+                logger.error("Unable to close file input stream", e);
+            }
         }
+
         final int headerNumberOfValues = sheet.getRow(0).getLastCellNum();
 
         if (headerNumberOfValues >= minHeaderSizeContracte) {
-            return APATenderExcelContracteHandler.parse(sheet, logger);
-        } else if(headerNumberOfValues >= minHeaderSizeDirectContract){
+            return APATenderExcelContracteHandler.parse(sheet, raw.getSourceUrl().getFile(), logger);
+        } else if (headerNumberOfValues >= minHeaderSizeDirectContract){
             return APATenderExcelDirectContractHandler.parse(sheet, logger);
         } else {
             return APATenderExcelCFTHandler.parse(sheet, logger);
@@ -69,9 +76,9 @@ public final class APATenderExcelHandler {
      * @return String or null
      */
     public static String getCellValue(final Cell cell) {
-        if (cell.getCellType() == HSSFCell.CELL_TYPE_STRING) {
+        if (cell.getCellType() == CellType.STRING) {
             return cell.getStringCellValue();
-        } else if (cell.getCellType() == HSSFCell.CELL_TYPE_NUMERIC) {
+        } else if (cell.getCellType() == CellType.NUMERIC) {
             return String.valueOf(cell.getNumericCellValue());
         } else {
             return null;

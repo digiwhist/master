@@ -13,7 +13,7 @@ import org.slf4j.Logger;
 public final class APATenderCsvHandler {
 
     private static int minHeaderSizeFormOne = 20;
-    private static int minHeaderSizeFormTwo = 37;
+    private static int minHeaderSizeFormTwo = 36;
     private static int minHeaderSizeFormThree = 16;
 
     /**

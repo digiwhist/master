@@ -6,9 +6,9 @@ import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.raw.RawData;
-import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
@@ -90,9 +90,9 @@ public final class BudgetExcelParser extends BaseDatlabBudgetItemParser {
      * @return String or null
      */
     private String getCellValue(final Cell cell) {
-        if (cell.getCellType() == HSSFCell.CELL_TYPE_STRING) {
+        if (cell.getCellType() == CellType.STRING) {
             return cell.getStringCellValue();
-        } else if (cell.getCellType() == HSSFCell.CELL_TYPE_NUMERIC) {
+        } else if (cell.getCellType() == CellType.NUMERIC) {
             return String.valueOf(cell.getNumericCellValue());
         } else {
             return null;

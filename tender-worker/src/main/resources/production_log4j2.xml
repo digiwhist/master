@@ -1,0 +1,31 @@
+<Configuration>
+    <Appenders>
+        <Gelf name="gelf" host="udp:localhost" port="12201" version="1.1" extractStackTrace="true"
+              filterStackTrace="true" mdcProfiling="true" includeFullMdc="true" maximumMessageSize="8192"
+              originHost="%host{fqdn}" additionalFieldTypes="fieldName1=String,fieldName2=Double,fieldName3=Long">
+            <Field name="timestamp" pattern="%d{dd MMM yyyy HH:mm:ss,SSS}" />
+            <Field name="level" pattern="%-5p" />
+            <Field name="className" pattern="%c" />
+            <Field name="server" pattern="%host" />
+            <Field name="server.fqdn" pattern="%host{fqdn}" />
+
+            <DynamicMdcFields regex="mdc.*" />
+            <DynamicMdcFields regex="(mdc|MDC)fields" />
+        </Gelf>
+        <Console name="stdout" target="SYSTEM_OUT">
+        	<PatternLayout pattern="%-5p %d %c - %m%n"/>
+    	</Console>
+    </Appenders>
+    <Loggers>
+    	<logger name="org.silvertunnel_ng.netlib" level="INFO" additivity="false">
+    		<AppenderRef ref="stdout"/>
+    	</logger>
+        <logger name="com.gargoylesoftware" level="OFF" additivity="false">
+            <AppenderRef ref="stdout"/>
+        </logger>
+        <Root level="INFO">
+<!--            <AppenderRef ref="gelf"/>-->
+            <AppenderRef ref="stdout"/>
+        </Root>
+    </Loggers>
+</Configuration>

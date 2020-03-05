@@ -211,7 +211,7 @@ public final class PCETenderCrawler extends BaseDatlabIncrementalPagedSourceHttp
      */
     private HtmlPage goBackByJS(final HtmlPage page) {
         ScriptResult result = page.executeJavaScript("javascript:window.history.back();");
-        return (HtmlPage) result.getNewPage();
+        return (HtmlPage) result.getJavaScriptResult();
     }
 
     @Override

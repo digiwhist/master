@@ -2,6 +2,7 @@ package eu.datlab.worker.ro.parsed;
 
 import eu.datlab.dataaccess.dto.codetables.PublicationSources;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
+import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
@@ -75,7 +76,7 @@ public final class APATenderExcelCFTHandler {
         }
         final List<ParsedTender> parsedTenders = new ArrayList<>();
         Row row;
-        for (int i = 0; i <= sheet.getLastRowNum(); i++) {
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
             row = sheet.getRow(i);
 
             String buyerName = checkingValue(headerIndexes.get(BUYER_NAME), row);
@@ -110,7 +111,7 @@ public final class APATenderExcelCFTHandler {
             }
             String formType = checkingValue(headerIndexes.get(FORM_TYPE), row);
             if (formType == null) { // ANNOTATION_call_2019
-                formType = "CONTRACT_NOTICE";
+                formType = String.valueOf(PublicationFormType.CONTRACT_NOTICE);
             }
 
             ParsedBody buyer = new ParsedBody()

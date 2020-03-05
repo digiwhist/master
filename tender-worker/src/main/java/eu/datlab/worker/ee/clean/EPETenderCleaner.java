@@ -147,7 +147,7 @@ public final class EPETenderCleaner extends BaseDatlabTenderCleaner {
         mapping.put(PublicationFormType.PRIOR_INFORMATION_NOTICE, Arrays.asList("Eelteade",
             "Eelteade - kaitse- ja julgeolekuvaldkond"));
         mapping.put(PublicationFormType.CONTRACT_NOTICE, Arrays.asList("Hanketeade", "Hanketeade (Võrgustik)",
-            "Hanketeade - kaitse- ja julgeolekuvaldkond"));
+            "Hanketeade - kaitse- ja julgeolekuvaldkond", "Ideekonkursi kutse"));
         mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList("Riigihanke aruanne",
             "Ehitustööde kontsessiooni teade", "Ideekonkursi tulemused"));
         mapping.put(PublicationFormType.CONTRACT_AMENDMENT, Arrays.asList("Riigihanke aruande lisa"));

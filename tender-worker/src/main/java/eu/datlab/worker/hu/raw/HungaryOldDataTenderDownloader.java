@@ -6,7 +6,7 @@ import eu.dl.dataaccess.dao.TransactionUtils;
 import eu.dl.dataaccess.dto.raw.RawData;
 import eu.dl.worker.Message;
 import eu.dl.worker.raw.downloader.BaseDownloader;
-import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang3.ArrayUtils;
 
 import java.io.BufferedReader;
 import java.io.FileReader;

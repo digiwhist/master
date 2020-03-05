@@ -24,6 +24,7 @@ import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getFirstOwnValueFr
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getFirstValueFromElement;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getFirstValueWithoutDots;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getFormType;
+import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getNpwpReasons;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getTrueOrFalseFromElement;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getValuesFromElement;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.parsePrice;
@@ -47,6 +48,8 @@ final class UvoTenderNewHandler {
     private static final String IN_PART_III = "legend:matchesOwn(ODDIEL III.*) + div ";
     private static final String IN_PART_IV = "legend:matchesOwn(ODDIEL IV.*) + div ";
     private static final String IN_PART_VI = "legend:matchesOwn(ODDIEL VI.*) + div ";
+
+    private static final String APPENDIX_D1 = "legend:matchesOwn(PRÍLOHA D1.*) + div";
 
     private static final String SOURCE_DOMAIN = "https://www.uvo.gov.sk";
 
@@ -122,7 +125,9 @@ final class UvoTenderNewHandler {
                 .setEligibleBidLanguages(parseTenderEligibleBidLanguages(document))
                 .setMediationBodyName(parseMediationBodyName(document))
                 .setAwardDecisionDate(parseAwardDecisionDate(document))
-                .setAppealBodyName(parseAppealBodyName(document));
+                .setAppealBodyName(parseAppealBodyName(document))
+                .setIsDps(parseIsDPS(document))
+                .setNpwpReasons(parseNpwpReasons(document));
 
         //         parse form specific attributes
         PublicationFormType formType = getFormType(parsedTender.getPublications().get(0).getSourceFormType());
@@ -147,6 +152,28 @@ final class UvoTenderNewHandler {
         }
 
         return new ArrayList<>(Arrays.asList(parsedTender));
+    }
+
+    /**
+     * Parse NPWP reasons.
+     *
+     * @param document document
+     * @return List<String>
+     */
+    private List<String> parseNpwpReasons(final Document document) {
+        Element section = document.selectFirst(IN_PART_IV + "div.subtitle:contains(IV.1.1)");
+        if (section == null) {
+            return null;
+        }
+
+        Element rawReasons;
+        if (section.nextElementSibling().text().contains("vyplňte prosím prílohu D")) {
+            rawReasons = document.selectFirst(APPENDIX_D1);
+        } else {
+            rawReasons = document.selectFirst(IN_PART_IV + "div.subtitle:contains(IV.1.1) + div + div");
+        }
+
+        return rawReasons != null ? getNpwpReasons(rawReasons.text()) : null;
     }
 
     /**
@@ -1028,5 +1055,18 @@ final class UvoTenderNewHandler {
         }
 
         return subsections;
+    }
+
+    /**
+     * Parse if tender is DPS.
+     *
+     * @param document document to parse from
+     *
+     * @return return isDPS value
+     */
+    private String parseIsDPS(final Document document) {
+        return getTrueOrFalseFromElement(document, new String[]{
+            IN_PART_IV + "div:containsOwn(Dynamický nákupný systém môžu využiť ďalší zákazníci) > span",
+            IN_PART_IV + "span:containsOwn(Dynamický nákupný systém môžu využiť ďalší zákazníci) + span"});
     }
 }

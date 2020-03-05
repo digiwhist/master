@@ -26,7 +26,6 @@ import eu.dl.worker.indicator.plugin.KeyMissingFieldsIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.LotIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.NewCompanyIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.NoticeAndAwardDiscrepanciesIndicatorPlugin;
-import eu.dl.worker.indicator.plugin.PoliticalConnectionsOfSuppliers;
 import eu.dl.worker.indicator.plugin.ProcedureTypeIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.SingleBidIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.TaxHavenIndicatorPlugin;
@@ -206,9 +205,6 @@ public class IndicatorWorker extends BaseWorker {
                 new NoticeAndAwardDiscrepanciesIndicatorPlugin(
                         DAOFactory.getDAOFactory().getMatchedTenderDAO(null, null, Collections.emptyList()));
         tenderIndicatorPluginRegistry.registerPlugin(noticeAndAwardDiscPlugin.getType(), noticeAndAwardDiscPlugin);
-
-        PoliticalConnectionsOfSuppliers politicalConnectionsOfSuppliers = new PoliticalConnectionsOfSuppliers(masterBodyDao);
-        tenderIndicatorPluginRegistry.registerPlugin(politicalConnectionsOfSuppliers.getType(), politicalConnectionsOfSuppliers);
 
         LotSingleBidIndicatorPlugin corruptionSingleBid = new LotSingleBidIndicatorPlugin();
         lotIndicatorPluginRegistry.registerPlugin(corruptionSingleBid.getType(), corruptionSingleBid);

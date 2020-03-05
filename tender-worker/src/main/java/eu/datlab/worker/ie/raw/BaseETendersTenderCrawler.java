@@ -115,7 +115,7 @@ abstract class BaseETendersTenderCrawler extends BaseDatlabIncrementalPagedSourc
         webClientForDetails.getOptions().setUseInsecureSSL(true);
         webClientForDetails.getOptions().setThrowExceptionOnScriptError(false);
 
-        final List<HtmlTableRow> htmlTableBody = page.getByXPath("//table[@class='table table-striped table-bordered sorter']/tbody/tr");
+        final List<HtmlTableRow> htmlTableBody = page.getByXPath("//div[@id='searchResultContainer']/table/tbody/tr");
 
         for (HtmlTableRow htmlTableRow : htmlTableBody) {
             // we do not want to get tender created today. It can happen during crawling of tenders from today
@@ -132,7 +132,7 @@ abstract class BaseETendersTenderCrawler extends BaseDatlabIncrementalPagedSourc
             // get URL to detail page. We have to get PID, which is part of URL. It is not the same as "System Id" from
             // the first column.
             // See https://irl.eu-supply.com/app/rfq/publicpurchase.asp?PID=46 ("System Id" is 10040)
-            HtmlAnchor detailPageAnchor = (HtmlAnchor) htmlTableRow.getCell(2).getFirstElementChild();
+            HtmlAnchor detailPageAnchor = htmlTableRow.getCell(2).getFirstByXPath("a");
             final String pid = URLUtils.getUrlParameter(detailPageAnchor.getHrefAttribute(), "PID");
             final String detailPageLink = BASE_DETAIL_PAGE_URL + pid;
 

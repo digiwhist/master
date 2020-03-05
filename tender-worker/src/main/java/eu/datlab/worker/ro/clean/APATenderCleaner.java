@@ -1,16 +1,23 @@
 package eu.datlab.worker.ro.clean;
 
 import eu.datlab.worker.clean.BaseDatlabTenderCleaner;
-import eu.datlab.worker.sk.clean.UvoTenderProcedureTypePlugin;
 import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.codetables.CountryCode;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
+import eu.dl.dataaccess.dto.codetables.SelectionMethod;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
+import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
+import eu.dl.worker.clean.plugin.AwardCriteriaPlugin;
 import eu.dl.worker.clean.plugin.BodyPlugin;
+import eu.dl.worker.clean.plugin.DatePlugin;
+import eu.dl.worker.clean.plugin.DateTimePlugin;
 import eu.dl.worker.clean.plugin.LotPlugin;
 import eu.dl.worker.clean.plugin.PricePlugin;
 import eu.dl.worker.clean.plugin.PublicationPlugin;
+import eu.dl.worker.clean.plugin.SelectionMethodPlugin;
+import eu.dl.worker.clean.plugin.TenderProcedureTypePlugin;
+import eu.dl.worker.clean.plugin.TenderSupplyTypePlugin;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -56,7 +63,25 @@ public class APATenderCleaner extends BaseDatlabTenderCleaner {
                 .registerPlugin("publications", new PublicationPlugin(NUMBER_FORMAT, DATE_FORMATTERS,
                         formTypeMapping()))
                 .registerPlugin("procedureType",
-                        new UvoTenderProcedureTypePlugin(procedureTypeMapping(), null));
+                        new TenderProcedureTypePlugin(procedureTypeMapping(), null))
+                .registerPlugin("supplyType", new TenderSupplyTypePlugin(supplyTypeMapping()))
+                .registerPlugin("selectionMethod", new SelectionMethodPlugin(selectionMethodMapping()))
+                .registerPlugin("date", new DatePlugin(DATE_FORMATTERS))
+                .registerPlugin("datetime", new DateTimePlugin(DATE_FORMATTERS))
+                .registerPlugin("awardCriterion", new AwardCriteriaPlugin(NUMBER_FORMAT));
+    }
+
+    /**
+     * @return supply type mapping
+     */
+    private Map<Enum, List<String>> supplyTypeMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(TenderSupplyType.SUPPLIES, Arrays.asList("Furnizare"));
+        mapping.put(TenderSupplyType.SERVICES, Arrays.asList("Servicii"));
+        mapping.put(TenderSupplyType.WORKS, Arrays.asList("Lucrari"));
+
+        return mapping;
     }
 
     /**
@@ -104,9 +129,31 @@ public class APATenderCleaner extends BaseDatlabTenderCleaner {
 
         mapping.put(TenderProcedureType.PUBLIC_CONTEST, Arrays.asList("Anunt de atribuire la anunt de participare"));
         mapping.put(TenderProcedureType.OUTRIGHT_AWARD, Arrays.asList("Cumparare directa"));
-
+        mapping.put(TenderProcedureType.APPROACHING_BIDDERS, Arrays.asList("Invitatie de participare",
+                "Procedura simplificata", "Cerere de oferta", "Licitatie deschisa accelerata"));
+        mapping.put(TenderProcedureType.NEGOTIATED_WITHOUT_PUBLICATION, Arrays.asList("Negociere fara anunt de participare"));
+        mapping.put(TenderProcedureType.OPEN, Arrays.asList("Licitatie deschisa"));
+        mapping.put(TenderProcedureType.NEGOTIATED, Arrays.asList("Negociere", "Negociere accelerata",
+                "Procedura competitiva cu negociere"));
+        mapping.put(TenderProcedureType.RESTRICTED, Arrays.asList("Licitatie restransa", "Licitatie restransa accelerata"));
+        mapping.put(TenderProcedureType.COMPETITIVE_DIALOG, Arrays.asList("Dialog competitiv"));
         return mapping;
     }
+
+    /**
+     * @return selection method mapping
+     */
+    private Map<Enum, List<String>> selectionMethodMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+
+        mapping.put(SelectionMethod.LOWEST_PRICE, Arrays.asList("Pretul cel mai scazut", "Costul cel mai scazut"));
+        mapping.put(SelectionMethod.MEAT, Arrays.asList("Oferta cea mai avantajoasa d.p.d.v. economic",
+                "Cel mai bun raport calitate – pret", "Cel mai bun raport calitate-pret",
+                "Cel mai bun raport calitate – cost", "Cel mai bun raport calitate–cost", "CRITERIU_ATRIBUIRE",
+                "Cel mai bun raport calitate�cost"));
+        return mapping;
+    }
+
 
     @Override
     public final String getVersion() {
@@ -125,6 +172,7 @@ public class APATenderCleaner extends BaseDatlabTenderCleaner {
                 t -> t.setPublicationDate(t.getPublicationDate().replaceAll("\\..*", "")));
         parsedItem.getLots().forEach(
                 t -> t.setContractSignatureDate(t.getContractSignatureDate().replaceAll("\\..*", "")));
+
         return parsedItem;
     }
 }

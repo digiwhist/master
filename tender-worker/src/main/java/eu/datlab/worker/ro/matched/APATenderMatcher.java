@@ -2,6 +2,8 @@ package eu.datlab.worker.ro.matched;
 
 import eu.datlab.worker.matched.BaseDatlabTenderMatcher;
 import eu.dl.core.UnrecoverableException;
+import eu.dl.dataaccess.dto.codetables.PublicationFormType;
+import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -40,7 +42,12 @@ public class APATenderMatcher extends BaseDatlabTenderMatcher {
         String hash = null;
 
         try {
-            hash = matchedTender.getBuyerAssignedId();
+            for(Publication publication: matchedTender.getPublications()){
+                if(publication.getFormType() != null &&publication.getFormType().equals(PublicationFormType.CONTRACT_NOTICE)){
+                    hash = publication.getBuyerAssignedId();
+                }
+            }
+            //hash = matchedTender.getBuyerAssignedId();
 
             if (hash == null) {
                 hash = UUID.randomUUID().toString();

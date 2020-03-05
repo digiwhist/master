@@ -5,6 +5,7 @@ import eu.dl.dataaccess.dto.codetables.CountryCode;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.raw.RawData;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -15,13 +16,13 @@ public class APATenderParser extends BaseDatlabTenderParser {
 
     @Override
     public final List<ParsedTender> parse(final RawData raw) {
-
-        if(raw.getSourceData() == null && raw.getSourceBinaryData() != null){
+        if (raw.getSourceData() == null && raw.getSourceBinaryData() != null){
             return APATenderExcelHandler.parse(raw, logger);
-        } else if(raw.getSourceData() != null && raw.getSourceBinaryData() == null){
+        } else if (raw.getSourceData() != null && raw.getSourceBinaryData() == null){
             return APATenderCsvHandler.parse(raw, logger);
         }
-        return null;
+
+        return Collections.EMPTY_LIST;
     }
 
     @Override

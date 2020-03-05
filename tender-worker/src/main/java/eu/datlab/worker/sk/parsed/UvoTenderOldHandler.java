@@ -15,13 +15,13 @@ import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.parsed.utils.ParserUtils;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getFirstValueFromElement;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getFirstValueWithoutDots;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getFormType;
+import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getNpwpReasons;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getTrueOrFalseFromElement;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getValuesFromElement;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.parsePrice;
@@ -43,6 +43,8 @@ class UvoTenderOldHandler {
     private static final String IN_PART_III = "legend:matchesOwn(ODDIEL III.*) + div ";
     private static final String IN_PART_IV = "legend:matchesOwn(ODDIEL IV.*) + div ";
     private static final String IN_PART_VI = "legend:matchesOwn(ODDIEL VI.*) + div ";
+
+    private static final String APPENDIX_D1 = "legend:matchesOwn(PRÍLOHA D1.*) + div ";
 
     private static final String SOURCE_DOMAIN = "https://www.uvo.gov.sk";
 
@@ -164,15 +166,19 @@ class UvoTenderOldHandler {
      * @return List<String>
      */
     private List<String> parseNpwpReasons(final Document document) {
-        final List<String> parsedReasons = new ArrayList<>();
-
-        Elements rawReasons = document.select(IN_PART_IV + "span:containsOwn(dôvodnenie výberu rokovacie) + span");
-
-        for (Element rawReason : rawReasons) {
-            parsedReasons.add(rawReason.text());
+        Element section = document.selectFirst(IN_PART_IV + "div.subtitle:contains(IV.1.1)");
+        if (section == null) {
+            return null;
         }
 
-        return parsedReasons;
+        Element rawReasons;
+        if (section.nextElementSibling().text().contains("vyplňte prosím prílohu D")) {
+            rawReasons = document.selectFirst(APPENDIX_D1);
+        } else {
+            rawReasons = document.selectFirst(IN_PART_IV + "div.subtitle:contains(IV.1.1) + div + div");
+        }
+
+        return rawReasons != null ? getNpwpReasons(rawReasons.text()) : null;
     }
 
     /**

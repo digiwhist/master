@@ -70,7 +70,7 @@ public final class APATenderExcelDirectContractHandler {
         }
         final List<ParsedTender> parsedTenders = new ArrayList<>();
         Row row;
-        for (int i = 0; i <= sheet.getLastRowNum(); i++) {
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
             row = sheet.getRow(i);
 
             String bidderName = checkingValue(headerIndexes.get(BIDDER_NAME), row);

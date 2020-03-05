@@ -50,6 +50,10 @@ public final class EPETenderParser extends BaseDatlabTenderParser {
             case "TV15L":
                 parsedTender = EPEContractAnexHandler.parse(doc, publicationDate);
                 break;
+            //Invitation to a design contest
+            case "TV12":
+                parsedTender = EPEInvitationToADesignContestHandler.parse(doc, publicationDate);
+                break;
             default:
                 logger.warn("Unknown form type {}, default handler was used", sourceFormType);
                 parsedTender = EPEDefaultHandler.parse(doc, publicationDate);

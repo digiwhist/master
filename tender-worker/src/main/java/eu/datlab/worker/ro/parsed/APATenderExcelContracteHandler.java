@@ -2,6 +2,7 @@ package eu.datlab.worker.ro.parsed;
 
 import eu.datlab.dataaccess.dto.codetables.PublicationSources;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
+import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
@@ -82,10 +83,11 @@ public final class APATenderExcelContracteHandler {
     /**
      * Parses the given sheet.
      * @param sheet sheet with raw data
+     * @param fileName name of source file
      * @param logger logger
      * @return list of parsed tenders
      */
-    public static List<ParsedTender> parse(final Sheet sheet, final Logger logger) {
+    public static List<ParsedTender> parse(final Sheet sheet, final String fileName, final Logger logger) {
         final Row headerRow = sheet.getRow(0);
         HashMap<String, Integer> headerIndexes = new HashMap<>();
         for (int i = 0; i < headerRow.getLastCellNum(); i++) {
@@ -93,9 +95,13 @@ public final class APATenderExcelContracteHandler {
         }
         final List<ParsedTender> parsedTenders = new ArrayList<>();
         Row row;
-        for (int i = 0; i <= sheet.getLastRowNum(); i++) {
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
             row = sheet.getRow(i);
 
+            String formType = String.valueOf(PublicationFormType.CONTRACT_AWARD);
+            if(fileName.contains("subsecvente")){
+                formType = String.valueOf(PublicationFormType.CONTRACT_IMPLEMENTATION);
+            }
 
             String bidsCount = checkingValue(headerIndexes.get(BIDS_COUNT), row);
             if (bidsCount == null) {
@@ -188,13 +194,13 @@ public final class APATenderExcelContracteHandler {
                     .addPublication(new ParsedPublication()
                             .setBuyerAssignedId(buyerAssignedIdPublication)
                             .setPublicationDate(publicationDate)
-                            .setSourceFormType("CONTRACT_AWARD")
+                            .setSourceFormType(String.valueOf(PublicationFormType.CONTRACT_AWARD))
                             .setIsIncluded(true)
                             .setSource(PublicationSources.RO_APA))
                     .addPublication(new ParsedPublication()
                             .setBuyerAssignedId(buyerAssignedIdPublication2)
                             .setPublicationDate(publicationDate2)
-                            .setFormType("CONTRACT_NOTICE")
+                            .setSourceFormType(String.valueOf(PublicationFormType.CONTRACT_NOTICE))
                             .setIsIncluded(false)
                             .setSource(PublicationSources.RO_APA))
                     .addFunding(new ParsedFunding()

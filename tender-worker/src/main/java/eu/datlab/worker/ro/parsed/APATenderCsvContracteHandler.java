@@ -3,6 +3,7 @@ package eu.datlab.worker.ro.parsed;
 import eu.datlab.dataaccess.dto.codetables.PublicationSources;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
+import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
@@ -99,11 +100,23 @@ public final class APATenderCsvContracteHandler {
             BID_ESTIMATED_PRICE_CURRENCY, IS_EU_FUND, FUNDING_SOURCE, LEGISLATIE_TYPE_ID, FUNDING_PROGRAMME,
             CONTRACT_PERIODIC, TENDER_DEPOSITS, FUNDING_SOURCE2}; // 37
 
+    private static final String[] CSV_NEW_NO_EUR_SUBSEQUENT_HEADER = {BIDDER_NAME, BIDDER_IDS, BIDDER_COUNTRY, BIDDER_CITY,
+            BIDDER_ADDRESS, FORM_TYPE, SUPPLY_TYPE, PROCEDURE_TYPE, BUYER_NAME, BUYER_IDS, BUYER_TYPE,
+            BUYER_MAIN_ACTIVITIES, AWARD_PUBLICATION_BUYER_ASSIGNED_ID, AWARD_PUBLICATION_PUBLICATION_DATE,
+            IS_FRAMEWORK_AGREEMENT, SELECTION_METHOD, IS_ELECTRONIC_AUCTION, LOT_BUYER_ASSIGNED_ID,
+            CONTRACT_SIGNATURE_DATE, TITLE, BID_PRICE_NET_AMOUNT, BID_PRICE_CURRENCY,
+            BID_PRICE_NET_AMOUNT_NATIONAL, CPV_CODE_ID, CPV_CODE,
+            NOTICE_PUBLICATION_BUYER_ASSIGNED_ID, NOTICE_PUBLICATION_PUBLICATION_DATE, BID_ESTIMATED_PRICE_NET_AMOUNT,
+            BID_ESTIMATED_PRICE_CURRENCY, IS_EU_FUND, FUNDING_SOURCE, LEGISLATIE_TYPE_ID, FUNDING_PROGRAMME,
+            CONTRACT_PERIODIC, TENDER_DEPOSITS, FUNDING_SOURCE2}; // 36
+
     private static final CSVFormat CSV_NEW_SUBSEQUENT_FORMAT = CSVFormat.newFormat('^').
             withHeader(CSV_NEW_SUBSEQUENT_HEADER).withIgnoreEmptyLines(true);
     private static final CSVFormat CSV_OLD_FORMAT = CSVFormat.newFormat('^').withHeader(CSV_OLD_HEADER).withIgnoreEmptyLines(true);
     private static final CSVFormat CSV_NEW_CONTRACTE_FORMAT = CSVFormat.newFormat('^').
             withHeader(CSV_NEW_CONTRACTE_HEADER).withIgnoreEmptyLines(true);
+    private static final CSVFormat CSV_NEW_NO_EUR_SUBSEQUENT_FORMAT = CSVFormat.newFormat('^').
+            withHeader(CSV_NEW_NO_EUR_SUBSEQUENT_HEADER).withIgnoreEmptyLines(true);
 
     /**
      * Suppress default constructor for noninstantiability.
@@ -121,20 +134,29 @@ public final class APATenderCsvContracteHandler {
         try {
             final List<ParsedTender> parsedTenders = new ArrayList<>();
 
-            boolean isNewContracte = false, isNewSubsequente = false, isOld = false;
+            boolean isNewContracte = false, isNewSubsequente = false, isNSNoEur = false, isOld = false;
             APACSVReader reader;
-            if (raw.getSourceData().split("\n", 2)[0].contains(MODALITATE_CONTRACTARE)) {
+            String headerLine = raw.getSourceData().split("\n", 2)[0];
+            if (headerLine.contains(MODALITATE_CONTRACTARE)) {
                 reader = new APACSVReader(raw.getSourceData(), CSV_NEW_CONTRACTE_HEADER.length);
                 isNewContracte = true;
-            } else if (raw.getSourceData().split("\n", 2)[0].contains(SUBCONTRACT)) {
+            } else if (headerLine.contains(SUBCONTRACT)) {
                 reader = new APACSVReader(raw.getSourceData(), CSV_OLD_HEADER.length);
                 isOld = true;
-            } else {
+            } else if(!headerLine.contains(BID_PRICE_NET_AMOUNT_EUR)) {
+                reader = new APACSVReader(raw.getSourceData(), CSV_NEW_NO_EUR_SUBSEQUENT_HEADER.length);
+                isNSNoEur = true;
+            } else{
                 reader = new APACSVReader(raw.getSourceData(), CSV_NEW_SUBSEQUENT_HEADER.length);
                 isNewSubsequente = true;
             }
 
             reader.readLine(); // skip header
+
+            String formType = String.valueOf(PublicationFormType.CONTRACT_AWARD);
+            if(raw.getSourceUrl().getFile().contains("subsecvente")){
+                formType = String.valueOf(PublicationFormType.CONTRACT_IMPLEMENTATION);
+            }
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -146,6 +168,8 @@ public final class APATenderCsvContracteHandler {
                     csvParser = CSVParser.parse(line, CSV_NEW_CONTRACTE_FORMAT);
                 } else if (isNewSubsequente) {
                     csvParser = CSVParser.parse(line, CSV_NEW_SUBSEQUENT_FORMAT);
+                } else if(isNSNoEur){
+                    csvParser = CSVParser.parse(line, CSV_NEW_NO_EUR_SUBSEQUENT_FORMAT);
                 } else {
                     csvParser = CSVParser.parse(line, CSV_OLD_FORMAT);
                 }
@@ -153,7 +177,7 @@ public final class APATenderCsvContracteHandler {
                 for (CSVRecord tender : csvParser) {
                     parsedTenders.add(new ParsedTender()
                             .addLot(new ParsedTenderLot()
-                                    .setBidsCount(isNewSubsequente ? null : tender.get(BIDS_COUNT))
+                                    .setBidsCount(isNewSubsequente || isNSNoEur ? null : tender.get(BIDS_COUNT))
                                     .addBid(new ParsedBid()
                                             .addBidder(new ParsedBody()
                                                     .setName(tender.get(BIDDER_NAME))
@@ -166,11 +190,12 @@ public final class APATenderCsvContracteHandler {
                                                             .setCity(tender.get(BIDDER_CITY))
                                                             .setRawAddress(tender.get(BIDDER_ADDRESS))))
                                             .setIsWinning(Boolean.TRUE.toString())
-                                            .setIsSubcontracted(isNewSubsequente ? null : tender.get(SUBCONTRACT))
+                                            .setIsSubcontracted(isNewSubsequente || isNSNoEur ? null : tender.get(SUBCONTRACT))
                                             .setPrice(new ParsedPrice()
                                                     .setNetAmount(tender.get(BID_PRICE_NET_AMOUNT))
                                                     .setCurrency(tender.get(BID_PRICE_CURRENCY))
-                                                    .setNetAmountEur(isNewContracte ? null : tender.get(BID_PRICE_NET_AMOUNT_EUR))))
+                                                    .setNetAmountEur(isNewContracte || isNSNoEur
+                                                            ? null : tender.get(BID_PRICE_NET_AMOUNT_EUR))))
                                     .setContractSignatureDate(tender.get(CONTRACT_SIGNATURE_DATE)))
                             .setNationalProcedureType(tender.get(PROCEDURE_TYPE))
                             .setProcedureType(tender.get(PROCEDURE_TYPE))
@@ -189,13 +214,13 @@ public final class APATenderCsvContracteHandler {
                                     .setBuyerAssignedId(tender.get(AWARD_PUBLICATION_BUYER_ASSIGNED_ID))
                                     .setPublicationDate(tender.get(AWARD_PUBLICATION_PUBLICATION_DATE))
                                     .setIsIncluded(true)
-                                    .setFormType("CONTRACT_AWARD")
+                                    .setSourceFormType(formType)
                                     .setSource(PublicationSources.RO_APA))
                             .addPublication(new ParsedPublication()
                                     .setBuyerAssignedId(tender.get(NOTICE_PUBLICATION_BUYER_ASSIGNED_ID))
                                     .setPublicationDate(tender.get(NOTICE_PUBLICATION_PUBLICATION_DATE))
                                     .setIsIncluded(false)
-                                    .setFormType("CONTRACT_NOTICE")
+                                    .setSourceFormType(String.valueOf(PublicationFormType.CONTRACT_NOTICE))
                                     .setSource(PublicationSources.RO_APA))
                             .setEstimatedPrice(new ParsedPrice()
                                     .setNetAmount(tender.get(BID_ESTIMATED_PRICE_NET_AMOUNT))

@@ -39,7 +39,7 @@ public class DOFFINTenderParser extends BaseDatlabTenderParser {
         final Document document = Jsoup.parse(raw.getSourceData(), "", Parser.xmlParser());
 
         Element buyer = JsoupUtils.selectFirst("CONTRACTING_AUTHORITY_VEAT, CONTRACTING_BODY,"
-            + " CA_CE_CONCESSIONAIRE_PROFILE", document);
+            + " CA_CE_CONCESSIONAIRE_PROFILE, ADDRESS_AUTHORITY", document);
         
         String publicationDate = (String) raw.getMetaData().get("publicationDate");
 
@@ -55,14 +55,21 @@ public class DOFFINTenderParser extends BaseDatlabTenderParser {
 
         ParsedAddress documentsLocation = parseDocumentsLocation(document);
 
+        ParsedPrice estimatedPrice = parseInlinePrice(JsoupUtils.selectFirst("VAL_ESTIMATED_TOTAL", document));
+        if(estimatedPrice == null){
+            estimatedPrice = parsePrice(JsoupUtils.selectFirst("COSTS_RANGE_AND_CURRENCY", document));
+        }
+
         return Collections.singletonList(new ParsedTender()
             .setPublications(parsePublications(document, raw.getSourceUrl().toString(), publicationDate))
-            .addBuyer(parseBuyer(document, JsoupUtils.selectFirst("CONTRACTING_AUTHORITY_VEAT, CONTRACTING_BODY,"
-                + " CA_CE_CONCESSIONAIRE_PROFILE", buyer)))
-            .setTitle(JsoupUtils.selectText("TITLE_CONTRACT, TITLE", document))
+            .addBuyer(parseBuyer(document,
+                    JsoupUtils.selectFirst("CONTRACTING_AUTHORITY_VEAT, CONTRACTING_BODY,"
+                + " CA_CE_CONCESSIONAIRE_PROFILE, ADDRESS_AUTHORITY", buyer)))
+            .setTitle(JsoupUtils.selectText("TITLE_CONTRACT, TITLE, NAME_GIVEN_TO_CONTRACT", document))
             .setSupplyType(parseSupplyType(document))
             .setAddressOfImplementation(parseAddressOfImplementation(document))
-            .setDescription(JsoupUtils.selectText("SHORT_CONTRACT_DESCRIPTION, *:not(OBJECT_DESCR) > SHORT_DESCR",
+            .setDescription(JsoupUtils.selectText("SHORT_CONTRACT_DESCRIPTION, *:not(OBJECT_DESCR) > SHORT_DESCR," +
+                            " DESCRIPTION_OF_CONTRACT",
                 document))
             .setIsCoveredByGpa(parseBoolean("*:not(OBJECT_DESCR) > CONTRACT_COVERED_GPA", document))
             .setFinalPrice(parseTenderFinalPrice(document))
@@ -112,7 +119,7 @@ public class DOFFINTenderParser extends BaseDatlabTenderParser {
             .setEnvisagedMaxCandidatesCount(JsoupUtils.selectText("NB_PARTICIPANTS", document))
             .setEligibilityCriteria(JsoupUtils.selectText("LEFTI SUITABILITY", document))
             .setIsEInvoiceAccepted(parseBoolean("EINVOICING", document))
-            .setEstimatedPrice(parseInlinePrice(JsoupUtils.selectFirst("VAL_ESTIMATED_TOTAL", document))));
+            .setEstimatedPrice(estimatedPrice));
     }
 
     /**
@@ -140,7 +147,7 @@ public class DOFFINTenderParser extends BaseDatlabTenderParser {
      * @return bid deadline
      */
     private String parseBidDeadLine(final Document document) {
-        String date = parseDate("RECEIPT_LIMIT_DATE", document);
+        String date = parseDate("RECEIPT_LIMIT_DATE, DEADLINE_TENDER_DATE", document);
         if (date == null) {
             date = JsoupUtils.selectText("DATE_RECEIPT_TENDERS", document, true) + " "
                 + JsoupUtils.selectText("TIME_RECEIPT_TENDERS", document, true);
@@ -211,7 +218,7 @@ public class DOFFINTenderParser extends BaseDatlabTenderParser {
 
     /**
      * @param document
-     *      docuemt to parse from
+     *      document to parse from
      * @return non empty list of parsed criteria or null
      */
     private List<ParsedAwardCriterion> parseAwardCriteria(final Document document) {
@@ -305,6 +312,11 @@ public class DOFFINTenderParser extends BaseDatlabTenderParser {
                 }
             }
         }
+
+        String contactPoint = JsoupUtils.selectText("ATTENTION", context);
+        if(contactPoint == null){
+            contactPoint = JsoupUtils.selectText("CONTACT_POINT", context);
+        }
         
         return new ParsedBody()
             .setName(name)
@@ -317,7 +329,7 @@ public class DOFFINTenderParser extends BaseDatlabTenderParser {
                 .setCity(JsoupUtils.selectText("TOWN", context))
                 .setPostcode(JsoupUtils.selectText("POSTAL_CODE", context))
                 .setCountry(JsoupUtils.selectAttribute("COUNTRY", "VALUE", context)))
-            .setContactPoint(JsoupUtils.selectText("ATTENTION, CONTACT_POINT", context))
+            .setContactPoint(contactPoint)
             .setPhone(JsoupUtils.selectText("PHONE", context))
             .setEmail(JsoupUtils.selectText("E_MAIL", context));
     }
@@ -338,13 +350,12 @@ public class DOFFINTenderParser extends BaseDatlabTenderParser {
 
         buyer.setBuyerType(JsoupUtils.selectAttribute("TYPE_OF_CONTRACTING_AUTHORITY, CA_TYPE",
                 "VALUE", document))
-            .addMainActivity(JsoupUtils.selectAttribute("TYPE_OF_ACTIVITY, CA_ACTIVITY", "VALUE", document))
-            .addMainActivity(JsoupUtils.selectText("CA_ACTIVITY_OTHER", document));
+            .addMainActivity(JsoupUtils.selectAttribute("TYPE_OF_ACTIVITY, CA_ACTIVITY, TYPE_OF_ACTIVITY_OTHER", "VALUE", document));
 
         if (buyer.getAddress() == null) {
             buyer.setAddress(new ParsedAddress());
         }
-        buyer.getAddress().setUrl(JsoupUtils.selectText("URL_BUYER", document));
+        buyer.getAddress().setUrl(JsoupUtils.selectText("URL_GENERAL", document));
         
         return buyer;
     }
@@ -387,7 +398,7 @@ public class DOFFINTenderParser extends BaseDatlabTenderParser {
         String supplyType = JsoupUtils.selectAttribute("TYPE_CONTRACT", "VALUE", document);
 
         if (supplyType == null) {
-            supplyType = JsoupUtils.selectAttribute("TYPE_CONTRACT, FD_PRIOR_INFORMATION", "CTYPE", document);
+            supplyType = JsoupUtils.selectAttribute("TYPE_CONTRACT, FD_PRIOR_INFORMATION, FD_CONTRACT", "CTYPE", document);
         }
 
         return supplyType;
@@ -607,6 +618,7 @@ public class DOFFINTenderParser extends BaseDatlabTenderParser {
             .setBuyerAssignedId(JsoupUtils.selectText("FILE_REFERENCE_NUMBER, REFERENCE_NUMBER", document))
             .setDispatchDate(parseDate("NOTICE_DISPATCH_DATE, DATE_DISPATCH_NOTICE", document))
             .setSourceFormType(JsoupUtils.selectAttribute("[form]", "form", document))
+                .setVersion(JsoupUtils.selectAttribute("[version]", "version", document))
             .setPublicationDate(publicationDate));
 
         // previous TED publications

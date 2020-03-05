@@ -49,7 +49,7 @@ public final class TenderLotPlugin extends BaseDatlabTenderLotPlugin {
     @Override
     protected Double calculateMatchingRatio(final MatchedTenderLot firstLot, final MatchedTenderLot secondLot,
                                             final List<List<MatchedTenderLot>> items) {
-        Double matchingScore = new Double(0.0);
+        Double matchingScore = (double) 0.0;
         int numberOfComparisons = 0;
 
         if (firstLot.getBidsCount() != null && secondLot.getBidsCount() != null) {

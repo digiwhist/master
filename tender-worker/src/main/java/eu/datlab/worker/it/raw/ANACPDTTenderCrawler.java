@@ -113,6 +113,10 @@ public final class ANACPDTTenderCrawler extends BaseDatlabIncrementalCrawler {
             @Override
             public void loadScriptError(final HtmlPage page, final URL scriptUrl, final Exception exception) {
             }
+
+            @Override
+            public void warn(final String s, final String s1, final int i, final String s2, final int i1) {
+            }
         });
         client.setHTMLParserListener(new HTMLParserListener() {
             @Override

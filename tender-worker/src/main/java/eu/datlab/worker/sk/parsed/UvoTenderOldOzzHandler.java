@@ -13,6 +13,8 @@ import org.jsoup.nodes.Element;
 
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.getFirstValueFromElement;
 import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.parsePrice;
+import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.removeFakeLots;
+import static eu.datlab.worker.sk.parsed.UvoTenderParserUtils.parseLotNumber;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -157,18 +159,6 @@ final class UvoTenderOldOzzHandler {
             return parsedBody;
         }
     }
-
-    /**
-     * Parse lot number from lot.
-     *
-     * @param lot lot to parse from
-     * @return String or null
-     */
-    private static String parseLotNumber(final Element lot) {
-        final String lotNumber = getFirstValueFromElement(lot, "span:containsOwn(Časť:)");
-        return lotNumber == null ? null : lotNumber.replace("Časť:", "");
-    }
-
 
     /**
      * Parse lot price.
@@ -317,7 +307,8 @@ final class UvoTenderOldOzzHandler {
             return null;
         }
 
-        List<Element> lotFirstLines = root.select("span:containsOwn(Časť:):not(:contains(Lokalita))");
+        removeFakeLots(document);
+        List<Element> lotFirstLines = root.select("span:matchesOwn(Časť: ?\\d+):not(:contains(Lokalita))");
 
         if (lotFirstLines == null || lotFirstLines.isEmpty()) {
             return Arrays.asList(root);
