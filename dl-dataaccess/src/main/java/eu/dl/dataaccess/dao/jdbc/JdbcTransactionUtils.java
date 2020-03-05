@@ -1,9 +1,9 @@
 package eu.dl.dataaccess.dao.jdbc;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,12 +33,13 @@ public final class JdbcTransactionUtils implements TransactionUtils {
 
             logger = LoggerFactory.getLogger(this.getClass().getName());
 
-            Class.forName("org.postgresql.Driver");
-
             String url = config.getParam("jdbc.url");
 
-            connection = DriverManager.getConnection(url, config.getParam("jdbc.user"),
-                    config.getParam("jdbc.password"));
+            ComboPooledDataSource cpds = new ComboPooledDataSource();
+            cpds.setJdbcUrl(url);
+            cpds.setUser(config.getParam("jdbc.user"));
+            cpds.setPassword(config.getParam("jdbc.password"));
+            connection = cpds.getConnection();
 
             logger.info("Successfully established database connection to {}", url);
         } catch (Exception e) {

@@ -42,21 +42,47 @@ public interface MasterDAO<T> {
     String save(T masteredItem);
 
     /**
-     * Returns objects which has been modified after timestamp. The result is
-     * paged with 1000 records per page.
+     * Returns objects which has been modified after timestamp. The result is paged with {@code pageSize} records per page.
      *
      * @param timestamp
      *            objects modified after this timestamp will be returned
      * @param page
      *            order of the page in the result
+     * @param pageSize
+     *      page size
+     * @return set of objects modified after timestamp
+     */
+    List<T> getModifiedAfter(LocalDateTime timestamp, Integer page, Integer pageSize);
+
+    /**
+     * Same as {@link MasterDAO#getModifiedAfter(LocalDateTime, Integer, Integer)} but uses default page size.
      *
+     * @param timestamp
+     *            objects modified after this timestamp will be returned
+     * @param page
+     *            order of the page in the result
      * @return set of objects modified after timestamp
      */
     List<T> getModifiedAfter(LocalDateTime timestamp, Integer page);
 
     /**
-     * Returns objects which has been modified after timestamp by certain
-     * source. The result is paged with 1000 records per page.
+     * Returns objects which has been modified after timestamp by certain source. The result is paged with {@code pageSize} records per
+     * page.
+     *
+     * @param timestamp
+     *            objects modified after this timestamp will be returned
+     * @param modifiedBy
+     *            "author" of the change
+     * @param page
+     *            order of the page in the result
+     * @param pageSize
+     *      page size
+     * @return set of objects modified after timestamp
+     */
+    List<T> getModifiedAfter(LocalDateTime timestamp, String modifiedBy, Integer page, Integer pageSize);
+
+    /**
+     * Same as {@link MasterDAO#getModifiedAfter(LocalDateTime, String, Integer, Integer)} but uses default page size.
      *
      * @param timestamp
      *            objects modified after this timestamp will be returned
@@ -69,10 +95,26 @@ public interface MasterDAO<T> {
      */
     List<T> getModifiedAfter(LocalDateTime timestamp, String modifiedBy, Integer page);
 
+    /**
+     * Returns objects which has been modified after timestamp by certain source. The result is paged with {@code pageSize} records per
+     * page.
+     *
+     * @param timestamp
+     *            objects modified after this timestamp will be returned
+     * @param createdBy
+     *            "author" of the change
+     * @param country
+     *            country the tender is coming from
+     * @param page
+     *            order of the page in the result
+     * @param pageSize
+     *      page size
+     * @return set of objects modified after timestamp
+     */
+    List<T> getModifiedAfter(LocalDateTime timestamp, String createdBy, String country, Integer page, Integer pageSize);
 
     /**
-     * Returns objects which has been modified after timestamp by certain
-     * source. The result is paged with 1000 records per page.
+     * Same as {@link MasterDAO#getModifiedAfter(LocalDateTime, String, String, Integer, Integer)} but uses default page size.
      *
      * @param timestamp
      *            objects modified after this timestamp will be returned

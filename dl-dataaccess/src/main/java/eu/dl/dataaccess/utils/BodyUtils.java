@@ -64,7 +64,7 @@ public final class BodyUtils {
         }
         
         MatchedBody result = null;
-        Double winningScore = new Double(0);
+        Double winningScore = (double) 0;
 
         for (MatchedBody body : bodies) {
             // calculate score for current body
@@ -95,7 +95,7 @@ public final class BodyUtils {
      * @return completeness score(0 for null values)
      */
     public static Double completenessScore(final MatchedBody body) {
-        Double score = new Double(0);
+        Double score = (double) 0;
 
         if (body == null) {
             return score;

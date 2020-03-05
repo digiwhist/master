@@ -60,7 +60,7 @@ public final class ClassUtils {
         }
 
         try {
-            List newList = list.getClass().newInstance();
+            List newList = list.getClass().getDeclaredConstructor().newInstance();
             for (T n : list) {
                 n = removeNonsenses(n);
                 if (n != null) {
@@ -69,7 +69,7 @@ public final class ClassUtils {
             }
 
             return newList.isEmpty() ? null : newList;
-        } catch (IllegalAccessException | InstantiationException ex) {
+        } catch (IllegalAccessException | InstantiationException | NoSuchMethodException | InvocationTargetException ex) {
             logger.error("Unable to get new instance of the {} because of", list.getClass(), ex);
             throw new UnrecoverableException("Unable to get new instance of the collection");
         }

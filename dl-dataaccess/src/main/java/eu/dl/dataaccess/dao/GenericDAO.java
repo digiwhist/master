@@ -54,21 +54,48 @@ public interface GenericDAO<T> extends BaseDAO<T> {
     List<T> getMine(String name, String version, String fromDate, String toDate);
 
     /**
-     * Returns objects which has been modified after timestamp. The result is
-     * paged with 1000 records per page.
+     * Returns objects which has been modified after timestamp. The result is paged with {@code pageSize} records per page.
      *
      * @param timestamp
      *            objects modified after this timestamp will be returned
      * @param page
      *            order of the page in the result (for first page set 0)
-     * 
+     * @param pageSize
+     *      page size
+     * @return set of objects modified after timestamp
+     */
+    List<T> getModifiedAfter(LocalDateTime timestamp, Integer page, Integer pageSize);
+
+    /**
+     * Same as {@link GenericDAO#getModifiedAfter(LocalDateTime, Integer, Integer)} but uses default page size.
+     *
+     * @param timestamp
+     *            objects modified after this timestamp will be returned
+     * @param page
+     *            order of the page in the result (for first page set 0)
      * @return set of objects modified after timestamp
      */
     List<T> getModifiedAfter(LocalDateTime timestamp, Integer page);
 
     /**
-     * Returns objects which has been modified after timestamp by certain
-     * source. The result is paged with 1000 records per page.
+     * Returns objects which has been modified after timestamp by certain source. The result is paged with {@code pageSize} records per
+     * page.
+     *
+     * @param timestamp
+     *            objects modified after this timestamp will be returned
+     * @param modifiedBy
+     *            "author" of the change
+     * @param page
+     *            order of the page in the result (for first page set 0)
+     * @param pageSize
+     *      page size
+     *
+     * @return set of objects modified after timestamp
+     */
+    List<T> getModifiedAfter(LocalDateTime timestamp, String modifiedBy, Integer page, Integer pageSize);
+
+    /**
+     * Same as {@link GenericDAO#getModifiedAfter(LocalDateTime, String, Integer, Integer)} but uses default page size.
      *
      * @param timestamp
      *            objects modified after this timestamp will be returned
@@ -82,8 +109,25 @@ public interface GenericDAO<T> extends BaseDAO<T> {
     List<T> getModifiedAfter(LocalDateTime timestamp, String modifiedBy, Integer page);
 
     /**
-     * Returns objects which has been modified after timestamp by certain
-     * source. The result is paged with 1000 records per page.
+     * Returns objects which has been modified after timestamp by certain source. The result is paged with {@code pageSize} records per
+     * page.
+     *
+     * @param timestamp
+     *            objects modified after this timestamp will be returned
+     * @param createdBy
+     *            "author" of the change
+     * @param countryCode
+     *            country code
+     * @param page
+     *            order of the page in the result (for first page set 0)
+     * @param pageSize
+     *      page size
+     * @return set of objects modified after timestamp
+     */
+    List<T> getModifiedAfter(LocalDateTime timestamp, String createdBy, String countryCode, Integer page, Integer pageSize);
+
+    /**
+     * Same as {@link GenericDAO#getModifiedAfter(LocalDateTime, String, String, Integer, Integer)} but uses default page size.
      *
      * @param timestamp
      *            objects modified after this timestamp will be returned
