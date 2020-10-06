@@ -83,8 +83,7 @@ public class KeyMissingFieldsIndicatorPlugin extends BaseIndicatorPlugin impleme
      * @return updated score
      */
     private static IndicatorScore evaluateContractNotice(final CleanTender tender, final IndicatorScore score) {
-        if (tender.getAwardCriteria() != null && tender.getSelectionMethod() != null
-                && tender.getSelectionMethod() == SelectionMethod.MEAT) {
+        if (tender.getAwardCriteria() != null && tender.getSelectionMethod() == SelectionMethod.MEAT) {
             tender.getAwardCriteria().forEach(n -> {
                 score.test(n.getName() != null);
                 score.test(n.getWeight() != null);

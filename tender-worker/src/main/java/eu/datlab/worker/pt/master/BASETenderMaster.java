@@ -3,7 +3,6 @@ package eu.datlab.worker.pt.master;
 import eu.datlab.worker.master.BaseDatlabTenderMaster;
 import eu.dl.dataaccess.dto.master.MasterTender;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
-
 import java.util.List;
 
 /**
@@ -14,9 +13,7 @@ public class BASETenderMaster extends BaseDatlabTenderMaster {
     private static final String VERSION = "1.0";
 
     @Override
-    protected final void registerSpecificPlugins() {
-        pluginRegistry.unRegisterPlugin("Lots");
-        pluginRegistry.registerPlugin("LotsPt", new ConcatLotsPlugin());
+    protected void registerSpecificPlugins() {
     }
 
     @Override

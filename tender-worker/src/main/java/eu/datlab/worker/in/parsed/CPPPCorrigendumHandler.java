@@ -50,6 +50,7 @@ public final class CPPPCorrigendumHandler {
             .setDescription(getValue(context, "Work Description"))
             .setDocumentsLocation(new ParsedAddress()
                 .setUrl(getValue(context, "Tender Document")))
+            .setProcedureType(procedureType)
             .setNationalProcedureType(procedureType)
             .setTitle(getValue(context, "Tender Title"))
             .addCpv(new ParsedCPV()

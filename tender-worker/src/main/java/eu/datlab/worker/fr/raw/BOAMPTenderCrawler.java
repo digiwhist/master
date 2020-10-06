@@ -13,7 +13,6 @@ import org.apache.commons.net.ftp.FTPFile;
 
 import static eu.datlab.worker.fr.BOAMPTenderUtils.ARCHIVE_URL_METADATA_KEY;
 import static eu.datlab.worker.fr.BOAMPTenderUtils.FILE_PATH_METADATA_KEY;
-import static eu.datlab.worker.fr.BOAMPTenderUtils.FILE_NAME_METADATA_KEY;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -34,7 +33,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 /**
  * Tender crawler for France.
@@ -86,14 +84,13 @@ public final class BOAMPTenderCrawler extends BaseDatlabIncrementalFtpCrawler {
 
                             // save the XML file to temporary folder with name of archive (the name is in extracted
                             // file name)
-                            final String tmpName = UUID.randomUUID().toString();
-                            final String filePath = "/tmp/fr_xml_files/" + tmpName;
-
+                            final String filePath = "/tmp/fr_xml_files/" + extractedFile.getKey();
                             // save the file only when it does not exist
                             if (Files.notExists(Paths.get(filePath))) {
                                 final String dirPath = filePath.substring(0, filePath.lastIndexOf('/'));
                                 createDirIfNotExists(dirPath);
-                                InputStream xmlFileStream = new ByteArrayInputStream(extractedFile.getValue().getBytes("UTF-8"));
+                                InputStream xmlFileStream = new ByteArrayInputStream(extractedFile.getValue().getBytes(
+                                        "UTF-8"));
                                 try {
                                     Files.copy(xmlFileStream, Paths.get(filePath));
                                 } catch (IOException e) {
@@ -105,7 +102,6 @@ public final class BOAMPTenderCrawler extends BaseDatlabIncrementalFtpCrawler {
 
                             final Message outgoingMessage = MessageFactory.getMessage();
                             outgoingMessage.setValue(FILE_PATH_METADATA_KEY, filePath);
-                            outgoingMessage.setValue(FILE_NAME_METADATA_KEY, extractedFile.getKey());
                             outgoingMessage.setValue(ARCHIVE_URL_METADATA_KEY, ftpUri.toURL().toString());
                             publishMessage(outgoingMessage);
                             logger.info("New message sent to be processed: {}", outgoingMessage);

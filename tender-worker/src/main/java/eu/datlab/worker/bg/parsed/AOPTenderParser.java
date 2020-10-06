@@ -54,9 +54,4 @@ public final class AOPTenderParser extends BaseDatlabTenderParser {
     protected String countryOfOrigin(final ParsedTender parsed, final RawData raw) {
         return "BG";
     }
-
-    @Override
-    protected List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
-        return parsed;
-    }
 }

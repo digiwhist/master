@@ -113,6 +113,7 @@ public final class APATenderCsvCFTHandler {
                                     .setNetAmount(tender.get(ESTIMATED_PRICE_NET_AMOUNT))
                                     .setCurrency(tender.get(ESTIMATED_PRICE_CURRENCY)))
                             .setNationalProcedureType(tender.get(PROCEDURE_TYPE))
+                            .setProcedureType(tender.get(PROCEDURE_TYPE))
                             .setSelectionMethod(tender.get(SELECTION_METHOD))
                             .addBuyer(buyer)
                             .setBuyerAssignedId(tender.get(BUYER_ASSIGNED_ID))

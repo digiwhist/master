@@ -139,9 +139,4 @@ public class CIAPublicOfficialParser extends BasePublicOfficialParser {
 
         return PdfTextExtractor.getTextFromPage(pdfDocument, pageNumber, filteredTextRenderListener);
     }
-
-    @Override
-    protected final List<ParsedPublicOfficial> postProcessSourceSpecificRules(final List<ParsedPublicOfficial> parsed, final RawData raw) {
-        return parsed;
-    }
 }

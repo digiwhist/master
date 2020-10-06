@@ -65,7 +65,7 @@ final class ENarocanjeContractAwardHandler3Old extends BaseENarocanjeContractAwa
         if (sectionIV11 != null && sectionIV11.childNodeSize() >= 12) {
             String procedureType = sectionIV11.childNode(12).toString();
 
-            tender.setNationalProcedureType(procedureType);
+            tender.setNationalProcedureType(procedureType).setProcedureType(procedureType);
         }
 
         // lots

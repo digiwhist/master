@@ -1,27 +1,7 @@
 package eu.datlab.worker.hr.raw;
 
-import com.google.common.base.Function;
-import eu.datlab.dataaccess.dao.DAOFactory;
-import eu.dl.core.UnrecoverableException;
-import eu.dl.dataaccess.dao.RawDAO;
-import eu.dl.dataaccess.dao.TransactionUtils;
-import eu.dl.dataaccess.dto.raw.RawData;
-import eu.dl.worker.Message;
-import eu.dl.worker.raw.downloader.BaseDownloader;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.remote.CapabilityType;
-import org.openqa.selenium.remote.RemoteWebDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.FluentWait;
-import org.openqa.selenium.support.ui.Wait;
-import org.openqa.selenium.support.ui.WebDriverWait;
-
 import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -31,10 +11,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
 
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.CapabilityType;
+import org.openqa.selenium.remote.DesiredCapabilities;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.FluentWait;
+import org.openqa.selenium.support.ui.Wait;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import com.google.common.base.Function;
+
+import eu.datlab.dataaccess.dao.DAOFactory;
+import eu.dl.core.UnrecoverableException;
+import eu.dl.dataaccess.dao.RawDAO;
+import eu.dl.dataaccess.dao.TransactionUtils;
+import eu.dl.dataaccess.dto.raw.RawData;
+import eu.dl.worker.Message;
+import eu.dl.worker.raw.downloader.BaseDownloader;
+
 /**
  * Downloads detail html from detail page. In detail page is located download button.
- * The downloader requires a running chromedriver docker container (see tender-worker/src/main/resources/chromedriver/Dockerfile),
- * which is a modified selenium/standalone-chrome image with modified linux users for smooth usage with this downloader.
  *
  * @author Kuba Krafka
  */
@@ -43,7 +43,7 @@ public final class EOJNTenderDownloader extends BaseDownloader<RawData> {
 
     private static final String WHOLE_FORM_BUTTON_ID = "uiDokumentPodaci_uiDocumentCtl_uiOpenDocumentHtml";
 
-    private WebDriver driver;
+    private final WebDriver driver;
     private final String downloadFilepath;
 
     /**
@@ -51,36 +51,32 @@ public final class EOJNTenderDownloader extends BaseDownloader<RawData> {
      */
     public EOJNTenderDownloader() {
         super();
-        String uuid = UUID.randomUUID().toString();
-        downloadFilepath = "/tmp/chrome_downloads/" + getName() + "_chrome_" + uuid;
 
-        // CHROME
+        System.setProperty("webdriver.chrome.driver", "/tmp/chromedriver/chromedriver.exe");
+
+        String uuid = UUID.randomUUID().toString();
+        downloadFilepath = "c:\\tmp\\" + getName() + uuid;
+
         HashMap<String, Object> chromePrefs = new HashMap<String, Object>();
-//        chromePrefs.put("profile.default_content_settings.popups", 0);
-        chromePrefs.put("download.prompt_for_download", "false");
+        chromePrefs.put("profile.default_content_settings.popups", 0);
         chromePrefs.put("download.default_directory", downloadFilepath);
 
         ChromeOptions options = new ChromeOptions();
         options.setExperimentalOption("prefs", chromePrefs);
 
-        options.addArguments("start-maximized");
-        options.addArguments("disable_infobars");
-        options.addArguments("--disable-gpu");
-        options.setHeadless(true);
-        options.setCapability(CapabilityType.BROWSER_NAME, "chrome");
-        options.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true);
+        // TODO: enters into the headless mode, waits for bugfix
+        // there is reported a bug,
+        // remove once fixed here https://bugs.chromium.org/p/chromium/issues/detail?id=696481
 
-        try {
-            driver = new RemoteWebDriver(new URL("http://localhost:4444"), options);
-        } catch (MalformedURLException e) {
-            driver = null;
-            e.printStackTrace();
-        }
-    }
+        // options.addArguments("--headless");
+        // options.addArguments("--disable-gpu");
 
-    @Override
-    protected boolean skipExisting(final Message message) {
-        return false;
+        DesiredCapabilities cap = new DesiredCapabilities();
+        cap.setBrowserName("chrome");
+        cap.setCapability(CapabilityType.ACCEPT_SSL_CERTS, true);
+        cap.setCapability(ChromeOptions.CAPABILITY, options);
+
+        driver = new ChromeDriver(cap);
     }
 
     @Override

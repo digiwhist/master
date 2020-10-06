@@ -1,16 +1,10 @@
 package eu.datlab.worker.sk.parsed;
 
 import eu.dl.core.UnrecoverableException;
-import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
-import eu.dl.dataaccess.dto.parsed.ParsedAddress;
-import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
-import eu.dl.worker.utils.jsoup.JsoupUtils;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,11 +20,6 @@ import java.util.regex.Pattern;
 public final class UvoTenderParserUtils {
 
     static final Pattern NPWP_REASONS_REGEX = Pattern.compile("[a-i]\\d?\\)");
-
-    /**
-     * Logger.
-     */
-    private static final Logger logger = LoggerFactory.getLogger(UvoTenderParserUtils.class);
 
     /**
      * Suppress default constructor for noninstantiability.
@@ -497,8 +486,7 @@ public final class UvoTenderParserUtils {
     }
 
     /**
-     * Removes lot subtitles from subsections II.2.2, V.2.3, II.2.5 and II.2.1. In these sections subtitle 'Časť:'
-     * doesn't mean lot.
+     * Removes lot subtitles from subsection II.2.2). In this section subtitle 'Časť:' doesn't mean lot.
      *
      * @param document
      *      document
@@ -506,47 +494,26 @@ public final class UvoTenderParserUtils {
     public static void removeFakeLots(final Element document) {
         List<String> selectors = Arrays.asList("div.subtitle:contains(II.2.2)", "div.subtitle:contains(V.2.3)",
             "div.subtitle:contains(II.2.5)", "div.subtitle:contains(II.2.1)");
-        Element oddielII = document.selectFirst("fieldset:contains(ODDIEL II:)");
-        Element oddielV = document.selectFirst("fieldset:contains(ODDIEL V:)");
 
         for (String selector : selectors) {
-            Element oddiel = selector.contains("V") ? oddielV : oddielII;
-            if(oddiel == null) {
+            Element section = document.selectFirst(selector);
+            if (section == null) {
                 continue;
             }
-            Elements sections = oddiel.select(selector);
-            Elements endElements = oddiel.select(selector + " ~ div.subtitle:matches([IVX]+\\.\\d)");
-            for(Element section: sections) {
-                if (section == null) {
-                    continue;
+
+            int sectionStart = section.siblingIndex();
+
+            Element endElement = document.selectFirst(selector + " ~ div.subtitle:matches([IVX]+\\.\\d)");
+            int sectionEnd = endElement != null ? endElement.siblingIndex() : section.lastElementSibling().siblingIndex();
+
+            Elements lots = document.select("span:containsOwn(Časť:), span:containsOwn(Časť č.:)");
+            for (Element l : lots) {
+                if (sectionEnd != -1 && l.siblingIndex() >= sectionEnd) {
+                    break;
                 }
 
-                int sectionStart = section.siblingIndex();
-
-                // looking for first end element with larger index than sectionStart and remove seen elements
-                Element endElement = null;
-                while(endElement == null) {
-                    if(endElements.isEmpty()) {
-                        break;
-                    }
-                    if(endElements.get(0).siblingIndex() > sectionStart) {
-                        endElement = endElements.get(0);
-                    }
-                    endElements.remove(0);
-                }
-                int sectionEnd = endElement != null ? endElement.siblingIndex() : section.lastElementSibling().siblingIndex();
-
-                Elements lots = oddiel.select("span:containsOwn(Časť:), span:containsOwn(Časť č.:)");
-                for (Element l : lots) {
-                    if (sectionEnd != -1 && l.siblingIndex() >= sectionEnd) {
-                        break;
-                    }
-
-                    if (l.siblingIndex() > sectionStart && l.siblingIndex() < sectionEnd) {
-                        logger.info("Removing {} from section {} of publication {}, fake lot.", l.html(),
-                                selector.split("\\(")[1].split("\\)")[0]);
-                        l.text("");
-                    }
+                if (l.siblingIndex() > sectionStart || l.siblingIndex() < sectionEnd) {
+                    l.text("");
                 }
             }
         }
@@ -566,69 +533,4 @@ public final class UvoTenderParserUtils {
 
         return lotNumber == null ? null : lotNumber.replace("Časť:", "").replace("Časť č.:", "").trim();
     }
-
-    /**
-     * Parse raw address of bidder from document.
-     *
-     * @param lot lot to be parsed
-     * @return parsed raw address
-     */
-    public static ParsedAddress parseRawAddress(final Element lot) {
-        Element element = lot.selectFirst("div.ContactSelectList > span.titleValue > text");
-
-        if (element == null) {
-            element = lot.selectFirst("div.ContactSelectList > span.titleValue");
-        }
-
-        if (element == null) {
-            return null;
-        }
-
-        Element nuts = lot.selectFirst("span:containsOwn(Kód NUTS:) + span");
-        Element country = lot.selectFirst("span:containsOwn(Slovensko)");
-
-        return new ParsedAddress()
-                .addNuts(nuts == null ? null : nuts.ownText())
-                .setCountry(country == null ? null : country.ownText())
-                .setRawAddress(element.ownText());
-    }
-
-    /**
-     * Parses lot bidders.
-     *
-     * @param lot to be parsed
-     * @return list of ParsedBody or null
-     */
-    public static List<ParsedBody> parseBidders(final Element lot) {
-        Elements nodes = JsoupUtils.select("div.contactSelectList", lot);
-
-        List<ParsedBody> bidders = new ArrayList<>();
-        for (Element n : nodes) {
-            ParsedBody parsedBody = new ParsedBody()
-                    .setName(getFirstValueFromElement(n, new String[]{
-                            "div.contactSelectList > span.titleValue > span",
-                            "div.contactSelectList > span.titleValue"}))
-                    .setAddress(parseRawAddress(n))
-                    .setIsSme(getTrueOrFalseFromElement(n.nextElementSibling(), "div:containsOwn(Dodávateľom je MS) > span"))
-                    .setPhone(getFirstValueFromElement(n, "span:containsOwn(Telefón:) + span"))
-                    .setEmail(getFirstValueFromElement(n, "span:containsOwn(Email) + span"));
-
-            String bodyId = getFirstValueFromElement(n, new String[]{
-                    "span:containsOwn(IČO:) + span",
-                    "span:containsOwn(útroštátne identifikačné číslo:) + span"});
-
-            if (bodyId != null) {
-                parsedBody.setBodyIds(Arrays.asList(new BodyIdentifier()
-                        .setId(bodyId)
-                        .setType(BodyIdentifier.Type.ORGANIZATION_ID)
-                        .setScope(BodyIdentifier.Scope.SK)));
-            }
-
-            bidders.add(parsedBody);
-        }
-
-        return bidders.isEmpty() ? null : bidders;
-    }
-
-
 }

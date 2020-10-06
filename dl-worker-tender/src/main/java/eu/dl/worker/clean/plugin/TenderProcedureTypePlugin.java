@@ -52,11 +52,7 @@ public final class TenderProcedureTypePlugin extends CodeTablePlugin<ParsedTende
      */
     @Override
     public CleanTender clean(final ParsedTender parsedTender, final CleanTender cleanTender) {
-        String parsedProcedureType = parsedTender.getNationalProcedureType();
-        if(parsedProcedureType != null && parsedProcedureType.contains(":")
-                && !parsedProcedureType.replace(":", "").isEmpty()) {
-            parsedProcedureType = parsedProcedureType.split(":")[0];
-        }
+        final String parsedProcedureType = parsedTender.getProcedureType();
         final TenderProcedureType procedureType =
             (TenderProcedureType) CodeTableUtils.mapValue(parsedProcedureType, mapping);
         cleanTender.setProcedureType(procedureType);

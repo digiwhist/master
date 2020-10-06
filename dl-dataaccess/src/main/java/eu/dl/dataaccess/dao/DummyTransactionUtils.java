@@ -9,12 +9,6 @@ package eu.dl.dataaccess.dao;
 public class DummyTransactionUtils implements TransactionUtils {
 
     @Override
-    public void close() {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
     public void begin() {
         // TODO Auto-generated method stub
 
@@ -31,4 +25,5 @@ public class DummyTransactionUtils implements TransactionUtils {
         // TODO Auto-generated method stub
 
     }
+
 }

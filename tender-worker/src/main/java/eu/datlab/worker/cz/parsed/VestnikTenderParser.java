@@ -661,9 +661,4 @@ public final class VestnikTenderParser extends BaseDatlabTenderParser {
     public String countryOfOrigin(final ParsedTender parsed, final RawData raw){
         return "CZ";
     }
-
-    @Override
-    protected List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
-        return parsed;
-    }
 }

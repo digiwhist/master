@@ -12,30 +12,5 @@ public enum CorrectionType {
     /**
      * CPVs correction.
      */
-    CPVS,
-
-    /**
-     * Tender final price correction.
-     */
-    FINAL_PRICE,
-
-    /**
-     * Bid price correction.
-     */
-    BID_PRICE,
-
-    /**
-     * Tender estimated price correction.
-     */
-    ESTIMATED_PRICE,
-
-    /**
-     * Lot estimated price correction.
-     */
-    LOT_ESTIMATED_PRICE,
-
-    /**
-     * Price correction.
-     */
-    PRICE;
+    CPVS;
 }

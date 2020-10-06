@@ -115,6 +115,7 @@ public class SPATenderParser extends BaseDatlabTenderParser {
             procedureType = getFromTableFromMainSnippet("Procurement type", mainSnippet);
         }
         parsedTender
+                .setProcedureType(procedureType)
                 .setNationalProcedureType(procedureType)
                 .setPublications(parsePublications(mainSnippet, chronologySnippet, rawTender.getSourceUrl().toString()))
                 .addLot(new ParsedTenderLot()
@@ -541,8 +542,4 @@ public class SPATenderParser extends BaseDatlabTenderParser {
         return "GE";
     }
 
-    @Override
-    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
-        return parsed;
-    }
 }

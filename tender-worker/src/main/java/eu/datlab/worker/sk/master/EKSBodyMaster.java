@@ -1,4 +1,4 @@
-package eu.datlab.worker.at.master;
+package eu.datlab.worker.sk.master;
 
 import eu.datlab.worker.master.BaseDatlabBodyMaster;
 import eu.dl.dataaccess.dto.master.MasterBody;
@@ -7,12 +7,9 @@ import eu.dl.dataaccess.dto.matched.MatchedBody;
 import java.util.List;
 
 /**
- * Body master for data.gv.at tenders.
- *
- * @author Miroslav Brezik
+ * Master for EKS bodies.
  */
-public class DataGvBodyMaster extends BaseDatlabBodyMaster {
-
+public class EKSBodyMaster extends BaseDatlabBodyMaster {
     private static final String VERSION = "1.0";
 
     @Override

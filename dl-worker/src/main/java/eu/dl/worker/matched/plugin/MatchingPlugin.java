@@ -17,13 +17,4 @@ public interface MatchingPlugin<T> {
      * @return result of matching
      */
     MatchingResult match(T item);
-
-    /**
-     * Check whether the the given item is matchable by this plugin.
-     *
-     * @param item
-     *      item to be matched
-     * @return TRUE if the item is matchable, otherwise FALSE
-     */
-    boolean isMatchable(T item);
 }

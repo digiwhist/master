@@ -1,14 +1,15 @@
 package eu.dl.dataaccess.dao.jdbc;
 
-import eu.dl.core.UnrecoverableException;
-import eu.dl.core.config.Config;
-import eu.dl.dataaccess.dao.TransactionUtils;
-import org.apache.commons.dbcp2.BasicDataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+
+import com.mchange.v2.c3p0.ComboPooledDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.sql.Connection;
-import java.sql.SQLException;
+import eu.dl.core.UnrecoverableException;
+import eu.dl.core.config.Config;
+import eu.dl.dataaccess.dao.TransactionUtils;
 
 /**
  * Transaction handling for hibernate.
@@ -16,8 +17,6 @@ import java.sql.SQLException;
 public final class JdbcTransactionUtils implements TransactionUtils {
 
     private Connection connection;
-
-    private BasicDataSource connectionPool;
 
     private static JdbcTransactionUtils instance;
 
@@ -34,16 +33,15 @@ public final class JdbcTransactionUtils implements TransactionUtils {
 
             logger = LoggerFactory.getLogger(this.getClass().getName());
 
+            String url = config.getParam("jdbc.url");
 
-            connectionPool = new BasicDataSource();
+            ComboPooledDataSource cpds = new ComboPooledDataSource();
+            cpds.setJdbcUrl(url);
+            cpds.setUser(config.getParam("jdbc.user"));
+            cpds.setPassword(config.getParam("jdbc.password"));
+            connection = cpds.getConnection();
 
-            connectionPool.setUsername(config.getParam("jdbc.user"));
-            connectionPool.setPassword(config.getParam("jdbc.password"));
-            connectionPool.setDriverClassName("org.postgresql.Driver");
-            connectionPool.setUrl(config.getParam("jdbc.url"));
-            connectionPool.setInitialSize(3);
-
-            logger.info("Successfully established database connection to database");
+            logger.info("Successfully established database connection to {}", url);
         } catch (Exception e) {
             logger.error("Unable to establish db connection caused by {}", e);
             throw new UnrecoverableException("Unable to establish db connection because of", e);
@@ -69,46 +67,22 @@ public final class JdbcTransactionUtils implements TransactionUtils {
      * @return entity manager
      */
     public Connection getConnection() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                return connection;
-            } else {
-                connection = connectionPool.getConnection();
-                return connection;
-            }
-        } catch (Exception e) {
-            logger.error("Unable to return db connection caused by {}", e);
-            throw new UnrecoverableException("Unable to return db connection because of", e);
-        }
-    }
-
-    @Override
-    public void close() {
-        try {
-            if (connection != null && !connection.isClosed()) {
-                connection.close();
-                logger.debug("DB connection closed");
-            }
-        } catch (SQLException ex) {
-            logger.error("Unable to close connection.");
-            throw new UnrecoverableException("Unable to close connection.", ex);
-        }
-
+        return connection;
     }
 
     @Override
     public void begin() {
-        logger.debug("Transaction is started by default.");
+        logger.debug("Transaction({}) is started by default.", connection.hashCode());
     }
 
     @Override
     public void commit() {
         try {
-            if (connection != null && !connection.isClosed() && !connection.getAutoCommit()) {
+            if (!connection.getAutoCommit()) {
                 connection.commit();
                 logger.debug("Transaction({}) commited.", connection.hashCode());
             } else {
-                logger.trace("Transaction is not in commmitable mode.");
+                logger.trace("Transaction is in autocommit mode, no commmit.");
             }
         } catch (SQLException ex) {
             logger.error("Unable to commit transaction.");
@@ -119,17 +93,16 @@ public final class JdbcTransactionUtils implements TransactionUtils {
     @Override
     public void rollback() {
         try {
-            if (connection != null && !connection.isClosed() && !connection.getAutoCommit()) {
+            if (!connection.getAutoCommit()) {
                 connection.rollback();
                 logger.debug("Transaction({}) rollbacked.", connection.hashCode());
             } else {
-                logger.trace("Transaction is in not in rollbackable state.");
+                logger.trace("Transaction is in autocommit mode, no rollback needed.");
             }
         } catch (SQLException ex) {
             logger.error("Unable to rollback transaction.");
             throw new UnrecoverableException("Unable to rollback transaction", ex);
         }
-
     }
 
 }

@@ -3,14 +3,12 @@ package eu.datlab.worker.master;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.master.MasterTender;
-import eu.dl.dataaccess.dto.master.MasterTenderLot;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
 import eu.dl.dataaccess.dto.utils.DTOUtils;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Class provides useful functions for mastering.
@@ -83,7 +81,7 @@ public final class MasterUtils {
      *      matched tender
      * @return TRUE if is created by eu.datlab.worker.cz.matched.VVZTenderMatcher
      */
-    public static boolean isFromNewVestnik(final MatchedTender tender) {
+    private static boolean isFromNewVestnik(final MatchedTender tender) {
         if (tender.getCreatedBy().equals("eu.datlab.worker.cz.matched.VVZTenderMatcher")) {
             return true;
         }
@@ -97,7 +95,7 @@ public final class MasterUtils {
      *      matched tender
      * @return TRUE if included publication is of type CONTRACT_AWARD
      */
-    public static boolean isContractAward(final MatchedTender tender) {
+    private static boolean isContractAward(final MatchedTender tender) {
         List<Publication> publications = tender.getPublications();
         if (publications != null) {
             for (Publication publication : publications) {
@@ -109,21 +107,5 @@ public final class MasterUtils {
         }
 
         return false;
-    }
-
-    /**
-     * Removes lots without bids.
-     *
-     * @param masterTender
-     *      master tender
-     */
-    public static void reduceLotsWithoutBids(final MasterTender masterTender) {
-        if (masterTender.getLots() != null && masterTender.getIsDps() != null && masterTender.getIsDps()) {
-            List<MasterTenderLot> lots = masterTender.getLots().stream()
-                .filter(l -> l.getBids() != null && !l.getBids().isEmpty())
-                .collect(Collectors.toList());
-            
-            masterTender.setLots(lots.isEmpty() ? null : lots);
-        }
     }
 }

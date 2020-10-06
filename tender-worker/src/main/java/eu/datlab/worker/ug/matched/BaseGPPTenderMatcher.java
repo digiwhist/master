@@ -1,6 +1,7 @@
 package eu.datlab.worker.ug.matched;
 
 import eu.datlab.worker.matched.BaseDatlabTenderMatcher;
+import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
 import eu.dl.dataaccess.utils.TenderUtils;
@@ -21,12 +22,19 @@ public abstract class BaseGPPTenderMatcher extends BaseDatlabTenderMatcher {
             return null;
         }
 
-        String name = body.getName();
-        if (name == null || name.isEmpty()) {
-            name = UUID.randomUUID().toString();
+        String bodyId = null;
+        if (body.getBodyIds() != null) {
+            bodyId = body.getBodyIds().stream()
+                .filter(n -> n.getId() != null && BodyIdentifier.Scope.UG.equals(n.getScope())
+                    && BodyIdentifier.Type.SOURCE_ID.equals(n.getType()))
+                .map(BodyIdentifier::getId).findFirst().orElse(null);
         }
 
-        return sha256Hex(name);
+        if (bodyId == null || bodyId.isEmpty()) {
+            bodyId = UUID.randomUUID().toString();
+        }
+
+        return sha256Hex(bodyId);
     }
 
     @Override

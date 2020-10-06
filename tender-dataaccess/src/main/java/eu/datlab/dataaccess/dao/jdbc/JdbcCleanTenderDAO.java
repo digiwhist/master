@@ -31,7 +31,7 @@ public class JdbcCleanTenderDAO extends GenericJdbcDAO<CleanTender> implements C
     @Override
     public final List<String> getIncludedPublicationSourceIds(final LocalDate date) {
         try {
-            PreparedStatement statement = getConnection().prepareStatement(
+            PreparedStatement statement = connection.prepareStatement(
                     "SELECT p->>'sourceId' AS sourceId " +
                             "FROM " + getTableWithSchema() + " r, jsonb_array_elements(r.data->'publications') as p " +
                             "WHERE (createdBy = ? AND createdByVersion = ? AND p->>'isIncluded' = 'true')");

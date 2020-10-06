@@ -1,6 +1,7 @@
 package eu.dl.worker.clean;
 
 import eu.dl.dataaccess.dto.clean.BaseCleanTenderLot;
+import eu.dl.dataaccess.dto.clean.CleanBid;
 import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.clean.CleanTenderLot;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
@@ -8,6 +9,8 @@ import eu.dl.dataaccess.dto.codetables.SelectionMethod;
 import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
 import eu.dl.dataaccess.dto.generic.AwardCriterion;
+import eu.dl.dataaccess.dto.generic.Payment;
+import eu.dl.dataaccess.dto.generic.Price;
 import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.dataaccess.dto.utils.DTOUtils;
@@ -17,7 +20,9 @@ import eu.dl.worker.clean.plugin.LongTextPlugin;
 import eu.dl.worker.clean.plugin.ShortTextPlugin;
 import eu.dl.worker.clean.plugin.URLPlugin;
 import org.apache.commons.lang3.BooleanUtils;
+import org.apache.commons.lang3.ObjectUtils;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -145,21 +150,19 @@ public abstract class BaseTenderCleaner extends BaseCleaner<ParsedTender, CleanT
         // a) has multiple lots and
         // b) is framework agreement and
         // c) is CONTRACT_AWARD or CONTRACT_IMPLEMENTATION (included publication)
-        // d) has same bidsCount on all lots and same title on all lots
+        // d) has same bidsCount on all lots
         // then move all bids under first lot (yes, there will be more winning bids per lot), delete other lots.
 
         List<CleanTenderLot> lots = cleanTender.getLots();
         // a) if tender has multiple lots
         if (lots != null && lots.size() > 1) {
             CleanTenderLot firstLot = lots.get(0);
-            // b) and is framework agreement or dps
+            // b) and is framework agreement
             if (BooleanUtils.isTrue(cleanTender.getIsFrameworkAgreement())) {
                 // c) and is CONTRACT_AWARD or CONTRACT_IMPLEMENTATION
                 if (formType == PublicationFormType.CONTRACT_AWARD || formType == PublicationFormType.CONTRACT_IMPLEMENTATION) {
-                    // d) and has same bidsCount or title on all lots
-                    if (lots.stream().allMatch(lot ->
-                        Objects.equals(lot.getBidsCount(), firstLot.getBidsCount()) && Objects.equals(lot.getTitle(), firstLot.getTitle()))
-                    ) {
+                    // d) and has same bidsCount on all lots
+                    if (lots.stream().allMatch(lot -> Objects.equals(lot.getBidsCount(), firstLot.getBidsCount()))) {
                         // move all the bids under the first lot
                         firstLot.setBids(lots.stream().
                             map(CleanTenderLot::getBids).filter(Objects::nonNull).flatMap(List::stream)
@@ -182,13 +185,43 @@ public abstract class BaseTenderCleaner extends BaseCleaner<ParsedTender, CleanT
      */
     private void processContractImplementations(final CleanTender cleanTender) {
         if (cleanTender.getPublications() != null) {
-            // change publications to contract implementation where needed
+            // variables used as temporar storage to avoid iterating over publications twice
+            Boolean includedContractImplementationsFound = false;
+            LocalDate publicationDate = null;
+
+            // phase 1) change publications to contract implementation where needed
             for (Publication publication : cleanTender.getPublications()) {
                 if (Boolean.TRUE.equals(publication.getIsIncluded())
                         && publication.getFormType() == PublicationFormType.CONTRACT_AWARD
                         && cleanTender.getProcedureType() == TenderProcedureType.MINITENDER) {
                     // change the publication type
                     publication.setFormType(PublicationFormType.CONTRACT_IMPLEMENTATION);
+                }
+
+                if (Boolean.TRUE.equals(publication.getIsIncluded())
+                        && publication.getFormType() == PublicationFormType.CONTRACT_IMPLEMENTATION) {
+                    includedContractImplementationsFound = true;
+                    publicationDate = publication.getPublicationDate();
+                }
+            }
+
+            // phase 2) create payments for winning bids
+            if (includedContractImplementationsFound && cleanTender.getLots() != null) {
+                for (CleanTenderLot lot : cleanTender.getLots()) {
+                    LocalDate paymentDate = ObjectUtils.firstNonNull(lot.getContractSignatureDate(), lot.getAwardDecisionDate(),
+                        cleanTender.getContractSignatureDate(), cleanTender.getAwardDecisionDate(), publicationDate);
+
+                    if (lot.getBids() != null) {
+                        for (CleanBid bid : lot.getBids()) {
+                            if (Boolean.TRUE.equals(bid.getIsWinning()) && (bid.getPayments() == null || bid.getPayments().isEmpty())) {
+                                Price paymentPrice = bid.getPrice() != null ? bid.getPrice() : cleanTender.getFinalPrice();
+
+                                bid.setPayments(new ArrayList(Collections.singletonList(
+                                    new Payment().setPrice(paymentPrice).setPaymentDate(paymentDate)
+                                )));
+                            }
+                        }
+                    }
                 }
             }
         }

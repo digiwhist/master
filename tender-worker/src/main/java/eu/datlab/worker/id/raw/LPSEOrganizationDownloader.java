@@ -39,11 +39,6 @@ public final class LPSEOrganizationDownloader extends BaseDownloader<RawData> {
     }
 
     @Override
-    protected boolean skipExisting(final Message message) {
-        return false;
-    }
-
-    @Override
     public List<RawData> downloadAndPopulateRawData(final Message message) {
 
         // init raw data

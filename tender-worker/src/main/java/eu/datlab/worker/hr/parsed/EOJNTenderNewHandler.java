@@ -146,6 +146,10 @@ final class EOJNTenderNewHandler {
                         .setCurrency(getSpanAfterSpan("Valuta:", document)))
                 .setFinalPrice(parseTenderFinalPrice(document))
                 .setIsCoveredByGpa(parseIsTenderCoveredByGpa(document))
+                .setProcedureType(JsoupUtils.selectText(
+                        "p:has(input[checked])" + ", "
+                        + "td:has(input[checked]) + td" + ", "
+                        + "td:contains(IV.1.1) input[checked] + span", subsectionIV1))
                 .setNationalProcedureType(JsoupUtils.selectText(
                         "p:has(input[checked])" + ", "
                                 + "td:has(input[checked]) + td" + ", "

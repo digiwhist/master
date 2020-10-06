@@ -51,7 +51,7 @@ public class JdbcMasterTenderDAO extends GenericJdbcDAO<MasterTender> implements
             query = query + " ORDER BY modified ASC LIMIT ? OFFSET ?";
 
             System.out.println(query);
-            PreparedStatement statement = getConnection().prepareStatement(query);
+            PreparedStatement statement = connection.prepareStatement(query);
 
             statement.setTimestamp(1, Timestamp.valueOf(timestamp));
             statement.setInt(2, pageSize);
@@ -83,13 +83,13 @@ public class JdbcMasterTenderDAO extends GenericJdbcDAO<MasterTender> implements
 
     @Override
     public final List<MasterTender> getModifiedAfterForBuyerProfileMatching(final LocalDateTime timestamp, final String createdBy,
-                                                                            final Integer page, final Integer pageSize) {
+                                                                            final Integer page) {
         if (createdBy == null) {
             return Collections.emptyList();
         }
 
         try {
-            PreparedStatement statement = getConnection().prepareStatement(
+            PreparedStatement statement = connection.prepareStatement(
                 "WITH data AS ("
                     + "SELECT id,"
                         + " min(p->>'publicationDate') FILTER (WHERE p->>'publicationDate' IS NOT NULL and (p->>'isIncluded')::boolean)"
@@ -104,12 +104,10 @@ public class JdbcMasterTenderDAO extends GenericJdbcDAO<MasterTender> implements
                 + " ORDER BY modified ASC LIMIT ? OFFSET ?"
             );
 
-            Integer size = pageSize != null ? pageSize : getPageSize();
-
             statement.setString(1, createdBy);
             statement.setTimestamp(2, Timestamp.valueOf(timestamp));
-            statement.setInt(3, size);
-            statement.setInt(4, page == null ? 0 : page * size);
+            statement.setInt(3, getPageSize());
+            statement.setInt(4, page == null ? 0 : page * getPageSize());
 
             ResultSet rs = statement.executeQuery();
 

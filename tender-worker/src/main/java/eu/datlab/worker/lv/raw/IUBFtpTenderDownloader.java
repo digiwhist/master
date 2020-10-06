@@ -26,11 +26,6 @@ public final class IUBFtpTenderDownloader extends BaseTenderFtpDownloader {
     private static final String VERSION = "2";
 
     @Override
-    protected boolean skipExisting(final Message message) {
-        return false;
-    }
-
-    @Override
     protected List<RawData> downloadAndPopulateRawDataFromFtpServer(final Message message) {
         final List<RawData> rawData = new ArrayList<>();
 

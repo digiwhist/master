@@ -96,6 +96,7 @@ public final class TedContractNoticeHandler {
             .setDescription(
                 JsoupUtils.selectText("DESCRIPTION_CONTRACT_INFORMATION > SHORT_CONTRACT_DESCRIPTION,"
                     + "DESCRIPTION_CONTRACT_INFORMATION_DEFENCE > SHORT_CONTRACT_DESCRIPTION", contractNode))
+            .setProcedureType(procedureType)
             .setNationalProcedureType(procedureType)
             .setSupplyType(
                 JsoupUtils.selectAttribute("TYPE_CONTRACT_LOCATION > TYPE_CONTRACT ", "VALUE", contractNode))

@@ -3,6 +3,7 @@ package eu.dl.dataaccess.dao.jdbc;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.core.config.Config;
 import eu.dl.dataaccess.dao.PostcodeNutsDAO;
+import java.sql.Connection;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -24,10 +25,7 @@ public final class JdbcPostcodeNutsDAO implements PostcodeNutsDAO {
 
     protected List<Pair<String, String>> additionalWorkers;
 
-    /**
-     * Transaction utils used to provide connection etc.
-     */
-    private static JdbcTransactionUtils transactionUtils = JdbcTransactionUtils.getInstance();
+    protected final Connection connection;
 
     private static final String TABLE_NAME = "postcode_nuts";
 
@@ -39,6 +37,7 @@ public final class JdbcPostcodeNutsDAO implements PostcodeNutsDAO {
 
         schema = config.getParam("jdbc.schema");
 
+        connection = JdbcTransactionUtils.getInstance().getConnection();
     }
 
     /**
@@ -55,7 +54,7 @@ public final class JdbcPostcodeNutsDAO implements PostcodeNutsDAO {
         }
 
         try {
-            PreparedStatement statement = transactionUtils.getConnection().prepareStatement(
+            PreparedStatement statement = connection.prepareStatement(
                 "SELECT nuts" +
                 " FROM " + getTableWithSchema() +
                 " WHERE country = ? AND postcode = ?");

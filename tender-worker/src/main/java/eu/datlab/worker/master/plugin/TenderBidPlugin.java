@@ -44,5 +44,6 @@ public final class TenderBidPlugin extends BaseBidPlugin<MatchedTenderLot, Maste
                         Arrays.asList("subcontractedProportion"),
                         new TenderConverter()))
                 .registerPlugin("Price", new GeneralPricePlugin<>(Arrays.asList("price", "subcontractedValue")));
+            //    .registerPlugin("RobustPrice", new RobustPricePlugin())
     }
 }

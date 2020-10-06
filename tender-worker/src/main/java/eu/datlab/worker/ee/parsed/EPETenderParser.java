@@ -71,9 +71,4 @@ public final class EPETenderParser extends BaseDatlabTenderParser {
     protected String countryOfOrigin(final ParsedTender parsed, final RawData raw){
         return "EE";
     }
-
-    @Override
-    protected List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
-        return parsed;
-    }
 }

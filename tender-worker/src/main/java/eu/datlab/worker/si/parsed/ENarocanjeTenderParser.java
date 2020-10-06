@@ -232,8 +232,4 @@ public class ENarocanjeTenderParser extends BaseDatlabTenderParser {
         return JsoupUtils.exists(BaseENarocanjeFormInDivsHandler.SUBSECTION_I_1_TITLE_SELECTOR + " + div", form);
     }
 
-    @Override
-    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
-        return parsed;
-    }
 }

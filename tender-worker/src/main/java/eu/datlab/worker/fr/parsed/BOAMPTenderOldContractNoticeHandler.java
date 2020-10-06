@@ -45,7 +45,7 @@ final class BOAMPTenderOldContractNoticeHandler {
                         "DONNEES > DUREE > DEB_PRESTATION", publicationElement)))
                 .setEligibleBidLanguages(parseTenderEligibleBidLanguages(publicationElement))
                 .setAwardCriteria(parseTenderAwardCriteria(publicationElement))
-                .setNationalProcedureType(JsoupUtils.selectAttribute("DONNEES > PROCEDURE", "type", publicationElement))
+                .setProcedureType(JsoupUtils.selectAttribute("DONNEES > PROCEDURE", "type", publicationElement))
                 .setBidDeadline(parseTenderBidDeadline(publicationElement))
                 .setDocumentsLocation(parseTenderDocumentsLocation(publicationElement))
                 .setAwardDeadline(JsoupUtils.selectText("DONNEES > DELAI > VALIDITE_OFFRE", publicationElement));

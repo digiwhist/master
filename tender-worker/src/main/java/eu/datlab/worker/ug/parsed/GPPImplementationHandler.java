@@ -4,7 +4,6 @@ import eu.dl.dataaccess.dto.ocds.OCDSContract;
 import eu.dl.dataaccess.dto.ocds.OCDSOrganization;
 import eu.dl.dataaccess.dto.ocds.OCDSPeriod;
 import eu.dl.dataaccess.dto.ocds.OCDSRelease;
-import eu.dl.dataaccess.dto.ocds.OCDSTender;
 import eu.dl.dataaccess.dto.parsed.ParsedBid;
 import eu.dl.dataaccess.dto.parsed.ParsedPayment;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
@@ -67,10 +66,7 @@ public final class GPPImplementationHandler {
                 return lot;
             }).collect(Collectors.toList()));
         }
-        OCDSTender tender = r.getTender();
-        if(tender != null) {
-            t.setAwardDecisionDate(GPPParserUtils.periodDatetimeToString(tender.getAwardPeriod(), OCDSPeriod::getEndDate));
-        }
+
         return t;
     }
 }

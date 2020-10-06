@@ -86,9 +86,4 @@ public class UZPTenderParser extends BaseDatlabTenderParser {
     protected final String countryOfOrigin(final ParsedTender parsed, final RawData raw){
         return "PL";
     }
-
-    @Override
-    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
-        return parsed;
-    }
 }

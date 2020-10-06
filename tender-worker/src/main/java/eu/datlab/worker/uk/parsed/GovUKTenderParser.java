@@ -34,26 +34,6 @@ import static eu.dl.worker.utils.jsoup.JsoupUtils.selectText;
 public class GovUKTenderParser extends BaseDatlabTenderParser {
     private static final String VERSION = "2";
 
-    /**
-     * Parses procedure type as procedure type + ":" + awarded procedure type.
-     * @param rawTender element to parse
-     * @return parsed procedure type as procedure type + ":" + awarded procedure type
-     */
-    private static String parseNationalProcedureType(final Element rawTender) {
-        String procedureType = selectText("ProcedureType", rawTender);
-        String awardedProcedureType = selectText("AwardDetail AwardedProcedureType", rawTender);
-        if((procedureType == null || procedureType.isEmpty()) && (awardedProcedureType == null || awardedProcedureType.isEmpty())) {
-            return null;
-        }
-        if(procedureType == null) {
-            procedureType = "";
-        }
-        if(awardedProcedureType == null) {
-            awardedProcedureType = "";
-        }
-        return procedureType + ":" + awardedProcedureType;
-    }
-
     @Override
     public final List<ParsedTender> parse(final RawData rawData) {
         final Document document = Jsoup.parse(rawData.getSourceData(), "", Parser.xmlParser());
@@ -63,6 +43,8 @@ public class GovUKTenderParser extends BaseDatlabTenderParser {
 
         for (Element rawTender : rawTenders) {
             final String sourceId = selectText("Notice Id", rawTender);
+            String procedureType = selectText("ProcedureType", rawTender);
+            String nationalProcedureType = selectText("AwardDetail AwardedProcedureType", rawTender);
 
             parsedTenders.add(new ParsedTender()
                     .addPublication(new ParsedPublication()
@@ -101,8 +83,9 @@ public class GovUKTenderParser extends BaseDatlabTenderParser {
                             .setContactName(selectText("ContactDetails Name", rawTender)))
                     .setTitle(selectText("Title", rawTender))
                     .setAwardDecisionDate(selectText("AwardedDate", rawTender))
+                    .setProcedureType(procedureType != null ? procedureType : nationalProcedureType)
                     .setIsAwarded(selectText("Status", rawTender))
-                    .setNationalProcedureType(parseNationalProcedureType(rawTender))
+                    .setNationalProcedureType(nationalProcedureType)
                     .setSupplyType(selectText("OjeuContractType", rawTender))
                     .setIsFrameworkAgreement(selectText("IsFrameworkAgreement", rawTender))
                     .setAddressOfImplementation(new ParsedAddress()
@@ -230,10 +213,5 @@ public class GovUKTenderParser extends BaseDatlabTenderParser {
     @Override
     protected final String countryOfOrigin(final ParsedTender parsed, final RawData raw) {
         return "UK";
-    }
-
-    @Override
-    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
-        return parsed;
     }
 }

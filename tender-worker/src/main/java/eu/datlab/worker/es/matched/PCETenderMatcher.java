@@ -2,20 +2,20 @@ package eu.datlab.worker.es.matched;
 
 import eu.datlab.worker.matched.BaseDatlabTenderMatcher;
 import eu.datlab.worker.matched.TenderPublicationMachineReadableUrlsMatchingPlugin;
-import eu.datlab.worker.matched.TenderSimilarityMatchingPlugin;
+import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
 import static eu.dl.dataaccess.utils.DigestUtils.bodyHash;
-
-import eu.dl.worker.utils.matched.MatchedUtils;
+import java.io.UnsupportedEncodingException;
+import java.util.UUID;
+import org.apache.commons.codec.digest.DigestUtils;
 
 /**
- * Matcher for ES tenders.
+ * Created by michal on 25.1.17.
  */
 public class PCETenderMatcher extends BaseDatlabTenderMatcher {
     private static final String VERSION = "1.0";
     protected static final String PCE_TENDER_PLUGIN = "pce";
-    protected static final String SIMILARITY_TENDER_PLUGIN = "similarity";
 
 
     @Override
@@ -27,9 +27,6 @@ public class PCETenderMatcher extends BaseDatlabTenderMatcher {
     protected final void registerTenderPlugins() {
         tenderPluginRegistry.registerPlugin(PCE_TENDER_PLUGIN,
             new TenderPublicationMachineReadableUrlsMatchingPlugin(matchedTenderDao, false));
-
-        tenderPluginRegistry.registerPlugin(SIMILARITY_TENDER_PLUGIN,
-                new TenderSimilarityMatchingPlugin(matchedTenderDao, matchedBodyDao, this.getClass().getName(), false));
     }
 
     @Override
@@ -44,7 +41,14 @@ public class PCETenderMatcher extends BaseDatlabTenderMatcher {
 
     @Override
     protected final String generateTenderHash(final MatchedTender matchedTender) {
-        return MatchedUtils.generateRandomHash();
+        try {
+            byte[] data = UUID.randomUUID().toString().getBytes("UTF-8");
+            return DigestUtils.sha1Hex(data);
+        } catch (UnsupportedEncodingException e) {
+            logger.error("Unable to convert random ID to UTF-8");
+            throw new UnrecoverableException("Unable to convert data to UTF-8", e);
+        }
+
     }
 
     @Override
@@ -56,5 +60,4 @@ public class PCETenderMatcher extends BaseDatlabTenderMatcher {
     protected final String getBodyMessagingTag() {
         return this.getName() + BODY_MESSAGING_TAG_SUFFIX;
     }
-
 }

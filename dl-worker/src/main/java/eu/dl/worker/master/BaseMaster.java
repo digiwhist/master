@@ -62,6 +62,7 @@ public abstract class BaseMaster<T extends Matchable & MasterablePart, V extends
     protected final void doWork(final Message message) {
         long startTime = System.currentTimeMillis();
 
+        getTransactionUtils().begin();
         final String groupId = message.getValue("groupId");
         ThreadContext.put("group_id", groupId);
 
@@ -132,6 +133,7 @@ public abstract class BaseMaster<T extends Matchable & MasterablePart, V extends
 
         String savedId = masterDAO.save(item);
 
+        
         getTransactionUtils().commit();
         logger.info("Mastering finished for group id {} stored as {}", groupId, savedId);
 

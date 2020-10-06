@@ -63,8 +63,8 @@ public final class LotDecisionPeriodIndicatorPluginTest {
 
         tender = new MasterTender()
             .setCountry("CZ")
-            .setBidDeadline(LocalDateTime.now())
-            .addLot(new MasterTenderLot().setAwardDecisionDate(LocalDate.now().minusDays(100)));
+            .setBidDeadline(LocalDateTime.now().minusDays(100))
+            .addLot(new MasterTenderLot().setAwardDecisionDate(LocalDate.now()));
         assertEquals(plugin.evaluate(tender.getLots().get(0), tender).getStatus(), IndicatorStatus.INSUFFICIENT_DATA);
     }
 
@@ -77,8 +77,8 @@ public final class LotDecisionPeriodIndicatorPluginTest {
 
         MasterTender tender = new MasterTender()
             .setCountry("CZ")
-            .setBidDeadline(LocalDateTime.now().minusDays(100))
-            .addLot(new MasterTenderLot().setAwardDecisionDate(LocalDate.now()));
+            .setBidDeadline(LocalDateTime.now())
+            .addLot(new MasterTenderLot().setAwardDecisionDate(LocalDate.now().minusDays(100)));
         assertEquals(plugin.evaluate(tender.getLots().get(0), tender).getStatus(), IndicatorStatus.CALCULATED);
     }
 }

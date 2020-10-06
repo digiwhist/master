@@ -58,20 +58,22 @@ public final class BASEContractTenderParser extends BaseDatlabTenderParser {
                 JsoupUtils.getFirstLabeledValueNode(contractTable, "Anúncio")))
             .setSupplyType(BASETenderParserUtils.getFirstValueByLabel(contractTable, "Tipo(\\(s\\))? de contrato"))
             .setNationalProcedureType(procedureType)
+            .setProcedureType(procedureType)
             .addBuyer(BASETenderParserUtils.parseBody(
                 JsoupUtils.getFirstLabeledValueNode(contractTable, "Entidade adjudicante \\- Nome, NIF")))
+            .setDescription(BASETenderParserUtils.getFirstValueByLabel(contractTable, "Objeto do Contrato"))
             .setAcceleratedProcedureJustification(BASETenderParserUtils.getFirstValueByLabel(contractTable,
                 "Fundamentação da necessidade de recurso ao ajuste direto \\(se aplicável\\)"))
+            .setCpvs(BASETenderParserUtils.parseCPVs(JsoupUtils.getFirstLabeledValueNode(contractTable, "CPV")))
             .setIsCentralProcurement(BASETenderParserUtils.parseBoolean(
                 JsoupUtils.getFirstLabeledValueNode(contractTable, "Procedimento Centralizado")).toString())
             .addLot(new ParsedTenderLot()
                 .setBids(parseBids(contractTable, contractExecutionTable, completionDate))
-                .setCompletionDate(completionDate)
-                .setDescription(BASETenderParserUtils.getFirstValueByLabel(contractTable, "Objeto do Contrato"))
-                .setCpvs(BASETenderParserUtils.parseCPVs(JsoupUtils.getFirstLabeledValueNode(contractTable, "CPV")))
-            )
+                .setCompletionDate(completionDate))
             .setContractSignatureDate(BASETenderParserUtils.getFirstValueByLabel(contractTable,
                 "Data de celebração do contrato"))
+            .setFinalPrice(BASETenderParserUtils.parsePrice(
+                JsoupUtils.getFirstLabeledValueNode(contractTable, "Preço contratual")))
             .setEstimatedDurationInDays(BASETenderParserUtils.getFirstValueByLabel(contractTable, "Prazo de execução"))
             .setAddressOfImplementation(parseAddress(
                 JsoupUtils.getFirstLabeledValueNode(contractTable, "Local de execução \\- País, Distrito, Concelho")))
@@ -151,8 +153,6 @@ public final class BASEContractTenderParser extends BaseDatlabTenderParser {
             JsoupUtils.getFirstLabeledValueNode(context, "Entidade adjudicatária \\- Nome, NIF"));
         
         if (winners != null) {
-            ParsedPrice price = BASETenderParserUtils.parsePrice(
-                JsoupUtils.getFirstLabeledValueNode(context, "Preço contratual"));
             ParsedPrice paymentPrice = BASETenderParserUtils.parsePrice(
                 JsoupUtils.getFirstLabeledValueNode(contractExecutionTable, "Preço total efetivo"));
 
@@ -160,9 +160,7 @@ public final class BASEContractTenderParser extends BaseDatlabTenderParser {
                 .setIsWinning(Boolean.TRUE.toString())
                 .addBidder(w)
                 .addPayment(paymentPrice != null ? new ParsedPayment()
-                    .setPrice(paymentPrice).setPaymentDate(paymentDate) : null)
-                .setPrice(price)
-            ));
+                    .setPrice(paymentPrice).setPaymentDate(paymentDate) : null)));
         }
 
         List<ParsedBody> losers = BASETenderParserUtils.parseBodies(
@@ -228,10 +226,5 @@ public final class BASEContractTenderParser extends BaseDatlabTenderParser {
     @Override
     protected String countryOfOrigin(final ParsedTender parsed, final RawData raw){
         return "PT";
-    }
-
-    @Override
-    protected List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
-        return parsed;
     }
 }

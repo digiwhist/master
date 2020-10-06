@@ -77,9 +77,4 @@ public class CVPISTenderParser extends BaseDatlabTenderParser {
 
         return null;
     }
-
-    @Override
-    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
-        return parsed;
-    }
 }

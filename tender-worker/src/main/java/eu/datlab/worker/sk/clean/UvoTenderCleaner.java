@@ -9,7 +9,6 @@ import eu.dl.dataaccess.dto.codetables.CountryCode;
 import eu.dl.dataaccess.dto.codetables.NpwpReason;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.codetables.SelectionMethod;
-import eu.dl.dataaccess.dto.codetables.TenderLotStatus;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
 import eu.dl.dataaccess.dto.codetables.TenderSupplyType;
 import eu.dl.dataaccess.dto.generic.Publication;
@@ -30,7 +29,6 @@ import eu.dl.worker.clean.plugin.IntegerPlugin;
 import eu.dl.worker.clean.plugin.NpwpReasonPlugin;
 import eu.dl.worker.clean.plugin.SelectionMethodPlugin;
 import eu.dl.worker.clean.plugin.TenderSupplyTypePlugin;
-import eu.dl.worker.clean.utils.CodeTableUtils;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
@@ -172,7 +170,6 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
     protected final void registerSpecificPlugins() {
         Map<String, Map<Enum, List<String>>> lotMappings = new HashMap<>();
         lotMappings.put("countryMapping", countryMapping());
-        lotMappings.put("statusMapping", lotStatusMapping());
 
         pluginRegistry
             .registerPlugin("integerPlugin", new IntegerPlugin(NUMBER_FORMAT))
@@ -194,13 +191,6 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
             .registerPlugin("awardCriteria", new AwardCriteriaPlugin(NUMBER_FORMAT))
             .registerPlugin("publications", new UvoTenderPublicationPlugin(NUMBER_FORMAT, DATE_FORMATTERS, formTypeMapping()))
             .registerPlugin("npwpReason", new NpwpReasonPlugin(npwpMapping()));
-    }
-
-    /**
-     * @return lot status mapping
-     */
-    private Map<Enum, List<String>> lotStatusMapping() {
-        return CodeTableUtils.enumToMapping(TenderLotStatus.class);
     }
 
     /**
@@ -430,19 +420,18 @@ public class UvoTenderCleaner extends BaseDatlabTenderCleaner {
         mapping.put(PublicationFormType.PRIOR_INFORMATION_NOTICE, Arrays.asList("POT", "POS", "POP", "POX"));
         mapping.put(PublicationFormType.CONTRACT_NOTICE, Arrays.asList(
                 "MDP", "MDS", "MDT", "MNA", "MRP", "MRS", "MRT", "MSP", "MSS", "MST", "MUP", "MUS", "MUT",
-                "WYP", "WYS", "WYT", "DEP", "DES", "DET", "WNP", "WNS", "WNT", "KPP", "KPS"));
+                "WYP", "WYS", "WYT"));
         mapping.put(PublicationFormType.CONTRACT_AWARD, Arrays.asList(
                 "IPP", "IPS", "IPT", "VBP", "VBS", "VBT", "VDP", "VDS", "VDT", "VEP", "VKP", "VKS", "VNA", "VNS",
-                "VRP", "VRS", "VRT", "VSP", "VSS", "VST", "VUP", "VUS", "VUT", "ICP", "IEP", "IES", "IET", "IEX",
-                "INO", "INP", "INS", "INT", "INX", "IVP", "IVS", "IVT", "IVX"));
+                "VRP", "VRS", "VRT", "VSP", "VSS", "VST", "VUP", "VUS", "VUT", "ICP"));
         mapping.put(PublicationFormType.CONTRACT_CANCELLATION, Arrays.asList(
                 "ZBP", "ZBS", "ZBT", "ZDP", "ZDS", "ZDT", "ZNA", "ZRP", "ZRS", "ZRT", "ZSP", "ZSS", "ZST", "ZUP",
                 "ZUS", "ZUT", "ZWP", "ZWS", "ZWT"));
         mapping.put(PublicationFormType.CONTRACT_IMPLEMENTATION, Arrays.asList(
                 "VZP", "VZS", "VZT"));
         mapping.put(PublicationFormType.OTHER, Arrays.asList(
-                "IBP", "IBS", "IBT", "IDS", "IDT", "IDP", "INO", "IZP",
-                "IZS", "IZT", "KOP", "KOS", "KSP", "KSS", "KST", "NSS", "PKT", "PRP",
+                "DEP", "DES", "DET", "IBP", "IBS", "IBT", "IDS", "IDT", "IDP", "INO", "IZP",
+                "IZS", "IZT", "KOP", "KOS", "KPS", "KSP", "KSS", "KST", "NSS", "PKT", "PRP",
                 "PRS", "PRT"));
         mapping.put(PublicationFormType.CONTRACT_UPDATE, Arrays.asList(PublicationFormType.CONTRACT_UPDATE.name()));
         mapping.put(PublicationFormType.CONTRACT_AMENDMENT, Arrays.asList("DOP", "DOS", "DOT"));

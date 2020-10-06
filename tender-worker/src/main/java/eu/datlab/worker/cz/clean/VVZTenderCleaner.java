@@ -110,12 +110,11 @@ public final class VVZTenderCleaner extends BaseVestnikTenderCleaner {
         mapping.put(TenderProcedureType.RESTRICTED, Arrays.asList("PT_RESTRICTED"));
         mapping.put(TenderProcedureType.NEGOTIATED_WITHOUT_PUBLICATION,
                 Arrays.asList("PT_AWARD_CONTRACT_WITHOUT_CALL", "PT_NEGOTIATED_WITHOUT_PUBLICATION",
-                        "PT_NEGOTIATED_WITHOUT_PUBLICATION_24EU", "PT_NEGOTIATED_WITHOUT_PUBLICATION_25EU"));
+                        "PT_NEGOTIATED_WITHOUT_PUBLICATION_24EU"));
         mapping.put(TenderProcedureType.NEGOTIATED_WITH_PUBLICATION,
                 Arrays.asList("PT_NEGOTIATED_WITH_PRIOR_CALL", "PT_COMPETITIVE_NEGOTIATION"));
         mapping.put(TenderProcedureType.APPROACHING_BIDDERS, Arrays.asList("PT_SIMPLIFIED_CONTRACT"));
         mapping.put(TenderProcedureType.COMPETITIVE_DIALOG, Arrays.asList("PT_COMPETITIVE_DIALOGUE"));
-        mapping.put(TenderProcedureType.INOVATION_PARTNERSHIP, Arrays.asList("PT_INNOVATION_PARTNERSHIP"));
 
         return mapping;
     }
