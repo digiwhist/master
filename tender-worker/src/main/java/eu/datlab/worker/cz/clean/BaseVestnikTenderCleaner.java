@@ -8,6 +8,7 @@ import eu.dl.dataaccess.dto.clean.CleanTender;
 import eu.dl.dataaccess.dto.codetables.BuyerType;
 import eu.dl.dataaccess.dto.codetables.SelectionMethod;
 import eu.dl.dataaccess.dto.codetables.TenderProcedureType;
+import eu.dl.dataaccess.dto.codetables.UnitType;
 import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 import eu.dl.worker.clean.plugin.AwardCriteriaPlugin;
@@ -54,6 +55,7 @@ public abstract class BaseVestnikTenderCleaner extends BaseDatlabTenderCleaner {
     protected final void registerSpecificPlugins() {
         final Map<String, Map<Enum, List<String>>> lotMapping = new HashMap<>();
         lotMapping.put("selectionMethodMapping", getSelectionMethodMapping());
+        lotMapping.put("unitPriceMapping", getUnitPriceMapping());
 
         pluginRegistry.registerPlugin("integerPlugin", new IntegerPlugin(numberFormat))
             .registerPlugin("supplyType", new TenderSupplyTypePlugin(getSupplyTypeMapping()))
@@ -156,6 +158,15 @@ public abstract class BaseVestnikTenderCleaner extends BaseDatlabTenderCleaner {
                 Arrays.asList("hospodářsky nejvýhodnější nabídka z hlediska", "hospodářsky nejvýhodnější nabídka",
                         "AC_PROCUREMENT_DOC", "AC_QUALITY_AC_COST"));
 
+        return mapping;
+    }
+
+    /**
+     * @return selection method mapping
+     */
+    private Map<Enum, List<String>> getUnitPriceMapping() {
+        final Map<Enum, List<String>> mapping = new HashMap<>();
+        mapping.put(UnitType.YEARS, Arrays.asList("rok"));
         return mapping;
     }
 

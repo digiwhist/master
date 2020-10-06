@@ -114,4 +114,12 @@ public interface MatchedTenderDAO<T extends MatchedTender> extends MatchedDAO<T>
      * @return list of tenders
      */
     List<T> getByPublicationSourceIdsAndPublicationDates(Map<String, LocalDate> sourceIdsAndDates);
+
+    /**
+     * Gets list of tenders with given buyer assigned id.
+     * @param buyerAssignedId buyer assigned id
+     * @return list of matched tenders with given buyer assigned id
+     */
+    List<MatchedTender> getByBuyerAssignedId(String buyerAssignedId);
+
 }

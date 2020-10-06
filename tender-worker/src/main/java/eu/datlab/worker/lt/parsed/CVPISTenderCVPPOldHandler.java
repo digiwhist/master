@@ -91,7 +91,7 @@ public final class CVPISTenderCVPPOldHandler {
                 .setPersonalRequirements(parseIinTD("Informacija apie asmenin", document))
                 .setEconomicRequirements(parseIinTD("Informacija apie asmenin", document))
                 .setTechnicalRequirements(parseIinTD("Informacija apie asmenin", document))
-                .setProcedureType(parseIinTD(new String[]{
+                .setNationalProcedureType(parseIinTD(new String[]{
                         "rocedūros rūšis",
                         "Proced�ros r��is"
                 }, document))

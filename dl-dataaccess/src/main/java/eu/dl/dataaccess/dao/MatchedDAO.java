@@ -62,6 +62,18 @@ public interface MatchedDAO<T> {
     List<T> getByHash(String hash);
 
     /**
+     * Returns groupId of objects with the same hash (if additional workers are set, then also records modified by
+     * additional
+     * workers are returned).
+     *
+     * @param hash
+     *         hash to be searched
+     *
+     * @return groupId of objects with the same hash
+     */
+    String getGroupIdByHash(String hash);
+
+    /**
      * Returns new instance of T.
      *
      * @return empty instance

@@ -87,7 +87,7 @@ final class ENarocanjeContractAwardHandler1Old extends BaseENarocanjeContractAwa
                 String procedureType = StringUtils.removeDotsAtTheEnd(sectionIV11.text()
                     .replace("IV.1.1) Vrsta postopka ", ""));
                 
-                tender.setNationalProcedureType(procedureType).setProcedureType(procedureType);
+                tender.setNationalProcedureType(procedureType);
             }
 
         // previous publication

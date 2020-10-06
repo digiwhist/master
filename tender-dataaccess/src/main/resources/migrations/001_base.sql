@@ -1,4 +1,5 @@
-SET search_path TO tender_production;
+create schema tender_development;
+SET search_path TO tender_development;
 
 CREATE TABLE crawler_audit_record (
     id character varying(255) PRIMARY KEY,
@@ -31,7 +32,7 @@ CREATE INDEX raw_data_modified_idx ON raw_data (modified);
 CREATE INDEX raw_data_modifiedby_idx ON raw_data (modifiedby);
 CREATE INDEX raw_data_modifiedbyversion_idx ON raw_data (modifiedbyversion);
 CREATE INDEX raw_dada_persistentid_idx ON raw_data ((data->>'persistentId'));
-CREATE INDEX raw_data_sourceurl_idx ON raw_data ((data->>'sourceUrl'));
+CREATE INDEX raw_data_sourceurl_idx ON raw_data (createdby, createdbyversion, (data->>'sourceUrl'));
 
 
 CREATE TABLE parsed_tender (

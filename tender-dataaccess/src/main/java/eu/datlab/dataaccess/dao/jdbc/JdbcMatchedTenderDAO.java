@@ -76,7 +76,7 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
             }
 
             try {
-                PreparedStatement statement = connection.prepareStatement(
+                PreparedStatement statement = getConnection().prepareStatement(
                         "SELECT * FROM " + getTableWithSchema() + " WHERE ((modifiedBy = ? AND modifiedByVersion = ?)"
                                 + "" + " " + additionalMatchersRestriction + ") AND (" + idRestriction
                                 .toString() + ")");
@@ -85,7 +85,6 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
                 statement.setString(2, workerVersion);
 
                 disableSeqScan();
-                disableIndexScan();
 
                 long selectStartTime = System.currentTimeMillis();
                 ResultSet rs = statement.executeQuery();
@@ -98,7 +97,6 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
                 }
 
                 enableSeqScan();
-                enableIndexScan();
 
                 while (rs.next()) {
                     MatchedTender matchedTender = createFromResultSet(rs);
@@ -159,7 +157,7 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
             }
 
             try {
-                PreparedStatement statement = connection.prepareStatement(
+                PreparedStatement statement = getConnection().prepareStatement(
                         "SELECT * FROM " + getTableWithSchema() + " WHERE ((modifiedBy = ? AND modifiedByVersion = ?)"
                                 + "" + " " + additionalMatchersRestriction + ") AND (" + urlRestriction
                                 .toString() + ")");
@@ -168,12 +166,10 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
                 statement.setString(2, workerVersion);
 
                 disableSeqScan();
-                disableIndexScan();
 
                 ResultSet rs = statement.executeQuery();
 
                 enableSeqScan();
-                enableIndexScan();
 
                 while (rs.next()) {
                     MatchedTender matchedTender = createFromResultSet(rs);
@@ -235,7 +231,7 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
             }
 
             try {
-                PreparedStatement statement = connection.prepareStatement(
+                PreparedStatement statement = getConnection().prepareStatement(
                         "SELECT * FROM " + getTableWithSchema() + " WHERE ((modifiedBy = ? AND modifiedByVersion = ?)"
                                 + "" + " " + additionalMatchersRestriction + ") AND (" + urlRestriction
                                 .toString() + ")");
@@ -244,12 +240,10 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
                 statement.setString(2, workerVersion);
 
                 disableSeqScan();
-                disableIndexScan();
 
                 ResultSet rs = statement.executeQuery();
 
                 enableSeqScan();
-                enableIndexScan();
 
                 while (rs.next()) {
                     MatchedTender matchedTender = createFromResultSet(rs);
@@ -289,7 +283,7 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
                 .append("}}'");
 
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE ((modifiedBy = ? AND modifiedByVersion = ?) "
                             + additionalMatchersRestriction + ") AND (" + urlRestriction.toString() + ")");
 
@@ -318,7 +312,7 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
     @Override
     public final List<MatchedTender> getForResend(final String name, final String version) {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT DISTINCT data->>'groupId' AS groupId FROM " + getTableWithSchema() + " WHERE modifiedby "
                             + "=" + " ? AND modifiedbyversion = ?");
 
@@ -387,7 +381,7 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
                 .collect(Collectors.joining(" OR "));
             
             try {
-                PreparedStatement statement = connection.prepareStatement(
+                PreparedStatement statement = getConnection().prepareStatement(
                         "SELECT * FROM " + getTableWithSchema() + " WHERE ((modifiedBy = ? AND modifiedByVersion = ?)"
                                 + "" + " " + additionalMatchersRestriction + ") AND (" + restriction + ")");
 
@@ -395,7 +389,6 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
                 statement.setString(2, workerVersion);
 
                 disableSeqScan();
-                disableIndexScan();
 
                 long selectStartTime = System.currentTimeMillis();
                 ResultSet rs = statement.executeQuery();
@@ -408,7 +401,6 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
                 }
 
                 enableSeqScan();
-                enableIndexScan();
 
                 while (rs.next()) {
                     MatchedTender matchedTender = createFromResultSet(rs);
@@ -429,4 +421,36 @@ public class JdbcMatchedTenderDAO extends GenericJdbcDAO<MatchedTender> implemen
     }
 
 
+
+    @Override
+    public final List<MatchedTender> getByBuyerAssignedId(final String buyerAssignedId) {
+        if(buyerAssignedId == null) {
+            logger.info("Buyer assigned id is null.");
+            return new ArrayList<>();
+        }
+
+        try {
+            String query = "SELECT * FROM " + getTableWithSchema() + " WHERE data @> '{\"buyerAssignedId\": \""  +
+                            buyerAssignedId + "\"}'";
+
+            System.out.println(query);
+            PreparedStatement statement = getConnection().prepareStatement(query);
+
+            ResultSet rs = statement.executeQuery();
+
+            List<MatchedTender> result = new ArrayList<>();
+
+            while (rs.next()) {
+                result.add(createFromResultSet(rs));
+            }
+
+            rs.close();
+            statement.close();
+
+            return result;
+        } catch (Exception e) {
+            logger.error("Unable to perform query, because of of {}", e);
+            throw new UnrecoverableException("Unable to perform query.", e);
+        }
+    }
 }

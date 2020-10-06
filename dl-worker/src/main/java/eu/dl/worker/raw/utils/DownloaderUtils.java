@@ -201,9 +201,41 @@ public final class DownloaderUtils {
      *      request method, if NULL the GET method is used
      * @param headers
      *      request headers
+     * @param requestBody
+     *      request payload
+     * @return HTTP response
+     */
+    public static Connection.Response getUrlResponse(final String url, final Connection.Method method, final Map<String, String> headers,
+                                                     final String requestBody) {
+        try {
+            return Jsoup.connect(url)
+                    .timeout(DOWNLOAD_TIMEOUT)
+                    .sslSocketFactory(socketFactory())
+                    .ignoreContentType(true)
+                    .method(method == null ? Connection.Method.GET : method)
+                    .maxBodySize(MAX_BODY_SIZE)
+                    .headers(headers == null ? Collections.emptyMap() : headers)
+                    .ignoreHttpErrors(true)
+                    .requestBody(requestBody)
+                    .execute();
+        } catch (final IOException ex) {
+            logger.error("Unable to get response for url {}", url, ex);
+            throw new UnrecoverableException("Unable to get response for url", ex);
+        }
+    }
+
+    /**
+     * Executes HTTP request with given url and returns response.
+     *
+     * @param url
+     *      requested URL
+     * @param method
+     *      request method, if NULL the GET method is used
+     * @param headers
+     *      request headers
      * @return HTTP response
      */
     public static Connection.Response getUrlResponse(final String url, final Connection.Method method, final Map<String, String> headers) {
-        return getUrlResponse(url, method, headers, null);
+        return getUrlResponse(url, method, headers, (Map<String, String>) null);
     }
 }

@@ -163,7 +163,7 @@ public class HungaryOldDataTenderParser extends BaseDatlabTenderParser {
                         .setHumanReadableUrl(record.get("eh_url_uj"))
                         .setSourceTenderId(record.get("eh_item_id")))
                 .setTitle(record.get("eh_rtart"))
-                .setProcedureType(record.get("eh_eljfaj"))
+                .setNationalProcedureType(record.get("eh_eljfaj"))
                 // in the column can be more NUTS codes, but we do not know how to parse it
                 .setAddressOfImplementation(new ParsedAddress().addNuts(record.get("eh_nuts")))
                 .addBuyer(parseBody(record, "eh_ajk_")
@@ -292,5 +292,10 @@ public class HungaryOldDataTenderParser extends BaseDatlabTenderParser {
     @Override
     protected final String countryOfOrigin(final ParsedTender parsed, final RawData raw) {
         return "HU";
+    }
+
+    @Override
+    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
+        return parsed;
     }
 }

@@ -64,40 +64,52 @@ final class UvoTenderNewHandler {
      */
     List<ParsedTender> parse(final Document document, final String url, final String publicationDate) {
         // parse common attributes
-        ParsedTender parsedTender = new ParsedTender().addPublication(
-                new ParsedPublication()
-                        .setSource(PublicationSources.SK_UVO)
-                        .setSourceId(parsePublicationSourceId(document))
-                        .setPublicationDate(publicationDate)
-                        .setSourceFormType(parsePublicationSourceFormType(document))
-                        .setDispatchDate(parsePublicationDispatchDate(document))
-                        .setBuyerAssignedId(parseBuyerAssignedId(document))
-                        .setHumanReadableUrl(url)
-                        .setIsIncluded(true)
-                        .setLanguage("SK"))
+        String sourceFormType = parsePublicationSourceFormType(document);
+
+        ParsedPublication publication = new ParsedPublication()
+                .setSource(PublicationSources.SK_UVO)
+                .setSourceId(parsePublicationSourceId(document))
+                .setPublicationDate(publicationDate)
+                .setSourceFormType(sourceFormType)
+                .setDispatchDate(parsePublicationDispatchDate(document))
+                .setBuyerAssignedId(parseBuyerAssignedId(document))
+                .setHumanReadableUrl(url)
+                .setIsIncluded(true)
+                .setLanguage("SK");
+
+        ParsedBody buyer = new ParsedBody().setName(parseBuyerName(document))
+                .addBodyId(new BodyIdentifier().setId(parseBuyerBodyIdentifierId(document))
+                        .setType(BodyIdentifier.Type.ORGANIZATION_ID)
+                        .setScope(BodyIdentifier.Scope.SK))
+                .setAddress(new ParsedAddress().setRawAddress(parseBuyerRawAddress(document))
+                        .addNuts(getFirstValueFromElement(document, "span:containsOwn(Kód NUTS:) + span"))
+                        .setCountry(parseBuyerCountry(document))
+                        .setUrl(parseBuyerWebAddress(document)))
+                .setContactPoint(parseBuyerContactPoint(document))
+                .setContactName(parseBuyerContactName(document))
+                .setPhone(parseBuyerPhone(document))
+                .setEmail(parseBuyerEmail(document))
+                .setBuyerType(parseBuyerType(document))
+                .setMainActivities(parseBuyerMainActivities(document));
+
+        String supplyType = parseTenderSupplyType(document);
+
+        // SÚHRNNÉ SPRÁVY
+        if (sourceFormType != null && sourceFormType.matches("IN.|IE.|IV.")) {
+            return new UvoTenderSummaryReportsHandler().parse(document, publication, buyer, supplyType);
+        }
+
+        ParsedTender parsedTender = new ParsedTender().addPublication(publication)
                 .addPublication(parsePreviousPublication(document))
                 .setNationalProcedureType(parseTenderNationalProcedureType(document))
-                .setSupplyType(parseTenderSupplyType(document))
+                .setSupplyType(supplyType)
                 .setEconomicRequirements(parseEconomicRequirements(document))
                 .setTechnicalRequirements(parseTechnicalRequirements(document))
                 .setSelectionMethod(parseTenderSelectionMethod(document))
                 .setIsJointProcurement(parseIsJointProcurement(document))
                 .setIsCentralProcurement(parseIsCentralProcurement(document))
                 .setIsFrameworkAgreement(parseIsFrameworkAgreement(document))
-                .addBuyer(new ParsedBody().setName(parseBuyerName(document))
-                        .addBodyId(new BodyIdentifier().setId(parseBuyerBodyIdentifierId(document))
-                                .setType(BodyIdentifier.Type.ORGANIZATION_ID)
-                                .setScope(BodyIdentifier.Scope.SK))
-                        .setAddress(new ParsedAddress().setRawAddress(parseBuyerRawAddress(document))
-                                .addNuts(getFirstValueFromElement(document, "span:containsOwn(Kód NUTS:) + span"))
-                                .setCountry(parseBuyerCountry(document))
-                                .setUrl(parseBuyerWebAddress(document)))
-                        .setContactPoint(parseBuyerContactPoint(document))
-                        .setContactName(parseBuyerContactName(document))
-                        .setPhone(parseBuyerPhone(document))
-                        .setEmail(parseBuyerEmail(document))
-                        .setBuyerType(parseBuyerType(document))
-                        .setMainActivities(parseBuyerMainActivities(document)))
+                .addBuyer(buyer)
                 .setTitle(parseTenderTitle(document))
                 .setAddressOfImplementation(
                         new ParsedAddress()
@@ -130,7 +142,12 @@ final class UvoTenderNewHandler {
                 .setNpwpReasons(parseNpwpReasons(document));
 
         //         parse form specific attributes
-        PublicationFormType formType = getFormType(parsedTender.getPublications().get(0).getSourceFormType());
+        PublicationFormType formType;
+        if (sourceFormType != null) {
+            formType = getFormType(sourceFormType);
+        } else {
+            formType = PublicationFormType.OTHER;
+        }
         switch (formType) {
             case CONTRACT_NOTICE:
                 parsedTender = UvoTenderNewOzHandler.parse(parsedTender, document);
@@ -909,7 +926,9 @@ final class UvoTenderNewHandler {
         if (rawAddressArray.length < 3) {
             return null;
         }
-
+        if (rawAddressArray[2].contains("<text>")) {
+            return rawAddressElement.selectFirst("text").ownText();
+        }
         return rawAddressArray[2];
     }
 

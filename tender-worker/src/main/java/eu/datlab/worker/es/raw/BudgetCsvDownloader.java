@@ -19,6 +19,11 @@ import java.util.List;
  */
 public class BudgetCsvDownloader extends BaseDownloader {
     @Override
+    protected final boolean skipExisting(final Message message) {
+        return false;
+    }
+
+    @Override
     public final List<Raw> downloadAndPopulateRawData(final Message message) {
         File folder = new File(message.getValue("path"));
 //        File folder = new File("/Users/michalriha/Downloads/spain_budgets/stream/tabula-L_09_E_R1_edit");

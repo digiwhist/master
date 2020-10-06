@@ -110,7 +110,6 @@ public final class AOPTenderSecondFormHandler {
             .setPersonalRequirements(getDivUnderSpan("Лично състояние към икономическите оператори", doc))
             .setEconomicRequirements(getDivUnderSpan("Икономически и финансови възможности", doc))
             .setTechnicalRequirements(getDivUnderSpan("Технически възможности", doc))
-            .setProcedureType(procedureType)
             .setNationalProcedureType(procedureType)
             .setSelectionMethod(getDivUnderSpan("Критерии за възлагане", doc))
             .setAwardCriteria(parseAwardCriteria(doc))

@@ -26,6 +26,9 @@ public class GPPTenderMaster extends BaseDatlabTenderMaster {
 
     @Override
     protected final void registerSpecificPlugins() {
+        pluginRegistry.unRegisterPlugin("Lots");
+
+        pluginRegistry.registerPlugin("LotsGPP", new GPPLotPlugin());
     }
 
     @Override

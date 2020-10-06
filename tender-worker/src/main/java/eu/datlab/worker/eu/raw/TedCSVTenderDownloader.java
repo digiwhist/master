@@ -32,6 +32,11 @@ public final class TedCSVTenderDownloader extends BaseDownloader<RawData> {
     private static final int CHUNK_LINES_COUNT = 5000;
     
     private static final String PERSISTENT_ID_PREFIX = "EU";
+
+    @Override
+    protected boolean skipExisting(final Message message) {
+        return false;
+    }
     
     @Override
     public List<RawData> downloadAndPopulateRawData(final Message message) {

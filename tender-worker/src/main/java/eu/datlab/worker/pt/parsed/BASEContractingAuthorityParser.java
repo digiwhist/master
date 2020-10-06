@@ -50,4 +50,10 @@ public final class BASEContractingAuthorityParser extends BaseContractingAuthori
     public String getVersion() {
         return VERSION;
     }
+
+    @Override
+    protected List<ParsedContractingAuthority> postProcessSourceSpecificRules(final List<ParsedContractingAuthority> parsed,
+                                                                                    final RawData raw) {
+        return parsed;
+    }
 }

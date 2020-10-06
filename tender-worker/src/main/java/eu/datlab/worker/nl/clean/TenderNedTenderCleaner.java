@@ -103,9 +103,6 @@ public class TenderNedTenderCleaner extends BaseDatlabTenderCleaner {
             parsedItem.setBidDeadline(null);
         }
 
-        // use nationalProcedureType as procedureType
-        parsedItem.setProcedureType(parsedItem.getNationalProcedureType());
-
         return parsedItem;
     }
 

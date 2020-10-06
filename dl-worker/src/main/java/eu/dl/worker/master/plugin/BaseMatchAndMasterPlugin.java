@@ -27,6 +27,8 @@ public abstract class
     // plugin registry used for mastering of matched nested items (eg. mastering of matched lots inside tenders)
     protected PluginRegistry<MasterPlugin> nestedPluginRegistry = new BasicPluginRegistry<>();
 
+    private W currentFinalItem = null;
+
     /**
      * Class constructor. Registers merging plugins.
      */
@@ -37,6 +39,7 @@ public abstract class
 
     @Override
     public final W master(final List<T> items, final W finalItem, final List<U> context) {
+        currentFinalItem = finalItem;
         // get list from each matched input item (eg. list of lots from each matched tender)
         List<List<U>> listsForMatching = getListsForMatching(items);
 
@@ -51,6 +54,13 @@ public abstract class
         // set list of master items to final item and return it
         // (eg. set list of master lots to tender and return tenders)
         return setFinalList(finalItem, finalList);
+    }
+
+    /**
+     * @return final item
+     */
+    protected final W getFinalItem() {
+        return currentFinalItem;
     }
 
     /**

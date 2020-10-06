@@ -89,7 +89,7 @@ public final class CVPISTenderCVPPNewHandler {
                 .setPersonalRequirements(parseBinTD("Informacija apie asmenin", document))
                 .setEconomicRequirements(parseBinTD("Informacija apie asmenin", document))
                 .setTechnicalRequirements(parseBinTD("Informacija apie asmenin", document))
-                .setProcedureType(parseProcedureType(document))
+                .setNationalProcedureType(parseProcedureType(document))
                 .setSelectionMethod(parseSelectionMethod(document))
                 .setIsElectronicAuction(parseChecked("tr:has(td:contains(elektroninis aukcionas)) + tr > td",
                         document))

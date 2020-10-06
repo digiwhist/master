@@ -321,6 +321,25 @@ public final class MasterTenderLot extends BaseMasterTenderLot<MasterTenderLot> 
     }
 
     /**
+     * Adds bid to the list of bids or create a new list with given bid if none
+     * exists.
+     *
+     * @param bid
+     *      new bid to be added
+     * @return this instance for chaining
+     */
+    public MasterTenderLot addBid(final MasterBid bid) {
+        if (bid != null) {
+            if (getBids() == null) {
+                setBids(new ArrayList<>());
+            }
+            this.bids.add(bid);
+        }
+
+        return this;
+    }
+
+    /**
      * Gets the bids count.
      *
      * @return the bidsCount

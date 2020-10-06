@@ -1,6 +1,8 @@
 package eu.datlab.worker.cz.master;
 
 import eu.datlab.worker.master.BaseDatlabTenderMaster;
+import eu.datlab.worker.master.MasterUtils;
+import eu.datlab.worker.master.plugin.TenderLotDPSPlugin;
 import eu.dl.dataaccess.dto.master.MasterTender;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
 
@@ -16,7 +18,9 @@ public class VestnikTenderMaster extends BaseDatlabTenderMaster {
 
     @Override
     protected final void registerSpecificPlugins() {
-        logger.debug("No specific plugins to be registered.");
+        pluginRegistry.unRegisterPlugin("Lots");
+
+        pluginRegistry.registerPlugin("LotsDPS", new TenderLotDPSPlugin());
     }
 
     @Override
@@ -39,6 +43,7 @@ public class VestnikTenderMaster extends BaseDatlabTenderMaster {
 
     @Override
     protected final MasterTender sourceSpecificPostprocessData(final MasterTender item) {
+        MasterUtils.reduceLotsWithoutBids(item);
         return item;
     }
 }

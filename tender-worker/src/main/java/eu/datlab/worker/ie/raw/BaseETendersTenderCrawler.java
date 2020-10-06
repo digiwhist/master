@@ -1,19 +1,18 @@
 package eu.datlab.worker.ie.raw;
 
+import com.gargoylesoftware.htmlunit.StringWebResponse;
 import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HTMLParser;
 import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
-import com.gargoylesoftware.htmlunit.html.HtmlCheckBoxInput;
-import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlSelect;
 import com.gargoylesoftware.htmlunit.html.HtmlTableRow;
-import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import com.gargoylesoftware.htmlunit.javascript.background.JavaScriptJobManager;
 import eu.datlab.dataaccess.dto.codetables.PublicationSources;
 import eu.datlab.worker.raw.BaseDatlabIncrementalPagedSourceHttpCrawler;
 import eu.dl.core.UnrecoverableException;
-import eu.dl.worker.raw.utils.CrawlerUtils;
 import eu.dl.worker.utils.http.URLUtils;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -36,21 +35,15 @@ abstract class BaseETendersTenderCrawler extends BaseDatlabIncrementalPagedSourc
     private static final String VERSION = "1";
 
     private static final String DOMAIN_URL = PublicationSources.IE_ETENDERS;
-    private static final String FIRST_PAGE_URL = DOMAIN_URL + "/ctm/supplier/publictenders";
+    private static final String FIRST_PAGE_URL = DOMAIN_URL + "/ctm/Supplier/PublicTenders";
     private static final String BASE_DETAIL_PAGE_URL = DOMAIN_URL + "/app/rfq/publicpurchase.asp?PID=";
-
-    private static final String DATE_FROM_INPUT_XPATH = "//input[@id='SearchFilter_FromDate']";
-    private static final String DATE_TO_INPUT_XPATH = "//input[@id='SearchFilter_ToDate']";
-    private static final String SHOW_ALSO_EXPIRED_TENDERS_CHECKBOX_XPATH = "//input[@id='SearchFilter_ShowExpiredRft']";
-    private static final String SEARCH_BUTTON_XPATH = "//a[@id='search']";
-    private static final String NEXT_BUTTON_XPATH = "//li[not(@class='disabled')]/a[child::i[@class='icon-forward']]";
-
-    private static final String FORM_TYPE_ELEMENT_ID = "SearchFilter_PublishType";
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private static final int MAX_JS_WAIT_TIMES = 10;
     private static final int SLEEP_TIME = 1000;
+
+    private static final String PAGE_SIZE = "25";
 
     /**
      * Pages have some javascript errors, they work, but generate a lot of warnings to logs, line in constructor
@@ -61,39 +54,62 @@ abstract class BaseETendersTenderCrawler extends BaseDatlabIncrementalPagedSourc
         java.util.logging.Logger.getLogger("com.gargoylesoftware").setLevel(Level.OFF);
     }
 
+    /**
+     * Sends POST request with search details and parses HTML page.
+     * @param date date for search
+     * @param pageNumber page number for search
+     * @return result page
+     */
+    private HtmlPage getPageViaPOSTMethod(final LocalDate date, final String pageNumber) {
+        String fromDate = date.format(DATE_FORMATTER);
+        String toDate = date.plusDays(1).format(DATE_FORMATTER);
+
+        Connection.Response response = null;
+        try {
+            response = Jsoup.connect(FIRST_PAGE_URL)
+                    .header("User-Agent", getWebClient().getBrowserVersion().getUserAgent())
+                    .data("SearchFilter.PublishType", getFormTypeOptionText())
+                    .data("SearchFilter.FromDate", fromDate)
+                    .data("SearchFilter.ToDate", toDate)
+                    .data("SearchFilter.SortField", "None")
+                    .data("SearchFilter.SortDirection", "None")
+                    .data("SearchFilter.Reference", "")
+                    .data("SearchFilter.TenderId", "0")
+                    .data("SearchFilter.OperatorId", "1")
+                    .data("Branding", "ETENDERS_SIMPLE")
+                    .data("SavedCategoryId", "")
+                    .data("SavedUnitAndName", "")
+                    .data("TextFilter", "")
+                    .data("SavedCategoryId", "")
+                    .data("CpvContainer.CpvCodes", "")
+                    .data("CpvContainer.CpvIds", "")
+                    .data("CpvContainer.CpvMain", "")
+                    .data("CpvContainer.ContractType", "")
+                    .data("CpvContainer.CpvIds", "")
+                    .data("CpvContainer.IsMandatory", "True")
+                    .data("SearchFilter.ShowExpiredRft", "true")
+                    .data("SearchFilter.ShowExpiredRft", "false")
+                    .data("SearchFilter.PagingInfo.PageNumber", pageNumber)
+                    .data("SearchFilter.PagingInfo.PageSize", PAGE_SIZE)
+                    .timeout(90000)
+                    .method(Connection.Method.POST)
+                    .execute();
+        }  catch (IOException e) {
+        logger.error("Sending POST request failed with exception {}", e.getMessage());
+        throw new UnrecoverableException("Could not send POST request", e);
+    }
+        try {
+            return HTMLParser.parseHtml(new StringWebResponse(response.body(), response.url()),
+                    getWebClient().getCurrentWindow());
+        } catch (IOException e) {
+            logger.error("Getting response failed with exception {}", e.getMessage());
+            throw new UnrecoverableException("Could not get response", e);
+        }
+    }
+
     @Override
     protected HtmlPage getSearchResultsStartPageForDate(final LocalDate incrementDate) {
-        try {
-            HtmlPage actualPage = getWebClient().getPage(FIRST_PAGE_URL);
-
-            // set form type
-            HtmlSelect formType = (HtmlSelect) actualPage.getElementById(FORM_TYPE_ELEMENT_ID);
-            if (formType == null) {
-                throw new UnrecoverableException("Publication type select element not found.");
-            }
-            formType.getOptionByText(getFormTypeOptionText()).setSelected(true);
-            assert formType.getSelectedOptions().size() == 1;
-
-            // show also expired tenders
-            final HtmlCheckBoxInput includeExpiredNoticesCheckBoxInput = actualPage.getFirstByXPath(
-                    SHOW_ALSO_EXPIRED_TENDERS_CHECKBOX_XPATH);
-            includeExpiredNoticesCheckBoxInput.setChecked(true);
-
-            // set publication dates
-            String dateString = incrementDate.format(DATE_FORMATTER);
-            final HtmlTextInput dateFromInput = actualPage.getFirstByXPath(DATE_FROM_INPUT_XPATH);
-            dateFromInput.setText(dateString);
-            String nextDateString = incrementDate.plusDays(1).format(DATE_FORMATTER);
-            final HtmlTextInput dateToInput = actualPage.getFirstByXPath(DATE_TO_INPUT_XPATH);
-            dateToInput.setText(nextDateString);
-
-            final HtmlElement searchButton = actualPage.getFirstByXPath(SEARCH_BUTTON_XPATH);
-
-            return searchButton.click();
-        } catch (IOException e) {
-            logger.error("Crawling failed for page with url {} with exception {}", getCurrentPageUrl(), e);
-            throw new UnrecoverableException("Unable to crawl page", e);
-        }
+            return getPageViaPOSTMethod(incrementDate, "1");
     }
 
     @Override
@@ -172,7 +188,7 @@ abstract class BaseETendersTenderCrawler extends BaseDatlabIncrementalPagedSourc
 
     @Override
     public boolean isPageValid(final HtmlPage page) {
-        return true;
+        return !page.getByXPath("//div[@id='searchResultContainer']/table/tbody/tr").isEmpty();
     }
 
     @Override
@@ -182,7 +198,7 @@ abstract class BaseETendersTenderCrawler extends BaseDatlabIncrementalPagedSourc
 
     @Override
     public HtmlPage getNextPage(final HtmlPage actualPage) {
-        return CrawlerUtils.clickElement(actualPage, NEXT_BUTTON_XPATH);
+        return getPageViaPOSTMethod(actualDate, String.valueOf(getCurrentPageNumber() + 1));
     }
 
     @Override

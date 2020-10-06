@@ -3,8 +3,8 @@ package eu.datlab.worker.matched;
 import eu.dl.dataaccess.dao.MatchedTenderDAO;
 import eu.dl.dataaccess.dto.generic.Publication;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
+
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * This plugin matches tenders with non-empty intersection of publications source ids.
@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 public class TenderPublicationSourceIdsMatchingPlugin extends BaseTenderMatchingPlugin {
 
     private static final String MATCHED_BY = "tenderPublicationSourceIds";
+
+    private List<String> sourceIds;
 
     /**
      * @see BaseTenderMatchingPlugin#BaseTenderMatchingPlugin(
@@ -44,12 +46,20 @@ public class TenderPublicationSourceIdsMatchingPlugin extends BaseTenderMatching
 
     @Override
     public final List<MatchedTender> getMatchedTenders(final MatchedTender matchedTender) {
-        List<String> publicationsSourceIds = matchedTender.getPublications().stream()
-            .filter(p ->  p.getSourceId() != null)
-            .map(Publication::getSourceId)
-            .distinct()
-            .collect(Collectors.toList());
+        return matchedTenderDao.getByPublicationSourceIds(getSourceIds(matchedTender));
+    }
 
-        return matchedTenderDao.getByPublicationSourceIds(publicationsSourceIds);
+    @Override
+    public final boolean isMatchable(final MatchedTender item) {
+        return !getSourceIds(item).isEmpty();
+    }
+
+    /**
+     * @param t
+     *      matched tender
+     * @return list of source ids of all publications or empty list
+     */
+    private List<String> getSourceIds(final MatchedTender t) {
+        return MatchingPluginUtils.getPublicationsValues(t, Publication::getSourceId);
     }
 }

@@ -28,16 +28,23 @@ public final class AddressUtils {
      *
      * @param parsedAddress
      *         parsed address
+     * @param countryMapping
+     *         country mapping
      *
      * @return cleaned address
      */
-    public static Address cleanAddress(final ParsedAddress parsedAddress) {
+    public static Address cleanAddress(final ParsedAddress parsedAddress, final Map<Enum, List<String>>
+            countryMapping) {
         if (parsedAddress == null) {
             return null;
         }
         
         String postcode = StringUtils.cleanShortString(parsedAddress.getPostcode());
         String country = StringUtils.cleanShortString(parsedAddress.getCountry());
+        if (country != null && countryMapping != null) {
+            Enum countryEnum = CodeTableUtils.mapValue(country, countryMapping);
+            country = countryEnum != null ? countryEnum.toString() : null;
+        }
         List<String> nuts = ArrayUtils.walk(parsedAddress.getNuts(), (parsedNuts) -> StringUtils.cleanShortString(parsedNuts));
         if (nuts == null && postcode != null && country != null) {
             String nutsByPostcode = NutsServiceFacotry.getNutsService().convert(country, postcode);
@@ -63,20 +70,10 @@ public final class AddressUtils {
      *
      * @param parsedAddress
      *         parsed address
-     * @param countryMapping
-     *         country mapping
      *
      * @return cleaned address
      */
-    public static Address cleanAddress(final ParsedAddress parsedAddress, final Map<Enum, List<String>>
-            countryMapping) {
-        final Address cleanAddress = cleanAddress(parsedAddress);
-
-        if (cleanAddress == null || cleanAddress.getCountry() == null || countryMapping == null) {
-            return cleanAddress;
-        } else {
-            Enum country = CodeTableUtils.mapValue(cleanAddress.getCountry(), countryMapping);
-            return cleanAddress.setCountry(country != null ? country.toString() : null);
-        }
+    public static Address cleanAddress(final ParsedAddress parsedAddress) {
+        return cleanAddress(parsedAddress, null);
     }
 }

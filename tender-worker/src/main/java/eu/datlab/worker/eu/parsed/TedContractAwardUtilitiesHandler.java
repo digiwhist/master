@@ -92,7 +92,6 @@ public final class TedContractAwardUtilitiesHandler {
             .addAdministrator(JsoupUtils.exists("TENDERS_REQUESTS_APPLICATIONS_MUST_BE_SENT_TO > IDEM",
                 contractingBodyNode) ? null : TedTenderParserUtils.parseBody(
                     JsoupUtils.selectFirst("TENDERS_REQUESTS_APPLICATIONS_MUST_BE_SENT_TO", contractingBodyNode)))
-            .setProcedureType(procedureType)
             .setNationalProcedureType(procedureType)
             .setSupplyType(
                 JsoupUtils.selectAttribute("TYPE_CONTRACT_LOCATION_W_PUB > TYPE_CONTRACT ", "VALUE", contractNode))
