@@ -59,7 +59,6 @@ final class ENarocanjeContractNoticeHandler1Old extends BaseENarocanjeFormInTabl
             .setAreVariantsAccepted(BooleanUtils.toStringTrueFalse(ENarocanjeTenderFormUtils.meansYes(
                     ENarocanjeTenderFormInTableUtils.getSectionContent("II.1.9", form))))
             .setNationalProcedureType(procedureType)
-            .setProcedureType(procedureType)
             .setSelectionMethod(StringUtils.removeDotsAtTheEnd(ParserUtils.getFromContent(sectionIV21, null, 6)))
             .setAwardCriteria(parseTenderAwardCriteria(sectionIV21))
             .setBidDeadline(ENarocanjeTenderFormInTableUtils.getSectionContent("IV.3.4", form, Arrays.asList(

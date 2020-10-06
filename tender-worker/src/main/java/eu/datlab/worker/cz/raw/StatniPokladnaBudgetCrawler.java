@@ -1,18 +1,12 @@
 package eu.datlab.worker.cz.raw;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.Month;
 import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
-import java.util.List;
-
-import com.gargoylesoftware.htmlunit.WebClient;
-import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
-import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import java.util.HashMap;
+import java.util.Map;
 
 import eu.datlab.worker.raw.BaseDatlabIncrementalCrawler;
-import eu.dl.core.UnrecoverableException;
 
 /**
  * This class is searching http://monitor.statnipokladna.cz/2016/zdrojova-data/transakcni-data for the fourth quarter
@@ -23,63 +17,45 @@ import eu.dl.core.UnrecoverableException;
 public final class StatniPokladnaBudgetCrawler extends BaseDatlabIncrementalCrawler {
 
     private static final String VERSION = "1.0";
-    
-    private static final String SOURCE_URL = "http://monitor.statnipokladna.cz";
-    
-    private static final String DATA_URL = SOURCE_URL + "/2016/zdrojova-data/transakcni-data";
+
+    private static final String SOURCE_URL = "https://monitor.statnipokladna.cz";
+    private static final String DATA_URL = SOURCE_URL + "/data/extrakty/csv";
     
     private static final LocalDate DEFAUL_START_DATE = LocalDate.of(2010, Month.JANUARY, 1);
 
-    private static final String DATASET_URL_PATTERN = "/data/%d_12_Data_CSUIS_%s.zip";
+    private static final String DATASET_NAME_PATTERN = "/%s/%d_12_Data_CSUIS_%s.zip";
     
-    private static final List<String> DATASET_INDENTIFIERS = Arrays.asList(
+    private static final Map<String, String> DATASET_INDENTIFIERS = new HashMap<>();
+    static {
         //cities budgets (FIN 2-12M - Plnění rozpočtu MŘO)
-        "FINM",
+        DATASET_INDENTIFIERS.put("FINM", "FinM");
         //state organisations budgets (FIN 2-04U - Plnění rozpočtu KAP a OSS)
-        "MISRIS",
+        DATASET_INDENTIFIERS.put("MISRIS", "FinOSS");
         //profit and loss (Výkaz zisku a ztráty)
-        "VYKZZ",
+        DATASET_INDENTIFIERS.put("VYKZZ", "ZiskZtraty");
         //balance sheets (Rozvaha)
-        "ROZV",
+        DATASET_INDENTIFIERS.put("ROZV", "Rozvaha");
         //old state organisations budgets (FIN 2-04U - Plnění rozpočtu KAP, OSS a SF (2010 - 2014))
-        "FINU",
+        DATASET_INDENTIFIERS.put("FINU", "FinU");
         // cash flow (Přehled peněžních toků)
-        "PPT");
+        DATASET_INDENTIFIERS.put("PPT", "PenezniToky");
+    }
     
     @Override
     protected void crawlSourceForDate(final LocalDate date) {
-        final WebClient webClient = new WebClient();
-        webClient.getOptions().setUseInsecureSSL(true);
-        webClient.getOptions().setThrowExceptionOnScriptError(false);
-        webClient.getOptions().setJavaScriptEnabled(false);
-        
-        try {
-            final HtmlPage page = webClient.getPage(DATA_URL);
-            
-            crawlDatasetsForYear(page, date.getYear());            
-        } catch(IOException e) {
-            logger.error("Crawling failed for date {} because of", date, e);
-            throw new UnrecoverableException("Crawling failed.", e);
-        }
+        crawlDatasetsForYear(date.getYear());
     }
 
     /**
      * Generates URLs for budget items datasets from each category and for the given {@code year}.
      *
-     * @param page
-     *      HTML page that includes datatsets URLs
      * @param year 
      *      datatset year
      */
-    private void crawlDatasetsForYear(final HtmlPage page, final int year) {
-        for (String datasetId : DATASET_INDENTIFIERS) {
-            final String datasetName = String.format(DATASET_URL_PATTERN, year, datasetId);
-            final HtmlAnchor datasetAnchor = (HtmlAnchor) page.getFirstByXPath("//div[@id='content-panel']"
-                + "//a[@href='" + datasetName + "']");
-
-            if (datasetAnchor != null) {
-                createAndPublishMessage(SOURCE_URL + datasetAnchor.getHrefAttribute());
-            }
+    private void crawlDatasetsForYear(final int year) {
+        for (Map.Entry<String, String> n : DATASET_INDENTIFIERS.entrySet()) {
+            final String dataset = String.format(DATASET_NAME_PATTERN, n.getValue(), year, n.getKey());
+            createAndPublishMessage(DATA_URL + dataset);
         }
     }
 

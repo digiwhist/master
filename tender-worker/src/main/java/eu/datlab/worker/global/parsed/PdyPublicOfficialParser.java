@@ -70,4 +70,9 @@ public class PdyPublicOfficialParser extends BasePublicOfficialParser {
     protected final String getVersion() {
         return null;
     }
+
+    @Override
+    protected final List<ParsedPublicOfficial> postProcessSourceSpecificRules(final List<ParsedPublicOfficial> parsed, final RawData raw) {
+        return parsed;
+    }
 }

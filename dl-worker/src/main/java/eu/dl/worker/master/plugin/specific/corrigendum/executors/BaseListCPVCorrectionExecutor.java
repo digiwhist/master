@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Base correction executor which applies corrections of CPVs.
  */
-public abstract class BaseListCPVCorrectionExecutor extends BaseCorrectionExecutor<List<CPV>> {
+public abstract class BaseListCPVCorrectionExecutor extends SimpleCorrectionExecutor<List<CPV>> {
     /**
      * @param c correction
      * @return correction origin value

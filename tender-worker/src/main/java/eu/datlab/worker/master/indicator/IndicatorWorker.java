@@ -1,6 +1,7 @@
 package eu.datlab.worker.master.indicator;
 
 import eu.datlab.dataaccess.dao.DAOFactory;
+import eu.datlab.worker.master.plugin.WinnerCAShareIndicatorPlugin;
 import eu.dl.dataaccess.dto.master.MasterTenderLot;
 import eu.dl.dataaccess.utils.PopulateUtils;
 import eu.dl.dataaccess.dao.MasterBodyDAO;
@@ -29,6 +30,17 @@ import eu.dl.worker.indicator.plugin.NoticeAndAwardDiscrepanciesIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.ProcedureTypeIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.SingleBidIndicatorPlugin;
 import eu.dl.worker.indicator.plugin.TaxHavenIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.LotCostOverrunIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.BuyerNameMissingIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.BuyerLocMissingIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.BidderIdMissingIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.BidderNameMissingIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.ValueMissingIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.AwardDateMissingIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.MarketMissingIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.ProcMethodMissingIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.TitleMissingIndicatorPlugin;
+import eu.dl.worker.indicator.plugin.YearMissingIndicatorPlugin;
 import eu.dl.worker.utils.BasicPluginRegistry;
 import eu.dl.worker.utils.PluginRegistry;
 
@@ -103,8 +115,6 @@ public class IndicatorWorker extends BaseWorker {
 
     @Override
     public final void doWork(final Message message) {
-        transactionUtils.begin();
-
         String id = message.getValue("id");
 
         final MasterTender tender = masterDao.getById(id);
@@ -141,8 +151,6 @@ public class IndicatorWorker extends BaseWorker {
             populateUtils.depopulateBodies(Arrays.asList(tender));
             masterDao.save(tender);
         }
-
-        transactionUtils.commit();
     }
 
     @Override
@@ -214,5 +222,34 @@ public class IndicatorWorker extends BaseWorker {
 
         LotNewCompanyIndicatorPlugin corruptionNewCompany = new LotNewCompanyIndicatorPlugin();
         lotIndicatorPluginRegistry.registerPlugin(corruptionNewCompany.getType(), corruptionNewCompany);
+
+        AwardDateMissingIndicatorPlugin awardDateMissingIndicatorPlugin = new AwardDateMissingIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(awardDateMissingIndicatorPlugin.getType(), awardDateMissingIndicatorPlugin);
+
+        MarketMissingIndicatorPlugin marketMissingIndicatorPlugin = new MarketMissingIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(marketMissingIndicatorPlugin.getType(), marketMissingIndicatorPlugin);
+        ProcMethodMissingIndicatorPlugin procMethodMissingIndicatorPlugin = new ProcMethodMissingIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(procMethodMissingIndicatorPlugin.getType(), procMethodMissingIndicatorPlugin);
+        TitleMissingIndicatorPlugin titleMissingIndicatorPlugin = new TitleMissingIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(titleMissingIndicatorPlugin.getType(), titleMissingIndicatorPlugin);
+
+        YearMissingIndicatorPlugin yearMissingIndicatorPlugin = new YearMissingIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(yearMissingIndicatorPlugin.getType(), yearMissingIndicatorPlugin);
+
+        LotCostOverrunIndicatorPlugin costOverrunPlugin = new LotCostOverrunIndicatorPlugin();
+        lotIndicatorPluginRegistry.registerPlugin(costOverrunPlugin.getType(), costOverrunPlugin);
+
+        BuyerNameMissingIndicatorPlugin buyerNameMissingIndicatorPlugin = new BuyerNameMissingIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(buyerNameMissingIndicatorPlugin.getType(), buyerNameMissingIndicatorPlugin);
+        BuyerLocMissingIndicatorPlugin buyerLocMissingIndicatorPlugin = new BuyerLocMissingIndicatorPlugin();
+        tenderIndicatorPluginRegistry.registerPlugin(buyerLocMissingIndicatorPlugin.getType(), buyerLocMissingIndicatorPlugin);
+        BidderIdMissingIndicatorPlugin bidderIdMissingIndicatorPlugin = new BidderIdMissingIndicatorPlugin();
+        lotIndicatorPluginRegistry.registerPlugin(bidderIdMissingIndicatorPlugin.getType(), bidderIdMissingIndicatorPlugin);
+        BidderNameMissingIndicatorPlugin bidderNameMissingIndicatorPlugin = new BidderNameMissingIndicatorPlugin();
+        lotIndicatorPluginRegistry.registerPlugin(bidderNameMissingIndicatorPlugin.getType(), bidderNameMissingIndicatorPlugin);
+        ValueMissingIndicatorPlugin valueMissingIndicatorPlugin = new ValueMissingIndicatorPlugin();
+        lotIndicatorPluginRegistry.registerPlugin(valueMissingIndicatorPlugin.getType(), valueMissingIndicatorPlugin);
+        WinnerCAShareIndicatorPlugin winnerCAShareIndicatorPlugin = new WinnerCAShareIndicatorPlugin();
+        lotIndicatorPluginRegistry.registerPlugin(winnerCAShareIndicatorPlugin.getType(), winnerCAShareIndicatorPlugin);
     }
 }

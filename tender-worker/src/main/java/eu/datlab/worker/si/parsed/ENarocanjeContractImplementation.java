@@ -57,7 +57,6 @@ final class ENarocanjeContractImplementation extends BaseENarocanjeFormInTableHa
                 .setEstimatedPrice(parsePrice(ParserUtils.getFromContent(sectionIII13, null, estimatedPriceTitle)))
                 .setFinalPrice(parsePrice(ParserUtils.getFromContent(sectionIII13, null, finalPriceTitle)))
                 .setNationalProcedureType(procedureType)
-                .setProcedureType(procedureType)
                 .setLots(parseLots(form));
 
         return tender;

@@ -13,6 +13,7 @@ import eu.dl.dataaccess.dto.matched.ApproximatellyMatchable;
 import eu.dl.dataaccess.dto.matched.EtalonBody;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 import eu.dl.worker.utils.matched.MatchedUtils;
+import org.apache.commons.lang3.ObjectUtils;
 
 /**
  * This plugin attempts to find approximate match with pool of bodies. 
@@ -111,6 +112,11 @@ public abstract class BaseApproximateMatchingPlugin<T extends MatchedBody, U ext
      */
     @Override
     protected abstract List<U> getBodiesPool(T item);
+
+    @Override
+    public final boolean isMatchable(final T item) {
+        return ObjectUtils.allNotNull(item.getStandardizedName(), item.getStandardizedAddress(), item.getBodyIds());
+    }
     
     /**
      * Computes similarities for each BodyIdentifier from {@code source} with each BodyIdentifier from {@target}

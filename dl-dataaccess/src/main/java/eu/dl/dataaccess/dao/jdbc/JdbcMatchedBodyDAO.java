@@ -47,7 +47,7 @@ public class JdbcMatchedBodyDAO extends GenericJdbcDAO<MatchedBody> implements M
             return Collections.emptyList();
         }
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE ((modifiedBy = ? AND modifiedByVersion = ?) " +
                             additionalMatchersRestriction + ") AND (" + restriction
                             .toString() + ")");
@@ -88,7 +88,7 @@ public class JdbcMatchedBodyDAO extends GenericJdbcDAO<MatchedBody> implements M
 
         try {
 
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE ((modifiedBy = ? AND modifiedByVersion = ?) " +
                             additionalMatchersRestriction + ") AND (" + restriction
                             .toString() + ")");
@@ -139,7 +139,7 @@ public class JdbcMatchedBodyDAO extends GenericJdbcDAO<MatchedBody> implements M
         String additionalMatchersRestriction = prepareAdditionalWorkersCondition();
 
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE ((modifiedBy = ? AND modifiedByVersion = ?) " +
                             additionalMatchersRestriction + ") AND " + bodyIdsRestriction
                             .toString());
@@ -168,7 +168,7 @@ public class JdbcMatchedBodyDAO extends GenericJdbcDAO<MatchedBody> implements M
     @Override
     public final List<MatchedBody> getForResend(final String name, final String version) {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT DISTINCT data->>'groupId' AS groupId FROM " + getTableWithSchema() + " WHERE modifiedby "
                             + "=" + " ? AND modifiedbyversion = ?");
 
@@ -287,7 +287,7 @@ public class JdbcMatchedBodyDAO extends GenericJdbcDAO<MatchedBody> implements M
                 gidStm.append("data @> '{\"groupId\":\"").append(sanitizeForJsonString(gid)).append("\"}'");
             });
 
-            PreparedStatement statement = connection.prepareStatement("select data#>>'{groupId}' as gid,"
+            PreparedStatement statement = getConnection().prepareStatement("select data#>>'{groupId}' as gid,"
                     + "SUM((data @> '{\"bodyIds\": [{\"type\": \"ETALON_ID\"}]}')::int) > 0 as hasEtalon,"
                     + "COUNT(*) as size"
                     + " FROM " + getTableWithSchema()
@@ -330,7 +330,7 @@ public class JdbcMatchedBodyDAO extends GenericJdbcDAO<MatchedBody> implements M
         String additionalMatchersRestriction = prepareAdditionalWorkersCondition();
 
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT data->>'groupId' as groupId FROM " + getTableWithSchema()
                             + " WHERE ((createdBy = ? AND createdByVersion = ?) "
                             + additionalMatchersRestriction + ") AND " + bodyIdsRestriction
@@ -364,7 +364,7 @@ public class JdbcMatchedBodyDAO extends GenericJdbcDAO<MatchedBody> implements M
 
         try {
             while (true) {
-                PreparedStatement statement = connection.prepareStatement(
+                PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT modified, data->>'groupId' as groupId, data->>'hash' as hash,"
                         + " jsonb_array_elements(data->'alternativeHashes')->>'hash' as alternativeHash"
                     + " FROM " + getTableWithSchema()
@@ -438,7 +438,7 @@ public class JdbcMatchedBodyDAO extends GenericJdbcDAO<MatchedBody> implements M
         }
 
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                 "SELECT * FROM " + getTableWithSchema()
                     + " WHERE ((createdBy = ? AND createdByVersion = ?) " + prepareAdditionalWorkersCondition() + ")" +
                     " AND data @> '{\"name\":\"" + name +"\", \"role\":\"" + role + "\"}'");

@@ -91,7 +91,10 @@ public final class APATenderExcelContracteHandler {
         final Row headerRow = sheet.getRow(0);
         HashMap<String, Integer> headerIndexes = new HashMap<>();
         for (int i = 0; i < headerRow.getLastCellNum(); i++) {
-            headerIndexes.put(headerRow.getCell(i).getStringCellValue(), i);
+            headerIndexes.put(headerRow.getCell(i).getStringCellValue()
+                    .replace(" ", "")
+                    .replace("_", "")
+                    .toLowerCase(), i);
         }
         final List<ParsedTender> parsedTenders = new ArrayList<>();
         Row row;
@@ -180,7 +183,6 @@ public final class APATenderExcelContracteHandler {
                             .setCurrency(estimatedPriceCurrency)
                     )
                     .setNationalProcedureType(procedureType)
-                    .setProcedureType(procedureType)
                     .addBuyer(new ParsedBody()
                             .setName(buyerName)
                             .setBuyerType(buyerType)

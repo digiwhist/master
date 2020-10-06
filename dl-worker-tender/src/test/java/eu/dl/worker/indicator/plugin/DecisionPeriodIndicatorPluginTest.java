@@ -50,22 +50,22 @@ public final class DecisionPeriodIndicatorPluginTest {
 
     private final MasterTender tender7 = new MasterTender()
             .setCountry("CZ")
-            .setBidDeadline(LocalDateTime.now().minusDays(100))
+            .setBidDeadline(LocalDateTime.now())
             .setLots(Arrays.asList(new MasterTenderLot()
-                    .setAwardDecisionDate(LocalDate.now())));
+                    .setAwardDecisionDate(LocalDate.now().minusDays(100))));
 
     private final MasterTender tender8 = new MasterTender()
             .setCountry("DE")
-            .setBidDeadline(LocalDateTime.now().minusDays(100))
+            .setBidDeadline(LocalDateTime.now())
             .setLots(Arrays.asList(new MasterTenderLot()
-                    .setAwardDecisionDate(LocalDate.now())));
+                    .setAwardDecisionDate(LocalDate.now().minusDays(100))));
 
     private final MasterTender tender9 = new MasterTender()
             .setCountry("DE")
-            .setBidDeadline(LocalDateTime.now().minusDays(100))
+            .setBidDeadline(LocalDateTime.now())
             .setLots(Arrays.asList(
                     new MasterTenderLot()
-                            .setAwardDecisionDate(LocalDate.now()),
+                            .setAwardDecisionDate(LocalDate.now().minusDays(100)),
                     new MasterTenderLot()
                             .setAwardDecisionDate(LocalDate.now().minusDays(80))));
 

@@ -13,7 +13,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlCheckBoxInput;
 import com.gargoylesoftware.htmlunit.html.HtmlElement;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
-import com.gargoylesoftware.htmlunit.html.HtmlSubmitInput;
 import com.gargoylesoftware.htmlunit.html.HtmlTextInput;
 import com.gargoylesoftware.htmlunit.xml.XmlPage;
 
@@ -55,7 +54,7 @@ public final class GovUKTenderCrawler extends BaseDatlabIncrementalCrawler {
      */
     private static final String DATE_FROM_INPUT_XPATH = "//input[@name='published_from']";
     private static final String DATE_TO_INPUT_XPATH = "//input[@name='published_to']";
-    private static final String SEARCH_BUTTON_XPATH = "//input[@name='adv_search']";
+    private static final String SEARCH_BUTTON_XPATH = "//button[@name='adv_search']";
 
     /**
      * Webclient to crawl with.
@@ -192,7 +191,7 @@ public final class GovUKTenderCrawler extends BaseDatlabIncrementalCrawler {
         // Open search page, this will be used for all dates.
         try {
             final HtmlPage firstPage = webClient.getPage(FIRST_PAGE);
-            final HtmlSubmitInput searchButton = firstPage.getFirstByXPath("//input[@name='adv_search']");
+            final HtmlElement searchButton = firstPage.getFirstByXPath(SEARCH_BUTTON_XPATH);
             searchPage = searchButton.click();
         } catch (IOException e) {
             logger.error("Cannot open search page for {}", e);

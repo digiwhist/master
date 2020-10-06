@@ -22,10 +22,23 @@ public abstract class BaseIncrementalCrawler extends BaseCrawler {
 
     protected LocalDate actualDate;
 
+    private int daysToYesterday = 1;
+
+    /**
+     * Basic initialization.
+     */
+    public BaseIncrementalCrawler() {
+        super();
+
+        Integer daysToYesterdayCfg = config.getParamValueAs(getName() + ".daysToYesterday", Integer::valueOf);
+        if (daysToYesterdayCfg != null) {
+            this.daysToYesterday = daysToYesterdayCfg;
+        }
+    }
+
     @Override
     public final void doWork(final Message message) {
         try {
-            getTransactionUtils().begin();
             initialSetup();
             setCrawlingDateRange(message);
             logger.info("Crawler is searching from {} to {}.", startDate.toString(), endDate.toString());
@@ -85,7 +98,7 @@ public abstract class BaseIncrementalCrawler extends BaseCrawler {
      *         message that may contain start and end dates
      */
     private void setCrawlingDateRange(final Message message) {
-        final LocalDate yesterday = LocalDate.now().minusDays(1);
+        final LocalDate yesterday = LocalDate.now().minusDays(daysToYesterday);
 
         // set the start date
         final String startDateString = message.getValue("startDate");

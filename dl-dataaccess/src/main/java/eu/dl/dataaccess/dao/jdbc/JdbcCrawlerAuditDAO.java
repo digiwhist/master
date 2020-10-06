@@ -60,7 +60,7 @@ public class JdbcCrawlerAuditDAO extends GenericJdbcDAO<BasicCrawlerAuditRecord>
     @Override
     public final BasicCrawlerAuditRecord getByNameAndVersion() {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE createdby = ? AND createdByVersion = ?");
 
             statement.setString(1, getWorkerName());

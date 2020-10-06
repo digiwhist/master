@@ -3,7 +3,6 @@ package eu.datlab.worker.matched;
 import eu.dl.dataaccess.dao.MatchedTenderDAO;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,8 +43,11 @@ public class TenderDocumentsUrlMatchingPlugin extends BaseTenderMatchingPlugin {
 
     @Override
     public final List<MatchedTender> getMatchedTenders(final MatchedTender matchedTender) {
-        return matchedTender.getDocumentsLocation() == null
-                ? Collections.emptyList()
-                : matchedTenderDao.getByDocumentsUrl(matchedTender.getDocumentsLocation().getUrl());
+        return matchedTenderDao.getByDocumentsUrl(matchedTender.getDocumentsLocation().getUrl());
+    }
+
+    @Override
+    public final boolean isMatchable(final MatchedTender item) {
+        return item.getDocumentsLocation() != null && item.getDocumentsLocation().getUrl() != null;
     }
 }

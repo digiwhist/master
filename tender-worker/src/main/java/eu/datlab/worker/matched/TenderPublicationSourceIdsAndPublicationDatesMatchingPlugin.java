@@ -3,6 +3,8 @@ package eu.datlab.worker.matched;
 import eu.dl.dataaccess.dao.MatchedTenderDAO;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
 import eu.dl.worker.utils.ArrayUtils;
+import org.apache.commons.lang3.ObjectUtils;
+
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,17 +50,31 @@ public class TenderPublicationSourceIdsAndPublicationDatesMatchingPlugin extends
 
     @Override
     public final List<MatchedTender> getMatchedTenders(final MatchedTender matchedTender) {
-        if (matchedTender == null || matchedTender.getPublications() == null) {
-            return Collections.emptyList();
+        return matchedTenderDao.getByPublicationSourceIdsAndPublicationDates(getSourceIdsAndDates(matchedTender));
+    }
+
+    @Override
+    public final boolean isMatchable(final MatchedTender item) {
+        return !getSourceIdsAndDates(item).isEmpty();
+    }
+
+    /**
+     * @param t
+     *      matched tender
+     * @return map of source ids and publication dates of all publications or empty map
+     */
+    private Map<String, LocalDate> getSourceIdsAndDates(final MatchedTender t) {
+        if (t == null) {
+            return Collections.emptyMap();
         }
 
         Map<String, LocalDate> publications = new HashMap<>();
 
-        matchedTender.getPublications().stream()
-            .filter(n ->  n.getSourceId() != null && n.getPublicationDate() != null)
+        MatchingPluginUtils.getPublicationsAsStream(t)
+            .filter(n -> ObjectUtils.allNotNull(n.getSourceId(), n.getPublicationDate()))
             .filter(ArrayUtils.distinct(n -> n.getSourceId() + "|" + n.getPublicationDate()))
             .forEach(n -> publications.put(n.getSourceId(), n.getPublicationDate()));
-            
-        return matchedTenderDao.getByPublicationSourceIdsAndPublicationDates(publications);
+
+        return publications;
     }
 }

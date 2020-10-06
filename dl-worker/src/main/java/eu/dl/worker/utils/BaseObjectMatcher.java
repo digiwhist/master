@@ -2,6 +2,8 @@ package eu.dl.worker.utils;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import eu.dl.worker.RabbitMessenger;
 import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,13 +19,14 @@ import org.slf4j.LoggerFactory;
  *      output item class
  * @author Tomas Mrazek
  */
-public abstract class BaseObjectMatcher<T, U, V> {
+public abstract class BaseObjectMatcher<T, U, V> extends RabbitMessenger {
     protected final Logger logger = LoggerFactory.getLogger(this.getClass().getName());
 
     /**
      * Default constructor.
      */
     public BaseObjectMatcher() {
+        super();
     }
 
     /**

@@ -134,4 +134,9 @@ public class EveryPoliticianPublicOfficialParser extends BasePublicOfficialParse
 
         return null;
     }
+
+    @Override
+    protected final List<ParsedPublicOfficial> postProcessSourceSpecificRules(final List<ParsedPublicOfficial> parsed, final RawData raw) {
+        return parsed;
+    }
 }

@@ -42,4 +42,10 @@ public class IndicepaContractingAuthorityParser extends BaseContractingAuthority
     public final String getVersion() {
         return null;
     }
+
+    @Override
+    protected final List<ParsedContractingAuthority> postProcessSourceSpecificRules(final List<ParsedContractingAuthority> parsed,
+                                                                                    final RawData raw) {
+        return parsed;
+    }
 }

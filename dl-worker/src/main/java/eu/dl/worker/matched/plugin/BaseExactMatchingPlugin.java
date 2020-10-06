@@ -1,10 +1,13 @@
 package eu.dl.worker.matched.plugin;
 
 import eu.dl.dataaccess.dao.ExactMatchBodyDAO;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
@@ -106,7 +109,13 @@ public abstract class BaseExactMatchingPlugin<T extends MatchedBody, U extends E
      */
     @Override
     public final List<U> getBodiesPool(final T item) {
-        return poolDAO.getExactMatchBodiesPool(item.getStandardizedName(),
-            item.getStandardizedAddress(), item.getBodyIds());
+        return poolDAO.getExactMatchBodiesPool(item.getStandardizedName(), item.getStandardizedAddress(), item.getBodyIds());
+    }
+
+    @Override
+    public final boolean isMatchable(final T item) {
+        long nonNullsCount = Stream.of(item.getStandardizedName(), item.getStandardizedAddress(), item.getBodyIds())
+            .filter(Objects::nonNull).count();
+        return nonNullsCount >= 2;
     }
 }

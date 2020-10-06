@@ -27,6 +27,11 @@ import eu.dl.worker.utils.ftp.FTPFactory;
 public final class TedTenderDownloader extends BaseTenderFtpDownloader {
     private static final String VERSION = "2";
 
+    @Override
+    protected boolean skipExisting(final Message message) {
+        return false;
+    }
+
     /**
      * Downloads and unpacks TED daily package and extract all files in archive.
      *

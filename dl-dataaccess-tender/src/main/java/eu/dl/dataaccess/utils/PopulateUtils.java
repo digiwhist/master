@@ -277,6 +277,26 @@ public class PopulateUtils {
     }
 
     /**
+     * Depopulates the master bodies, so the bodies will have just group ID.
+     *
+     * @param bodies
+     *            list of bodies
+     *
+     * @return depopulated master bodies or null when there are no bodies
+     */
+    private List<MatchedBody> unsetAllExceptGroupIdInMatchedBodies(final List<MatchedBody> bodies) {
+        if (bodies == null || bodies.isEmpty()) {
+            return null;
+        }
+
+        List<MatchedBody> result = new ArrayList<>();
+        for (MatchedBody body : bodies) {
+            result.add(unsetAllExceptGroupIdInMatchedBody(body));
+        }
+        return result;
+    }
+
+    /**
      * Depopulates the master body, so the body will have just group ID.
      *
      * @param body
@@ -288,6 +308,21 @@ public class PopulateUtils {
         return body == null
                 ? null
                 : new MasterBody()
+                .setGroupId(body.getGroupId());
+    }
+
+    /**
+     * Depopulates the matched body, so the body will have just group ID.
+     *
+     * @param body
+     *            body
+     *
+     * @return depopulated matched body or null when there is no body
+     */
+    private MatchedBody unsetAllExceptGroupIdInMatchedBody(final MatchedBody body) {
+        return body == null
+                ? null
+                : new MatchedBody()
                 .setGroupId(body.getGroupId());
     }
 
@@ -381,6 +416,22 @@ public class PopulateUtils {
     /**
      * Populates the matched tender with all possible matched bodies.
      *
+     * @param tender
+     *            tender
+     */
+    public final void populateMatchedBodies(final MatchedTender tender) {
+        if (tender == null) {
+            return;
+        }
+
+        List<MatchedTender> tenders = Arrays.asList(tender);
+
+        populateMatchedBodies(tenders);
+    }
+
+    /**
+     * Populates the matched tender with all possible matched bodies.
+     *
      * @param tenders
      *            list of tenders
      */
@@ -446,6 +497,42 @@ public class PopulateUtils {
     }
 
     /**
+     * Depopulates the matched tender, so the bodies will have just group ID.
+     *
+     * @param tenders
+     *            list of tenders
+     */
+    public final void depopulateMatchedBodies(final List<MatchedTender> tenders) {
+        for (MatchedTender tender : tenders) {
+            tender.setAdministrators(unsetAllExceptGroupIdInMatchedBodies(tender.getAdministrators()));
+            tender.setApproachedBidders(unsetAllExceptGroupIdInMatchedBodies(tender.getApproachedBidders()));
+            tender.setCandidates(unsetAllExceptGroupIdInMatchedBodies(tender.getCandidates()));
+            tender.setSupervisors(unsetAllExceptGroupIdInMatchedBodies(tender.getSupervisors()));
+            tender.setBuyers(unsetAllExceptGroupIdInMatchedBodies(tender.getBuyers()));
+
+            tender.setOnBehalfOf(unsetAllExceptGroupIdInMatchedBodies(tender.getOnBehalfOf()));
+            tender.setBidsRecipient(unsetAllExceptGroupIdInMatchedBody(tender.getBidsRecipient()));
+            tender.setFurtherInformationProvider(unsetAllExceptGroupIdInMatchedBody(tender.getFurtherInformationProvider()));
+            tender.setSpecificationsCreator(unsetAllExceptGroupIdInMatchedBody(tender.getSpecificationsCreator()));
+            tender.setSpecificationsProvider(unsetAllExceptGroupIdInMatchedBody(tender.getSpecificationsProvider()));
+
+            List<MatchedTenderLot> lots = tender.getLots();
+            if (lots != null) {
+                for (MatchedTenderLot lot : lots) {
+                    List<MatchedBid> bids = lot.getBids();
+                    if (bids != null) {
+                        for (MatchedBid bid : bids) {
+                            bid.setBidders(unsetAllExceptGroupIdInMatchedBodies(bid.getBidders()));
+                        }
+                    }
+                    lot.setBids(bids);
+                }
+                tender.setLots(lots);
+            }
+        }
+    }
+
+    /**
      * Adds all the bodies from a list to target.
      *
      * @param target
@@ -486,8 +573,7 @@ public class PopulateUtils {
             return;
         }
 
-        List<String> ids = bodies.values().stream().map(MatchedBody::getId).collect(Collectors.toList());
-
+        List<String> ids = bodies.values().stream().map(MatchedBody::getId).filter(Objects::nonNull).collect(Collectors.toList());
         List<MatchedBody> storedBodies = matchedBodyDAO.getByIds(ids);
 
         if (storedBodies != null && !storedBodies.isEmpty()) {
