@@ -70,7 +70,7 @@ public final class MPTenderParser extends BaseDatlabTenderParser {
             .setTitle(getById("lblFicha1Nombre", doc))
             .setCountry("CL")
             .setDescription(getById("lblFicha1Descripcion", doc))
-            .setProcedureType(getById("lblFicha1Convocatoria", doc))
+            .setNationalProcedureType(getById("lblFicha1Convocatoria", doc))
             .setBidDeadline(getById("lblFicha3Cierre", doc))
             .addPublication(new ParsedPublication()
                 .setSourceId(getById("lblNumLicitacion", doc))
@@ -406,5 +406,10 @@ public final class MPTenderParser extends BaseDatlabTenderParser {
             logger.error("Cannot create output stream {}", e);
             throw new UnrecoverableException("Cannot create output stream", e);
         }
+    }
+
+    @Override
+    protected List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
+        return parsed;
     }
 }

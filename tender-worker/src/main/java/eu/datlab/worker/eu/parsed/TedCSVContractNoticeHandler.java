@@ -45,7 +45,7 @@ public final class TedCSVContractNoticeHandler {
             .setEstimatedDurationInMonths(record.get("duration"))
             .setEstimatedStartDate(record.get("contract_start"))
             .setEstimatedCompletionDate(record.get("contract_completion"))
-            .setProcedureType(record.get("procedure"))            
+            .setNationalProcedureType(record.get("procedure"))
             .setEnvisagedMinCandidatesCount(record.get("env_min_operators"))
             .setEnvisagedMaxCandidatesCount(record.get("env_max_operators"))            
             .setBidDeadline(record.get("dt_applications"))

@@ -53,7 +53,6 @@ public class LPSETenderParser extends BaseDatlabTenderParser {
                     .addBuyer(new ParsedBody().setName(JsoupUtils.getFirstValueByLabel(d, "Instansi")))
                     .setSupplyType(JsoupUtils.getFirstValueByLabel(d, "Kategori"))
                     .setNationalProcedureType(procedureType)
-                    .setProcedureType(procedureType)
                     .addAwardCriterion(new ParsedAwardCriterion()
                             .setName("Bobot Teknis")
                             .setWeight(JsoupUtils.getFirstValueByLabel(d, "Bobot Teknis"))
@@ -425,5 +424,10 @@ public class LPSETenderParser extends BaseDatlabTenderParser {
     @Override
     protected final String countryOfOrigin(final ParsedTender parsed, final RawData raw) {
         return "ID";
+    }
+
+    @Override
+    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
+        return parsed;
     }
 }

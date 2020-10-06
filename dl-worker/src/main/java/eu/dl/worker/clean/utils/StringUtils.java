@@ -295,6 +295,22 @@ public final class StringUtils {
      *          or longer than {@link StringUtils#BODYID_MAX_LENGTH}
      */
     public static String cleanBodyIdentifier(final String value) {
+        return cleanBodyIdentifier(value, false);
+    }
+
+    /**
+     * Method to clean body identifier text.
+     * E.g. this body identifier "36 183 792" is cleaned to "36183792".
+     *
+     * @param value
+     *            value to be cleaned
+     * @param ignoreLength
+     *            indicates if the length of id should be ignored
+     *
+     * @return cleaned value or null in case that the isIgnored is false and identifier is shorter than
+     * {@link StringUtils#BODYID_MIN_LENGTH} or longer than {@link StringUtils#BODYID_MAX_LENGTH}
+     */
+    public static String cleanBodyIdentifier(final String value, final boolean ignoreLength) {
         String cleaned = cleanShortString(value);
         if (cleaned == null) {
             return null;
@@ -303,7 +319,11 @@ public final class StringUtils {
         // delete all whitespaces
         cleaned = cleaned.replaceAll("\\s+", "");
 
-        return BODYID_MIN_LENGTH <= cleaned.length() && cleaned.length() <= BODYID_MAX_LENGTH ? cleaned : null;
+        if(ignoreLength) {
+            return cleaned.length() != 0 ? cleaned : null;
+        } else {
+            return BODYID_MIN_LENGTH <= cleaned.length() && cleaned.length() <= BODYID_MAX_LENGTH ? cleaned : null;
+        }
     }
 
     /**

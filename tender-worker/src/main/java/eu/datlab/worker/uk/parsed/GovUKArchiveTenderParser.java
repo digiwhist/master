@@ -100,7 +100,6 @@ public class GovUKArchiveTenderParser extends BaseDatlabTenderParser {
                 .setEstimatedDurationInMonths(selectNonEmptyText("PERIOD_WORK_DATE_STARTING > MONTHS", element))
                 .setEstimatedDurationInYears(selectNonEmptyText("PERIOD_WORK_DATE_STARTING > YEARS", element))
                 .setNationalProcedureType(procedureType)
-                .setProcedureType(procedureType)
                 .addFunding(new ParsedFunding()
                         .setIsEuFund(String.valueOf(!JsoupUtils.exists("RELATES_TO_EU_PROJECT_NO", element))))
                 .addPublication(new ParsedPublication()
@@ -475,5 +474,10 @@ public class GovUKArchiveTenderParser extends BaseDatlabTenderParser {
     @Override
     protected final String countryOfOrigin(final ParsedTender parsed, final RawData raw) {
         return "UK";
+    }
+
+    @Override
+    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
+        return parsed;
     }
 }

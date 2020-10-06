@@ -48,7 +48,6 @@ public final class TedContractAwardUtilitiesHandlerR209 {
             .setHasLots(JsoupUtils.exists("LOT_DIVISION", contractNode).toString())
             .setFinalPrice(TedTenderParserR209Utils.parsePriceWithRange(contractNode))
             .setLots(TedTenderParserR209Utils.parseLots(JsoupUtils.select("OBJECT_DESCR", contractNode), originNode))
-            .setProcedureType(procedureType)
             .setNationalProcedureType(procedureType)
             .setNpwpReasons(TedTenderParserR209Utils.parseNpwpReasons(
                 JsoupUtils.selectFirst("PT_AWARD_CONTRACT_WITHOUT_CALL D_JUSTIFICATION", procedureNode)))

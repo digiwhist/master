@@ -1,17 +1,16 @@
 package eu.dl.worker.master;
 
-import java.util.Arrays;
-import java.util.List;
-
 import eu.dl.dataaccess.dto.master.MasterBody;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 import eu.dl.worker.master.plugin.AddressPlugin;
 import eu.dl.worker.master.plugin.body.BodyIdPlugin;
-import eu.dl.worker.master.plugin.body.MetaDataPlugin;
 import eu.dl.worker.master.plugin.generic.LogicalORPlugin;
 import eu.dl.worker.master.plugin.generic.ModusPlugin;
 import eu.dl.worker.master.plugin.generic.UnionPlugin;
 import eu.dl.worker.master.plugin.generic.converter.TenderConverter;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Common functionality for all Body Master Record Deduplicators.

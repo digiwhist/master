@@ -724,7 +724,6 @@ public final class EPEParserUtils {
                 .setAddressOfImplementation(EPEParserUtils.parseAddressOfImplementation(dataTable))
                 .setIsFrameworkAgreement(EPEParserUtils.parseIsFrameworkAgreement(dataTable))
                 .setNationalProcedureType(procedureType)
-                .setProcedureType(procedureType)
                 .setSelectionMethod(EPEParserUtils.tableValueByLabel("^IV\\.2\\.1\\)", dataTable))
                 .setAwardCriteria(parseTenderRelatedCriteria(dataTable))
                 .setIsElectronicAuction(EPEParserUtils.parseBoolean("^IV\\.2\\.2\\)", dataTable))

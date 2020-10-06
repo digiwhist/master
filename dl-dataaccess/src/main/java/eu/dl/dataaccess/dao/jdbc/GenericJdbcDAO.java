@@ -39,7 +39,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
      */
     public final List<T> getByCountry(final String countryCode, final Integer page, final Integer pageSize) {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE data ->> 'country' = '" +
                             sanitizeForJsonString(countryCode) + "' ORDER BY modified ASC LIMIT ? " +
                             "OFFSET ?");
@@ -86,7 +86,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
      */
     public final List<T> getByCountry(final String countryCode, final Integer page, final String createdBy, final Integer pageSize) {
         try {
-            PreparedStatement statement = connection.prepareStatement("SELECT * FROM " + getTableWithSchema()
+            PreparedStatement statement = getConnection().prepareStatement("SELECT * FROM " + getTableWithSchema()
                 + " WHERE data ->> 'country' = '" + sanitizeForJsonString(countryCode) + "' AND createdby = ?"
                 + " ORDER BY modified ASC LIMIT ? OFFSET ?");
 
@@ -132,7 +132,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
      */
     public final List<T> getByGroupId(final String groupId) {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE data @> '{ \"groupId\":\"" +
                             sanitizeForJsonString(
                             groupId) + "\"}' ");
@@ -188,7 +188,8 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
                     }
                 }
 
-                PreparedStatement statement = connection.prepareStatement("SELECT * FROM " + getTableWithSchema() + " WHERE " + condition);
+                PreparedStatement statement = getConnection().prepareStatement(
+                        "SELECT * FROM " + getTableWithSchema() + " WHERE " + condition);
 
                 ResultSet rs = statement.executeQuery();
 
@@ -222,7 +223,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
 
                 if (t.getId() == null) {
                     // insert
-                    statement = connection.prepareStatement(
+                    statement = getConnection().prepareStatement(
                             "INSERT INTO " + getTableWithSchema() + " (id, created, createdBy, createdByVersion, " +
                                     "modified, modifiedBy, modifiedByVersion, data)" + " VALUES (?, ?, ?, ?, ?, ?, ?,"
                                     + "" + "" + "" + "" + "" + "" + "" + "" + " ?)",
@@ -255,7 +256,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
                     rs.close();
                 } else {
                     // update
-                    statement = connection.prepareStatement(
+                    statement = getConnection().prepareStatement(
                             "UPDATE " + getTableWithSchema() + " SET modified = ? , modifiedBy = ?, " +
                                     "modifiedByVersion" + " = ?, data = ? WHERE id = ?;");
 
@@ -290,7 +291,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
     @Override
     public final T getById(final String id) {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE id = ?");
 
             statement.setString(1, id);
@@ -330,7 +331,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
 
             sql.append(");");
 
-            PreparedStatement statement = connection.prepareStatement(sql.toString());
+            PreparedStatement statement = getConnection().prepareStatement(sql.toString());
 
             statement.executeQuery();
 
@@ -357,23 +358,23 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
         try {
             PreparedStatement statement;
             if (fromDate != null && toDate != null) {
-                statement = connection.prepareStatement(
+                statement = getConnection().prepareStatement(
                         "SELECT id FROM " + getTableWithSchema() + " WHERE createdby = ? AND createdbyversion = ? "
                                 + "AND modified >= ? AND modified <= ? ORDER BY data->>'processingOrder'");
                 statement.setString(3, fromDate);
                 statement.setString(4, toDate);
             } else if (fromDate != null) {
-                statement = connection.prepareStatement(
+                statement = getConnection().prepareStatement(
                         "SELECT id FROM " + getTableWithSchema() + " WHERE createdby = ? AND createdbyversion = ? "
                                 + "AND modified >= ? ORDER BY data->>'processingOrder'");
                 statement.setString(3, fromDate);
             } else if (toDate != null) {
-                statement = connection.prepareStatement(
+                statement = getConnection().prepareStatement(
                         "SELECT id FROM " + getTableWithSchema() + " WHERE createdby = ? AND createdbyversion = ? "
                                 + "modified <= ? ORDER BY data->>'processingOrder'");
                 statement.setString(3, toDate);
             } else {
-                statement = connection.prepareStatement(
+                statement = getConnection().prepareStatement(
                         "SELECT id FROM " + getTableWithSchema() + " WHERE createdby = ? AND createdbyversion = ? " +
                                 "ORDER BY data->>'processingOrder'");
             }
@@ -411,7 +412,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
      */
     public final List<T> getMineByHash(final String hash) {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE data @> '{ \"hash\":\"" + sanitize(
                             hash) + "\"}' AND createdBy = ? AND createdbyversion = ? ORDER BY data->>'processingOrder'");
 
@@ -435,9 +436,9 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
             throw new UnrecoverableException("Unable to perform query.", e);
         }
     }
-    
+
     /**
-     * Returns objects with which have been stored by the 
+     * Returns objects with which have been stored by the
      * particular version of the matcher (or its relative).
      *
      * @param page
@@ -448,7 +449,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
      */
     public final List<T> getMine(final Integer page, final Integer pageSize) {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema()
                     + " WHERE ((createdBy = ? AND createdByVersion = ?) "
         				+ prepareAdditionalWorkersCondition() + ")"
@@ -458,7 +459,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
             statement.setString(2, workerVersion);
             statement.setInt(3, pageSize);
             statement.setInt(4, page * pageSize);
-            
+
             ResultSet rs = statement.executeQuery();
 
             List<T> result = new ArrayList<T>();
@@ -503,7 +504,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
         String additionalWorkersCondition = prepareAdditionalWorkersCondition();
 
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE data @> '{ \"hash\":\"" + sanitize(
                             hash) + "\"}' AND ( (createdBy = ? AND createdByVersion = ?) " +
                             additionalWorkersCondition + ")");
@@ -529,10 +530,60 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
         }
     }
 
+    /**
+     * Returns groupId of records with given hash which have been stored by specified workers (and versions of workers).
+     *
+     * @param hash hash to be searched
+     * @return groupId of objects with the same hash and stored be one of the specified workers
+     */
+    public final String getGroupIdByHash(final String hash) {
+        // prepare sql condition part for additional workers
+        String additionalWorkersCondition = prepareAdditionalWorkersCondition();
+
+        try {
+            PreparedStatement statement = getConnection().prepareStatement(
+                    "SELECT DISTINCT data->>'groupId' AS group_id FROM " + getTableWithSchema() + " WHERE data @> '{ " +
+                            "\"hash\":\"" + sanitize(
+                            hash) + "\"}' AND ( (createdBy = ? AND createdByVersion = ?) " +
+                            additionalWorkersCondition + ")");
+
+            statement.setString(1, workerName);
+            statement.setString(2, workerVersion);
+
+            ResultSet rs = statement.executeQuery();
+
+            if (rs.next()) {
+                String groupId = rs.getString("group_id");
+                try {
+                    if (rs.next()) {
+                        logger.error("More than one unique groupId for hash {}", hash);
+                        throw new UnrecoverableException("More than one unique groupId for hash.");
+                    }
+                    rs.close();
+                    statement.close();
+                    return groupId;
+                } catch (Exception e) {
+                    rs.close();
+                    statement.close();
+                    throw new UnrecoverableException("More than one unique groupId for hash.");
+                }
+            }
+            rs.close();
+            statement.close();
+            return null;
+        } catch (SQLException e) {
+            logger.error("Unable to perform query, because of {}", e);
+            throw new UnrecoverableException("Unable to perform query.", e);
+        } catch (UnrecoverableException e) {
+            logger.error("More than one unique groupId for hash {}", hash);
+            throw new UnrecoverableException(e.getMessage(), e);
+        }
+    }
+
     @Override
     public final List<T> getModifiedAfter(final LocalDateTime timestamp, final Integer page, final Integer pageSize) {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE modified > ? ORDER BY modified ASC LIMIT ? " +
                             "OFFSET ?");
 
@@ -567,7 +618,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
     public final List<T> getModifiedAfter(final LocalDateTime timestamp, final String modifiedBy, final Integer page,
                                           final Integer pageSize) {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE modified > ? AND createdby = ? ORDER BY " +
                             "modified ASC LIMIT ? OFFSET ?");
 
@@ -615,7 +666,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
             query = query + " ORDER BY modified ASC LIMIT ? OFFSET ?";
 
 
-            PreparedStatement statement = connection.prepareStatement(query);
+            PreparedStatement statement = getConnection().prepareStatement(query);
 
             statement.setTimestamp(1, Timestamp.valueOf(timestamp));
             statement.setInt(2, pageSize);
@@ -660,7 +711,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
                 query = query + " AND data ->> 'country' = '" + sanitize(countryCode) + "' ";
             }
 
-            PreparedStatement statement = connection.prepareStatement(query);
+            PreparedStatement statement = getConnection().prepareStatement(query);
 
             statement.setTimestamp(1, Timestamp.valueOf(timestamp));
 
@@ -743,7 +794,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
      */
     protected final void disableIndexScan() {
         try {
-            PreparedStatement st = connection.prepareStatement("SET enable_indexscan TO 'off';");
+            PreparedStatement st = getConnection().prepareStatement("SET enable_indexscan TO 'off';");
 
             st.executeUpdate();
             st.close();
@@ -761,7 +812,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
      */
     protected final void enableIndexScan() {
         try {
-            PreparedStatement st = connection.prepareStatement("SET enable_indexscan TO 'on';");
+            PreparedStatement st = getConnection().prepareStatement("SET enable_indexscan TO 'on';");
 
             st.executeUpdate();
             st.close();
@@ -779,7 +830,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
      */
     protected final void disableSeqScan() {
         try {
-            PreparedStatement st = connection.prepareStatement("SET enable_seqscan TO 'off';");
+            PreparedStatement st = getConnection().prepareStatement("SET enable_seqscan TO 'off';");
 
             st.executeUpdate();
             st.close();
@@ -797,7 +848,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
      */
     protected final void enableSeqScan() {
         try {
-            PreparedStatement st = connection.prepareStatement("SET enable_seqscan TO 'on';");
+            PreparedStatement st = getConnection().prepareStatement("SET enable_seqscan TO 'on';");
 
             st.executeUpdate();
             st.close();
@@ -848,7 +899,7 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
     @Override
     public final Boolean removeById(final String id) {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "DELETE FROM " + getTableWithSchema() + " WHERE id = ?");
 
             statement.setString(1, id);
@@ -866,11 +917,11 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
     @Override
     public final List<String> getIdsBySourceAndVersion(final String name, final String version) {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT id FROM " + getTableWithSchema() + ";");
 
             if (!name.isEmpty()) {
-                statement = connection.prepareStatement(
+                statement = getConnection().prepareStatement(
                         "SELECT id FROM " + getTableWithSchema() + " WHERE createdby "
                                 + "LIKE" + " ? AND createdbyversion LIKE ?");
                 statement.setString(1, name);
@@ -913,13 +964,13 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
         try {
             PreparedStatement statement;
             if (maxDate != null) {
-                statement = connection.prepareStatement(
+                statement = getConnection().prepareStatement(
                     "SELECT max(p->>'publicationDate') as last_date"
                         + " FROM " + getTableWithSchema() + " t, jsonb_array_elements(t.data->'publications') p"
                         + " WHERE createdby = ? AND createdbyversion = ? AND p->>'publicationDate' < ?");
                 statement.setString(3, maxDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
             } else {
-                statement = connection.prepareStatement(
+                statement = getConnection().prepareStatement(
                     "SELECT max(p->>'publicationDate') as last_date"
                         + " FROM " + getTableWithSchema() + " t, jsonb_array_elements(t.data->'publications') p"
                         + " WHERE createdby = ? AND createdbyversion = ?");
@@ -969,12 +1020,12 @@ public abstract class GenericJdbcDAO<T extends StorableDTO> extends BaseJdbcDAO<
         try {
             String restriction = hashes.stream()
                 .filter(n -> n != null)
-                .map(n -> String.format("data->>'hash' = '%s'", sanitize(n)))
-                .collect(Collectors.joining(" OR "));
+                .map(n -> String.format("'%s'", sanitize(n)))
+                .collect(Collectors.joining(","));
 
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                 "SELECT data->>'hash' AS hash FROM " + getTableWithSchema() +
-                " WHERE createdBy = ? AND createdByVersion = ? AND (" + restriction + ")");
+                " WHERE createdBy = ? AND createdByVersion = ? AND data->>'hash' IN (" + restriction + ")");
 
             statement.setString(1, workerName);
             statement.setString(2, workerVersion);

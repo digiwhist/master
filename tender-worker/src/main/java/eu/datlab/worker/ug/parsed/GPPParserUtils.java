@@ -12,7 +12,6 @@ import eu.dl.dataaccess.dto.ocds.OCDSValue;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
 import eu.dl.dataaccess.dto.parsed.ParsedBody;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
-import eu.dl.dataaccess.dto.parsed.ParsedTender;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -46,7 +45,12 @@ public final class GPPParserUtils {
             return null;
         }
 
-        return parseBody(bodies.stream().filter(n -> Objects.equals(n.getId(), ref.getId())).findFirst().orElse(null));
+        OCDSOrganization body = bodies.stream().filter(n -> Objects.equals(n.getId(), ref.getId())).findFirst().orElse(null);
+        if (body == null) {
+            body = bodies.stream().filter(n -> Objects.equals(n.getName(), ref.getName())).findFirst().orElse(null);
+        }
+
+        return parseBody(body);
     }
 
     /**
@@ -61,10 +65,14 @@ public final class GPPParserUtils {
 
         ParsedBody parsedBody = new ParsedBody()
             .addBodyId(new BodyIdentifier().setType(BodyIdentifier.Type.SOURCE_ID).setScope(BodyIdentifier.Scope.UG).setId(body.getId()))
-            .setName(body.getName())
-            .setContactName(body.getContactPoint().getName())
-            .setEmail(body.getContactPoint().getEmail())
-            .setPhone(body.getContactPoint().getPhone());
+            .setName(body.getName());
+
+        if (body.getContactPoint() != null) {
+            parsedBody
+                .setContactName(body.getContactPoint().getName())
+                .setEmail(body.getContactPoint().getEmail())
+                .setPhone(body.getContactPoint().getPhone());
+        }
 
         if (body.getAddress() != null) {
             parsedBody.setAddress(new ParsedAddress()
@@ -119,25 +127,6 @@ public final class GPPParserUtils {
     }
 
     /**
-     * Sets estimatedStartDate, estimatedCompletionDate, estimatedDurationInDays, bidDeadline, and awardDeadline of parsed tender from OCDS
-     * tender data.
-     *
-     * @param parsedTender
-     *      parsed tender to be updated
-     * @param ocdsTender
-     *      OCDS tender
-     */
-    public static void updateTenderDeadlines(final ParsedTender parsedTender, final OCDSTender ocdsTender) {
-        parsedTender
-            .setEstimatedStartDate(periodDatetimeToString(ocdsTender.getContractPeriod(), OCDSPeriod::getStartDate))
-            .setEstimatedCompletionDate(periodDatetimeToString(ocdsTender.getContractPeriod(), OCDSPeriod::getEndDate))
-            .setEstimatedDurationInDays(Optional.ofNullable(ocdsTender.getContractPeriod())
-                .map(OCDSPeriod::getDurationInDays).filter(Objects::nonNull).map(String::valueOf).orElse(null))
-            .setBidDeadline(periodDatetimeToString(ocdsTender.getTenderPeriod(), OCDSPeriod::getEndDate))
-            .setAwardDeadline(periodDatetimeToString(ocdsTender.getAwardPeriod(), OCDSPeriod::getEndDate));
-    }
-
-    /**
      * @param period
      *      period
      * @param getter
@@ -172,5 +161,25 @@ public final class GPPParserUtils {
         return r.getContracts().stream()
             .filter(c -> Objects.equals(a.getId(), c.getAwardId()))
             .findFirst().orElse(null);
+    }
+
+    /**
+     * Parses national procedure type as procurement method enumeration value + ":" + description.
+     * @param tender tender to parse
+     * @return parsed national procedure type
+     */
+    public static String parseNationalProcedureType(final OCDSTender tender) {
+        String enumValue = GPPParserUtils.enumToString(tender.getProcurementMethod());
+        String description = tender.getProcurementMethodDetails();
+        if((enumValue == null || enumValue.isEmpty()) && (description == null || description.isEmpty())) {
+            return null;
+        }
+        if(enumValue == null) {
+            enumValue = "";
+        }
+        if(description == null) {
+            description = "";
+        }
+        return enumValue + ":" + description;
     }
 }

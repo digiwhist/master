@@ -37,7 +37,7 @@ public final class TedCSVContractAwardHandler {
 
         parsedTender
             .setFinalPrice(TedCSVTenderParserUtils.parseTenderPrice(record))
-            .setProcedureType(record.get("top_type"))
+            .setNationalProcedureType(record.get("top_type"))
             .addLot(new ParsedTenderLot()
                 .addBid(new ParsedBid()
                     .setIsWinning(Boolean.TRUE.toString())

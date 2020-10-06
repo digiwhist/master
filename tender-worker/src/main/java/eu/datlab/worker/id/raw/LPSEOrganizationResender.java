@@ -46,14 +46,10 @@ public final class LPSEOrganizationResender extends BaseWorker {
     @Override
     protected void doWork(final Message message) {
         try {
-            getTransactionUtils().begin();
-
             List<RawData> data = organizationDAO.getMine(ORGANIZATION_WORKER_NAME, ORGANIZATION_WORKER_VERSION, null, null);
             for (RawData r : data) {
                 createAndPublishMessage(r.getId());
             }
-
-            getTransactionUtils().commit();
         } catch (final Exception e) {
             logger.error("Crawling failed with exception", e);
             throw new UnrecoverableException("Crawling failed.", e);

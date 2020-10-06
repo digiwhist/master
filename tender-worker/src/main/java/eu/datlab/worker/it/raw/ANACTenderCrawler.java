@@ -49,7 +49,7 @@ public final class ANACTenderCrawler extends BaseCrawler {
     /**
      * Ending year for tenders crawling.
      */
-    private static final int STOP_CRAWL_YEAR = 2016;
+    private static final int STOP_CRAWL_YEAR = 2020;
 
     @Override
     protected void doWork(final Message message) {

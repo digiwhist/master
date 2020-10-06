@@ -53,9 +53,18 @@ public final class PriceUtils {
      *          ISO code of country
      * @return cleaned price
      */
-    public static Price cleanPrice(final ParsedPrice parsedPrice, final List<NumberFormat> numberFormat,
-        final String country) {
-        return cleanPrice(parsedPrice, numberFormat, country, true);
+    public static Price cleanPrice(final ParsedPrice parsedPrice, final List<NumberFormat> numberFormat, final String country) {
+        boolean removeNonsensical = true;
+
+        if (country == null) {
+            logger.warn("Unable to get removeNonsensicalPrices setting without country.");
+        } else {
+            String cfgRemoveNonsensical = Config.getInstance()
+                .getParam("eu.datlab.worker." + Strings.toLowerCase(country) + ".removeNonsensicalPrices");
+            removeNonsensical = cfgRemoveNonsensical == null ? true : cfgRemoveNonsensical.equals("1");
+        }
+
+        return cleanPrice(parsedPrice, numberFormat, country, removeNonsensical);
     }
 
     /**

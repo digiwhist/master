@@ -80,7 +80,7 @@ final class BOAMPTenderOldHandler {
                 .setAppealBodyName(JsoupUtils.selectText(
                     "DONNEES > PROCEDURES_RECOURS > INSTANCE_RECOURS > ACHETEUR", publicationElement))
                 .setAwardDecisionDate(JsoupUtils.selectText("DONNEES > PROCEDURES > DATE_ATT", document))
-                .setProcedureType(JsoupUtils.selectAttribute("DONNEES > PROCEDURE", "type", publicationElement))
+                .setNationalProcedureType(JsoupUtils.selectAttribute("DONNEES > PROCEDURE", "type", publicationElement))
                 .setDescription(JsoupUtils.selectCombinedText("DESCRIPTEURS > DESCRIPTEUR", publicationElement))
                 .setEstimatedPrice(new ParsedPrice()
                     .setNetAmount(JsoupUtils.selectText("DONNEES > PROCEDURES > VALEUR_ESTIMEE + AUTRES", document)));

@@ -24,7 +24,7 @@ public abstract class BaseTenderMatchingPlugin implements TenderMatchingPlugin {
     /**
      * Plugin needs MatchedTenderDAO and allows to enable/disable strict mode. Strict mode controls behavior of the
      * plugin in cases when matched tenders which were returned with
-     * {@link getMatchedTender(eu.dl.dataaccess.dto.matched.MatchedTender) } appear in more than one group. If true, all
+     * {@link #getMatchedTenders(MatchedTender)}} appear in more than one group. If true, all
      * matched tenders have to be from the same group otherwise, throws UnrecoverableException. If a false, the same
      * group is set for the each item from the matched list.
      *

@@ -1,15 +1,15 @@
 package eu.datlab.dataaccess.dao.jdbc;
 
+import eu.dl.core.UnrecoverableException;
+import eu.dl.dataaccess.dao.ManualMatchDAO;
+import eu.dl.dataaccess.dao.jdbc.BaseJdbcDAO;
+import eu.dl.dataaccess.dto.matched.ManualMatch;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import eu.dl.core.UnrecoverableException;
-import eu.dl.dataaccess.dao.ManualMatchDAO;
-import eu.dl.dataaccess.dao.jdbc.BaseJdbcDAO;
-import eu.dl.dataaccess.dto.matched.ManualMatch;
 
 /**
  * JDBC implementation of manual match.
@@ -38,7 +38,7 @@ public class JdbcManualMatchDAO<T extends ManualMatch> extends BaseJdbcDAO<Manua
             }
 
             PreparedStatement statement =
-                connection.prepareStatement("SELECT * FROM " + getTableWithSchema() + " WHERE " + query);
+                getConnection().prepareStatement("SELECT * FROM " + getTableWithSchema() + " WHERE " + query);
 
             ResultSet rs = statement.executeQuery();
 
@@ -81,7 +81,7 @@ public class JdbcManualMatchDAO<T extends ManualMatch> extends BaseJdbcDAO<Manua
 //            String query = "data @> '{\"flag\":\"" + sanitizeForJsonString(flag) + "\"}'";
 
             PreparedStatement statement =
-                connection.prepareStatement("SELECT * FROM " + getTableWithSchema() + " WHERE flag = ?");
+                getConnection().prepareStatement("SELECT * FROM " + getTableWithSchema() + " WHERE flag = ?");
 
             statement.setString(1, flag);
             ResultSet rs = statement.executeQuery();

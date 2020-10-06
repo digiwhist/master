@@ -31,6 +31,11 @@ public final class FINSTATBudgetDownloader extends BaseDownloader<RawData> {
     private static final String SOURCE_URL = "https://www.finstat.sk";
 
     @Override
+    protected boolean skipExisting(final Message message) {
+        return false;
+    }
+
+    @Override
     public List<RawData> downloadAndPopulateRawData(final Message message) {
         final List<RawData> rawData = new ArrayList<>();
         final String fileUrl = message.getValue("url");

@@ -3,10 +3,14 @@ package eu.dl.worker.master.plugin;
 import eu.dl.dataaccess.dto.codetables.CorrectionType;
 import eu.dl.dataaccess.dto.generic.CPV;
 import eu.dl.dataaccess.dto.generic.Corrigendum;
+import eu.dl.dataaccess.dto.generic.Price;
+import eu.dl.dataaccess.dto.master.MasterBid;
 import eu.dl.dataaccess.dto.master.MasterTender;
+import eu.dl.dataaccess.dto.master.MasterTenderLot;
 import eu.dl.worker.master.plugin.specific.CorrigendumPlugin;
 import org.junit.Test;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Month;
@@ -211,5 +215,70 @@ public class CorrigendumPluginTest {
 
         assertEquals(Arrays.asList(cpv), tender.getCpvs());
         assertNull(tender.getCorrections().get(0).getIsIncluded());
+    }
+
+    /**
+     * Test of price corrections.
+     */
+    @Test
+    public final void pluginPriceTest() {
+        CorrigendumPlugin plugin = new CorrigendumPlugin();
+
+        // tenderOrigin != null, correctionOrigin != null
+        // fix tender.finalPrice and lots[0].bids[0].price
+        MasterTender tender = new MasterTender()
+            .setFinalPrice(new Price().setNetAmount(BigDecimal.ONE))
+            .addLot(new MasterTenderLot()
+                .setBids(Arrays.asList(new MasterBid().setPrice(new Price().setNetAmount(BigDecimal.ONE)))))
+            .addLot(new MasterTenderLot()
+                .setBids(Arrays.asList(new MasterBid().setPrice(new Price().setNetAmount(BigDecimal.ZERO)))))
+            .setCorrections(Arrays.asList(new Corrigendum()
+                .setPublicationDate(LocalDate.now())
+                .setSectionNumber("V.2.4")
+                .setOriginalValue(new Price().setNetAmount(BigDecimal.ONE))
+                .setReplacementValue(new Price().setNetAmount(BigDecimal.TEN)))
+            );
+
+        tender = plugin.master(null, tender, null);
+
+        assertEquals(BigDecimal.TEN, tender.getFinalPrice().getNetAmount());
+        assertEquals(BigDecimal.TEN, tender.getLots().get(0).getBids().get(0).getPrice().getNetAmount());
+        assertEquals(BigDecimal.ZERO, tender.getLots().get(1).getBids().get(0).getPrice().getNetAmount());
+
+        // tenderOrigin != null, correctionOrigin == null, single lot
+        // fix only tender.finalPrice
+        tender = new MasterTender()
+            .setFinalPrice(new Price().setNetAmount(BigDecimal.ONE))
+            .addLot(new MasterTenderLot()
+                .setBids(Arrays.asList(new MasterBid().setPrice(new Price().setNetAmount(BigDecimal.ONE)))))
+            .setCorrections(Arrays.asList(new Corrigendum()
+                .setPublicationDate(LocalDate.now())
+                .setSectionNumber("V.2.4")
+                .setReplacementValue(new Price().setNetAmount(BigDecimal.TEN)))
+            );
+
+        tender = plugin.master(null, tender, null);
+
+        assertEquals(BigDecimal.TEN, tender.getFinalPrice().getNetAmount());
+        assertEquals(BigDecimal.ONE, tender.getLots().get(0).getBids().get(0).getPrice().getNetAmount());
+
+        // tenderOrigin == null, correctionOrigin != null, multi lot
+        // no fix
+        tender = new MasterTender()
+            .setFinalPrice(new Price().setNetAmount(BigDecimal.ONE))
+            .addLot(new MasterTenderLot()
+                .setBids(Arrays.asList(new MasterBid().setPrice(new Price().setNetAmount(BigDecimal.ONE)))))
+            .addLot(new MasterTenderLot()
+                .setBids(Arrays.asList(new MasterBid())))
+            .setCorrections(Arrays.asList(new Corrigendum()
+                .setPublicationDate(LocalDate.now())
+                .setSectionNumber("V.2.4")
+                .setReplacementValue(new Price().setNetAmount(BigDecimal.TEN)))
+            );
+
+        tender = plugin.master(null, tender, null);
+
+        assertEquals(BigDecimal.ONE, tender.getFinalPrice().getNetAmount());
+        assertEquals(BigDecimal.ONE, tender.getLots().get(0).getBids().get(0).getPrice().getNetAmount());
     }
 }

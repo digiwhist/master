@@ -198,7 +198,6 @@ public final class APATenderCsvContracteHandler {
                                                             ? null : tender.get(BID_PRICE_NET_AMOUNT_EUR))))
                                     .setContractSignatureDate(tender.get(CONTRACT_SIGNATURE_DATE)))
                             .setNationalProcedureType(tender.get(PROCEDURE_TYPE))
-                            .setProcedureType(tender.get(PROCEDURE_TYPE))
                             .setSupplyType(tender.get(SUPPLY_TYPE))
                             .setSelectionMethod(tender.get(SELECTION_METHOD))
                             .addBuyer(new ParsedBody()

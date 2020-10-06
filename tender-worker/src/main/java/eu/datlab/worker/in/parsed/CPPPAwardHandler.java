@@ -50,7 +50,6 @@ public final class CPPPAwardHandler {
             .setDocumentsLocation(new ParsedAddress()
                 .setUrl(getValue(context, "Tender Document")))
             .setSupplyType(supplyOrProcedureType)
-            .setProcedureType(supplyOrProcedureType)
             .setNationalProcedureType(supplyOrProcedureType)
             .addLot(new ParsedTenderLot()
                 .setBidsCount(getValue(context, "Number of bids received"))

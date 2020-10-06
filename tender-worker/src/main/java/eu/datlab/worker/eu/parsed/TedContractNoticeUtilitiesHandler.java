@@ -94,7 +94,6 @@ public final class TedContractNoticeUtilitiesHandler {
                     JsoupUtils.selectFirst("TENDERS_REQUESTS_APPLICATIONS_MUST_BE_SENT_TO", contractingBodyNode)))
             .setDescription(
                 JsoupUtils.selectText("CONTRACT_OBJECT_DESCRIPTION > SHORT_CONTRACT_DESCRIPTION", contractNode))
-            .setProcedureType(procedureType)
             .setNationalProcedureType(procedureType)
             .setSupplyType(
                 JsoupUtils.selectAttribute("TYPE_CONTRACT_LOCATION > TYPE_CONTRACT ", "VALUE", contractNode))

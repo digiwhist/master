@@ -1,7 +1,5 @@
 package eu.datlab.worker.master.statistic;
 
-import java.util.Arrays;
-
 import eu.datlab.dataaccess.dao.DAOFactory;
 import eu.dl.dataaccess.dao.MasterTenderDAO;
 import eu.dl.dataaccess.dao.TransactionUtils;
@@ -11,8 +9,10 @@ import eu.dl.dataaccess.dto.master.MasterTender;
 import eu.dl.dataaccess.dto.master.MasterTenderLot;
 import eu.dl.worker.BaseWorker;
 import eu.dl.worker.Message;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
@@ -80,8 +80,6 @@ public final class OpenTenderWorker extends BaseWorker {
 
     @Override
     public void doWork(final Message message) {
-        transactionUtils.begin();
-    		
         String id = message.getValue("id");
 
         final MasterTender tender = masterDao.getById(id);
@@ -98,8 +96,6 @@ public final class OpenTenderWorker extends BaseWorker {
             tender.setMetaData(metaData);
             masterDao.save(tender);            
         }
-
-        transactionUtils.commit();
     }
 
     @Override

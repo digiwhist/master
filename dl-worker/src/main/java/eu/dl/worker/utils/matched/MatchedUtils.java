@@ -1,11 +1,15 @@
 package eu.dl.worker.utils.matched;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
+import eu.dl.core.UnrecoverableException;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.search.spell.LevensteinDistance;
 import org.apache.lucene.search.spell.NGramDistance;
@@ -233,5 +237,19 @@ public final class MatchedUtils {
             
             return 0f;            
         });
+    }
+
+    /**
+     * Generates new hash from random value.
+     * @return new random hash
+     */
+    public static String generateRandomHash() {
+        try {
+            String value = UUID.randomUUID().toString();
+            byte[] data = value.getBytes("UTF-8");
+            return DigestUtils.sha1Hex(data);
+        } catch (UnsupportedEncodingException e) {
+            throw new UnrecoverableException("Unable to convert data to UTF-8", e);
+        }
     }
 }

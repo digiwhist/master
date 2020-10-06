@@ -73,7 +73,6 @@ public final class TedContractNoticeUtilitiesHandlerR209 {
                         JsoupUtils.selectCombinedText("TECHNICAL_PROFESSIONAL_INFO, TECHNICAL_PROFESSIONAL_MIN_LEVEL",
                                 leftiNode))
                 .setDeposits(JsoupUtils.selectText("DEPOSIT_GUARANTEE_REQUIRED", leftiNode))
-                .setProcedureType(procedureType)
                 .setNationalProcedureType(procedureType)
                 .setIsFrameworkAgreement(JsoupUtils.exists("FRAMEWORK", procedureNode).toString())
                 .setMaxFrameworkAgreementParticipants(

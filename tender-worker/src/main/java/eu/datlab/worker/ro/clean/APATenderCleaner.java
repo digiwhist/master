@@ -47,7 +47,9 @@ public class APATenderCleaner extends BaseDatlabTenderCleaner {
 
     private static final List<DateTimeFormatter> DATE_FORMATTERS = Arrays.asList(
         DateTimeFormatter.ofPattern("uuuu-MM-dd hh:mm:ss[.SSS]"),
-        DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss[.SSSSSSSSS]")
+        DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss[.SSSSSSSSS]"),
+        DateTimeFormatter.ofPattern("dd.MM.uuuu HH:mm:ss[.SSSSSSSSS]"),
+        DateTimeFormatter.ofPattern("dd-MM-uuuu HH:mm:ss[.SSSSSSSSS]")
     );
 
     @SuppressWarnings("unchecked")
@@ -168,9 +170,9 @@ public class APATenderCleaner extends BaseDatlabTenderCleaner {
 
     @Override
     protected final ParsedTender preProcessParsedItem(final ParsedTender parsedItem) {
-        parsedItem.getPublications().forEach(
+        parsedItem.getPublications().stream().filter(p -> p.getPublicationDate().matches("....-.*")).forEach(
                 t -> t.setPublicationDate(t.getPublicationDate().replaceAll("\\..*", "")));
-        parsedItem.getLots().forEach(
+        parsedItem.getLots().stream().filter(l -> l.getContractSignatureDate().matches("....-.*")).forEach(
                 t -> t.setContractSignatureDate(t.getContractSignatureDate().replaceAll("\\..*", "")));
 
         return parsedItem;

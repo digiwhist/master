@@ -255,4 +255,8 @@ public class ETendersTenderParser extends BaseDatlabTenderParser {
         return VERSION;
     }
 
+    @Override
+    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
+        return parsed;
+    }
 }

@@ -352,6 +352,18 @@ CREATE TABLE master_tender_analytics
   flag_desc_length float,
   flag_eligibility_length float,
   flag_evaluation_criteria float,
+  flag_award_date_missing float,
+  flag_market_missing float,
+  flag_proc_method_missing float,
+  flag_title_missing float,
+  flag_year_missing float,
+  flag_buyer_name_missing float,
+  flag_buyer_loc_missing float,
+  flag_bidder_id_missing float,
+  flag_bidder_name_missing float,
+  flag_value_missing float,
+  flag_cost_overrun float,
+  flag_ca_share float,
   opentender boolean,
   tender_country text,
   tender_digiwhist_price double precision,
@@ -366,7 +378,8 @@ CREATE TABLE master_tender_analytics
   updated_completion_date date,
   updated_duration_days integer,
   payments_sum double precision,
-  last_payment_year integer
+  last_payment_year integer,
+  matched_master_tender_id text
 )
 WITH (
   OIDS=FALSE
@@ -429,6 +442,9 @@ CREATE INDEX analytics_mta_buyer_id_idx
   (tender_country COLLATE pg_catalog."default");
   
   CREATE INDEX analytics_mta_src_idx ON master_tender_analytics (src);
+  CREATE INDEX analytics_mta_award_date_idx ON master_tender_analytics (award_date);
+  CREATE INDEX analytics_mta_notice_date_first_idx ON master_tender_analytics (notice_date_first);
+  CREATE INDEX analytics_mta_matched_master_tender_id_idx ON master_tender_analytics (matched_master_tender_id);
 
 
 

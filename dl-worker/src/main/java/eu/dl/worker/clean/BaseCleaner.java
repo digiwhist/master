@@ -49,7 +49,6 @@ public abstract class BaseCleaner<T extends Parsable, V extends Cleanable> exten
     @Override
     protected final void doWork(final Message message) {
         try {
-            getTransactionUtils().begin();
             final String id = message.getValue("id");
             ThreadContext.put("parsed_tender_id", id);
             logger.debug("Cleaning started for parsed tender {}", id);
@@ -81,7 +80,9 @@ public abstract class BaseCleaner<T extends Parsable, V extends Cleanable> exten
 
             // save clean tender
             String savedId = cleanDao.save(cleanItem);
+
             getTransactionUtils().commit();
+
             logger.debug("Cleaning finished for parsed tender {}, stored as clean {}", id, savedId);
 
             // publish message

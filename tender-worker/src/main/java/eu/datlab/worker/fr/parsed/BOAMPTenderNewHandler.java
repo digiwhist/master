@@ -81,7 +81,7 @@ final class BOAMPTenderNewHandler {
             .addCorrigendum(parseEstimatedStartDateCorrigendum(document))
             .setHasLots(JsoupUtils.exists("DONNEES > OBJET > DIV_EN_LOTS > OUI", document).toString())
             .setLots(parseTenderLots(document, isFrameworkAgreement))
-            .setProcedureType(JsoupUtils.selectNodeName("DONNEES > PROCEDURE > TYPE_PROCEDURE > *", document))
+            .setNationalProcedureType(JsoupUtils.selectNodeName("DONNEES > PROCEDURE > TYPE_PROCEDURE > *", document))
             .setIsAcceleratedProcedure(JsoupUtils.exists("DONNEES > PROCEDURE > RESTREINT > ACCELERE", document).toString())
             .setEnvisagedMaxCandidatesCount(JsoupUtils.selectText("DONNEES > PROCEDURE > NB_CANDIDATS > NB_MAX_OFFRE", document))
             .setEnvisagedMinCandidatesCount(JsoupUtils.selectText("DONNEES > PROCEDURE > NB_CANDIDATS > NB_MIN_OFFRE", document))

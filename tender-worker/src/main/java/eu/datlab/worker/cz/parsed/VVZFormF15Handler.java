@@ -91,7 +91,8 @@ final class VVZFormF15Handler extends VVZContractAwardHandler {
         parsedTender.addPublication(parsePreviousTedPublication(sectionIV));
 
         // SECTION V
-        parsedTender.addLots(parseF15LotsAwards(form, Boolean.TRUE.toString().equals(parsedTender.getIsFrameworkAgreement())));
+        parsedTender.addLots(parseF15LotsAwards(form, Boolean.TRUE.toString().equals(parsedTender.getIsFrameworkAgreement()),
+            Boolean.TRUE.toString().equals(parsedTender.getIsDps())));
 
         // SECTION VI
 
@@ -211,9 +212,11 @@ final class VVZFormF15Handler extends VVZContractAwardHandler {
      *         form html
      * @param isFrameworkAgreement
      *      whether the parsed is framework agreement
+     * @param isDPS
+     *         whether the parsed tender is dps
      * @return lots with award info
      */
-    private static List<ParsedTenderLot> parseF15LotsAwards(final Document form, final boolean isFrameworkAgreement) {
+    private static List<ParsedTenderLot> parseF15LotsAwards(final Document form, final boolean isFrameworkAgreement, final Boolean isDPS) {
         List<ParsedTenderLot> lots = new ArrayList<>();
         Elements lotsHtmls = VVZTenderParser.getLotsAwardsHtmls(form);
 

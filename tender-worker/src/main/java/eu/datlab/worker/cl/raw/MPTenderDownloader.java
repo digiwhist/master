@@ -43,10 +43,15 @@ public final class MPTenderDownloader<T extends Raw> extends BaseDownloader<T> {
         getNewWebclient();
 
         // check whether TOR should be started
-        if (config.getParam(getName() + ".torEnabled") != null
-                && config.getParam(getName() + ".torEnabled").equals("1")) {
-            NetworkUtils.enableTorForHttp();
+        if (config.getParam(getName() + ".proxyEnabled") != null
+                && config.getParam(getName() + ".proxyEnabled").equals("1")) {
+            NetworkUtils.enableProxyForHttp();
         }
+    }
+
+    @Override
+    protected boolean skipExisting(final Message message) {
+        return false;
     }
 
     @Override

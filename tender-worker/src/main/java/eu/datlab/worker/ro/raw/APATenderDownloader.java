@@ -9,7 +9,15 @@ import eu.dl.worker.Message;
 import eu.dl.worker.raw.downloader.BaseDownloader;
 import org.apache.commons.io.FilenameUtils;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 import java.io.File;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,8 +30,36 @@ public class APATenderDownloader extends BaseDownloader {
     private static final String WORK_FOLDER = "RO_download";
 
     @Override
+    protected final boolean skipExisting(final Message message) {
+        return false;
+    }
+
+    @Override
     public final List downloadAndPopulateRawData(final Message message) {
         final List<Raw> rawData = new ArrayList<>();
+
+        // Create a trust manager that does not validate certificate chains
+        TrustManager[] trustAllCerts = new TrustManager[]{new X509TrustManager() {
+            public X509Certificate[] getAcceptedIssuers() {
+                return null;
+            }
+
+            public void checkClientTrusted(final X509Certificate[] certs, final String authType) {
+            }
+
+            public void checkServerTrusted(final X509Certificate[] certs, final String authType) {
+            }
+        }};
+
+        // Install the all-trusting trust manager
+        SSLContext sc = null;
+        try {
+            sc = SSLContext.getInstance("TLS");
+            sc.init(null, trustAllCerts, new SecureRandom());
+            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            e.printStackTrace();
+        }
 
         // get message parameters
         final String csvUrl = message.getValue("url");

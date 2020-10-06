@@ -35,6 +35,11 @@ public final class UZPTenderDownloader extends BaseTenderFtpDownloader {
     private static final String VERSION = "2";
     private static final String WORK_FOLDER = "PL_workFolder";
 
+    @Override
+    protected boolean skipExisting(final Message message) {
+        return false;
+    }
+
     /**
      * Download and unpack package and extract all files in archive.
      *
