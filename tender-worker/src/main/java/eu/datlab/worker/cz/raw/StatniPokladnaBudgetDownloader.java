@@ -40,11 +40,6 @@ public final class StatniPokladnaBudgetDownloader extends BaseDownloader<RawData
     private static final List<String> BLACKLIST = Arrays.asList("^FINM204.*", "^FINU103.*");
 
     @Override
-    protected boolean skipExisting(final Message message) {
-        return false;
-    }
-
-    @Override
     public List<RawData> downloadAndPopulateRawData(final Message message) {
         final List<RawData> rawData = new ArrayList<>();
         final String fileUrl = message.getValue("url");

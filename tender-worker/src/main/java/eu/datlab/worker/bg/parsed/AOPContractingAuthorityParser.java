@@ -55,10 +55,4 @@ public class AOPContractingAuthorityParser extends BaseContractingAuthorityParse
     public final String getVersion() {
         return VERSION;
     }
-
-    @Override
-    protected final List<ParsedContractingAuthority> postProcessSourceSpecificRules(final List<ParsedContractingAuthority> parsed,
-                                                                                    final RawData raw) {
-        return parsed;
-    }
 }

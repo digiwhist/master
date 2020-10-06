@@ -40,6 +40,7 @@ public final class TedContractAwardHandlerR209 {
 
         parsedTender.setBuyers(TedTenderParserR209Utils.parseBuyers(document))
             .setTitle(JsoupUtils.selectText("TITLE", contractNode))
+            .setProcedureType(procedureType)
             .setNationalProcedureType(procedureType)
             .setSupplyType(JsoupUtils.selectAttribute("TYPE_CONTRACT", "CTYPE", contractNode))
             .setDescription(JsoupUtils.selectText("SHORT_DESCR", contractNode))

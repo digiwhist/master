@@ -45,11 +45,6 @@ public enum TenderIndicatorType {
     INTEGRITY_POLITICAL_CONNECTIONS,
 
     /**
-     * Corruption - cost overrun.
-     */
-    INTEGRITY_COST_OVERRUN,
-
-    /**
      * Administrative capacity - centralized procurement.
      */
     ADMINISTRATIVE_CENTRALIZED_PROCUREMENT,
@@ -82,61 +77,6 @@ public enum TenderIndicatorType {
     /**
      * Administrative - notice and award discrepancies.
      */
-    ADMINISTRATIVE_NOTICE_AND_AWARD_DISCREPANCIES,
-
-    /**
-     * Transparency - missing award decision date.
-     */
-    TRANSPARENCY_AWARD_DATE_MISSING,
-
-    /**
-     * Transparency - missing buyer name.
-     */
-    TRANSPARENCY_BUYER_NAME_MISSING,
-
-    /**
-     * Transparency - missing procedure type.
-     */
-    TRANSPARENCY_PROC_METHOD_MISSING,
-
-    /**
-     * Transparency - missing buyer nuts.
-     */
-    TRANSPARENCY_BUYER_LOC_MISSING,
-
-    /**
-     * Transparency - missing bidder id.
-     */
-    TRANSPARENCY_BIDDER_ID_MISSING,
-
-    /**
-     * Transparency - missing bidder name.
-     */
-    TRANSPARENCY_BIDDER_NAME_MISSING,
-
-    /**
-     * Transparency - missing tender CPVs.
-     */
-    TRANSPARENCY_MARKET_MISSING,
-
-    /**
-     * Transparency - missing tender title.
-     */
-    TRANSPARENCY_TITLE_MISSING,
-
-    /**
-     * Transparency - missing bid price.
-     */
-    TRANSPARENCY_VALUE_MISSING,
-
-    /**
-     * Transparency - missing year.
-     */
-    TRANSPARENCY_YEAR_MISSING,
-
-    /**
-     * Integrity - winner's contract share by buyers.
-     */
-    INTEGRITY_WINNER_CA_SHARE
+    ADMINISTRATIVE_NOTICE_AND_AWARD_DISCREPANCIES
 }
 

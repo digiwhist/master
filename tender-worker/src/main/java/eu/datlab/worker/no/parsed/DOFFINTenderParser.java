@@ -73,6 +73,7 @@ public class DOFFINTenderParser extends BaseDatlabTenderParser {
                 document))
             .setIsCoveredByGpa(parseBoolean("*:not(OBJECT_DESCR) > CONTRACT_COVERED_GPA", document))
             .setFinalPrice(parseTenderFinalPrice(document))
+            .setProcedureType(procedureType)
             .setNationalProcedureType(procedureType)
             .setLots(parseLots(document))
             .addNpwpReason(JsoupUtils.selectTagName("REASONS_PROVIDED_PARTICULAR_TENDERER > *", document))
@@ -660,8 +661,4 @@ public class DOFFINTenderParser extends BaseDatlabTenderParser {
         return parsedPublications;
     }
 
-    @Override
-    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
-        return parsed;
-    }
 }

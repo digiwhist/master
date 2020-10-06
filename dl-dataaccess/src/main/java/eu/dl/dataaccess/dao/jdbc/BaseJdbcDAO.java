@@ -6,8 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import eu.dl.core.config.Config;
 import eu.dl.dataaccess.dao.BaseDAO;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.text.StringEscapeUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +34,8 @@ public abstract class BaseJdbcDAO<T> implements BaseDAO<T> {
 
     protected List<Pair<String, String>> additionalWorkers;
 
+    protected final Connection connection;
+
     protected final ObjectMapper mapper;
 
     protected final String schema;
@@ -49,17 +51,14 @@ public abstract class BaseJdbcDAO<T> implements BaseDAO<T> {
     protected int pageSize;
 
     /**
-     * Transaction utils used to provide connection etc.
-     */
-    private static JdbcTransactionUtils transactionUtils = JdbcTransactionUtils.getInstance();
-
-    /**
      * Initializes connection etc.
      */
     protected BaseJdbcDAO() {
         config = Config.getInstance();
 
         schema = config.getParam("jdbc.schema");
+
+        connection = JdbcTransactionUtils.getInstance().getConnection();
 
         mapper = new ObjectMapper();
         mapper.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
@@ -94,13 +93,6 @@ public abstract class BaseJdbcDAO<T> implements BaseDAO<T> {
      */
     protected final String getWorkerName() {
         return workerName;
-    }
-
-    /**
-     * @return db connection
-     */
-    protected final Connection getConnection() {
-        return transactionUtils.getConnection();
     }
 
     /**

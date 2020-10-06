@@ -40,7 +40,7 @@ final class BOAMPTenderOldContractAwardHandler {
     static void parse(final Element publicationElement, final ParsedTender parsedTender) {
         parsedTender
                 .setAwardCriteria(parseTenderAwardCriteria(publicationElement))
-                .setNationalProcedureType(JsoupUtils.selectAttribute("DONNEES > PROCEDURES", "type", publicationElement))
+                .setProcedureType(JsoupUtils.selectAttribute("DONNEES > PROCEDURES", "type", publicationElement))
                 .setLots(parseTenderLots(publicationElement))
                 .setAcceleratedProcedureJustification(
                         JsoupUtils.selectText("DONNEES > ANNEXE_1 > OFFRES_IRREGULIERES", publicationElement));

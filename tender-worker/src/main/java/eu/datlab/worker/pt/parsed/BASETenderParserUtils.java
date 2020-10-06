@@ -1,5 +1,13 @@
 package eu.datlab.worker.pt.parsed;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
+
 import eu.datlab.dataaccess.dto.codetables.PublicationSources;
 import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
 import eu.dl.dataaccess.dto.parsed.ParsedAddress;
@@ -8,15 +16,6 @@ import eu.dl.dataaccess.dto.parsed.ParsedCPV;
 import eu.dl.dataaccess.dto.parsed.ParsedPrice;
 import eu.dl.dataaccess.dto.parsed.ParsedPublication;
 import eu.dl.worker.utils.jsoup.JsoupUtils;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
-
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Useful functions for BASE parsers.
@@ -24,8 +23,6 @@ import java.util.regex.Pattern;
  * @author Tomas Mrazek
  */
 public final class BASETenderParserUtils {
-    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy/MM/dd");
-
 
     /**
      * Supress default constructor for non-instatiability.
@@ -41,7 +38,7 @@ public final class BASETenderParserUtils {
      * @return parsed body or null
      */
     public static ParsedBody parseBody(final Element bodyNode) {
-        return parseBodyFromAnchor(JsoupUtils.selectFirst("a", bodyNode));
+        return praseBodyFromAnchor(JsoupUtils.selectFirst("a", bodyNode));
     }
 
     /**
@@ -59,7 +56,7 @@ public final class BASETenderParserUtils {
 
         List<ParsedBody> bodies = new ArrayList<>();
         bodyNodes.stream().forEach(n -> {
-            bodies.add(parseBodyFromAnchor(n));
+            bodies.add(praseBodyFromAnchor(n));
         });
 
         return bodies;
@@ -72,7 +69,7 @@ public final class BASETenderParserUtils {
      *      anchor that inlcudes body data
      * @return parsed body or null
      */
-    public static ParsedBody parseBodyFromAnchor(final Element anchor) {
+    public static ParsedBody praseBodyFromAnchor(final Element anchor) {
         if (anchor == null) {
             return null;
         }
@@ -82,28 +79,11 @@ public final class BASETenderParserUtils {
 
         Matcher m = Pattern.compile("(.*)\\(([^\\)]+)\\)").matcher(anchor.text());
         if (m.find()) {
-            body.addBodyId(new BodyIdentifier()
+            body.setName(m.group(1))
+                .addBodyId(new BodyIdentifier()
                     .setId(m.group(2))
                     .setScope(BodyIdentifier.Scope.PT)
                     .setType(BodyIdentifier.Type.ORGANIZATION_ID));
-
-            final String trimmedName = m.group(1).trim();
-            boolean isDate;
-            try {
-                DATE_FORMATTER.parse(trimmedName);
-                isDate = true;
-            } catch (DateTimeParseException ex) {
-                isDate = false;
-            }
-
-            if (!(
-                    trimmedName.equals(
-                            "(No caso de se tratar de um agrupamento, separar os sucessivos nomes e os sucessivos NIF por ponto e vírgula)")
-                    || isNIF(trimmedName)
-                    || isDate
-            )) {
-                body.setName(m.group(1));
-            }
         }
 
         return body;
@@ -226,31 +206,5 @@ public final class BASETenderParserUtils {
      */
     public static String resolveNull(final String value) {
         return (value == null || value.matches("(\\-|Não aplicável|Não Houve|Não definido)[\\.]?")) ? null : value;
-    }
-
-    /**
-     * Checks if passed string is in the NIF format (see https://pt.wikipedia.org/wiki/N%C3%BAmero_de_identifica%C3%A7%C3%A3o_fiscal).
-     * @param s
-     *      string to be checked
-     * @return whether passed string is in the NIF format
-     */
-    public static boolean isNIF(final String s) {
-        try {
-            Integer.parseInt(s);
-        } catch(NumberFormatException e){
-            return false;
-        }
-
-        if (s.length() != 9) {
-            return false;
-        }
-        int checkSum = 0;
-        for (int i = 2; i <= 9; i++) {
-            checkSum = checkSum + i * Integer.parseInt(s.substring(9 - i, 10 - i));
-        }
-        int remainder = checkSum % 11;
-        int controlDigit = remainder <= 1 ? 0 : 11 - remainder;
-
-        return Integer.parseInt(s.substring(s.length() - 1)) == controlDigit;
     }
 }

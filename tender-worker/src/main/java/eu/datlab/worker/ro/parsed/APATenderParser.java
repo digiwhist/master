@@ -34,9 +34,4 @@ public class APATenderParser extends BaseDatlabTenderParser {
     protected final String countryOfOrigin(final ParsedTender parsed, final RawData raw) {
         return CountryCode.RO.toString();
     }
-
-    @Override
-    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
-        return parsed;
-    }
 }

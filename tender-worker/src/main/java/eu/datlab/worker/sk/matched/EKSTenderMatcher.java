@@ -1,7 +1,6 @@
-package eu.datlab.worker.at.matched;
+package eu.datlab.worker.sk.matched;
 
 import eu.datlab.worker.matched.BaseDatlabTenderMatcher;
-import eu.datlab.worker.matched.TenderPublicationMachineReadableUrlsMatchingPlugin;
 import eu.dl.core.UnrecoverableException;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
@@ -13,14 +12,12 @@ import java.util.UUID;
 import static eu.dl.dataaccess.utils.DigestUtils.bodyHash;
 
 /**
- * Provisional matcher for data.gv.at tenders.
+ * Matcher for EKS.
  *
- * @author Miroslav Brezik
+ * @author Tomas Mrazek
  */
-public class DataGvTenderMatcher extends BaseDatlabTenderMatcher {
+public class EKSTenderMatcher extends BaseDatlabTenderMatcher {
     private static final String VERSION = "1.0";
-    protected static final String DATA_GV_TENDER_PLUGIN = "data_gv";
-
 
     @Override
     protected final String getVersion() {
@@ -28,26 +25,31 @@ public class DataGvTenderMatcher extends BaseDatlabTenderMatcher {
     }
 
     @Override
+    protected final void registerBodyPlugins() {
+    }
+
+    @Override
     protected final void registerTenderPlugins() {
-        tenderPluginRegistry.registerPlugin(DATA_GV_TENDER_PLUGIN,
-                new TenderPublicationMachineReadableUrlsMatchingPlugin(matchedTenderDao, false));
     }
 
     @Override
-    protected void registerBodyPlugins() {
-
+    protected final String generateBodyHash(final MatchedBody matchedBody) {
+        return bodyHash(matchedBody);
     }
-
-    @Override
-    protected final String generateBodyHash(final MatchedBody matchedBody) { return bodyHash(matchedBody); }
 
     @Override
     protected final String generateTenderHash(final MatchedTender matchedTender) {
+        String publication = "";
+
         try {
+            // there is no source id assigned, the hash cannot be reasonably
+            // calculated
+            publication = UUID.randomUUID().toString();
+
             byte[] data = UUID.randomUUID().toString().getBytes("UTF-8");
             return DigestUtils.sha1Hex(data);
         } catch (UnsupportedEncodingException e) {
-            logger.error("Unable to convert random ID to UTF-8");
+            logger.error("Unable to convert \"{}\" to UTF-8", publication);
             throw new UnrecoverableException("Unable to convert data to UTF-8", e);
         }
     }

@@ -152,6 +152,7 @@ abstract class BaseENarocanjeFormInDivsHandler {
             .setTitle(ParserUtils.getFromContent(sectionII11, null, "Naslov:"))
             .setCpvs(parseTenderCpvs(sectionII12))
             .setNationalProcedureType(procedureType)
+            .setProcedureType(procedureType)
             .setLots(parseLots(form))
             .setHasLots(BooleanUtils.toStringTrueFalse(ENarocanjeTenderFormUtils.meansYes(
                 ParserUtils.getFromContent(sectionII16, null, "Naročilo je razdeljeno na sklope:"))))

@@ -49,7 +49,7 @@ public class JdbcCleanBudgetItemDAO extends GenericJdbcDAO<CleanBudgetItem>
         }
 
         try {
-            PreparedStatement statement = getConnection().prepareStatement(
+            PreparedStatement statement = connection.prepareStatement(
                 "SELECT * FROM " + getTableWithSchema() +
                 " WHERE "
                     + (!restriction.isEmpty() ? "(" + restriction + ") AND " : "")

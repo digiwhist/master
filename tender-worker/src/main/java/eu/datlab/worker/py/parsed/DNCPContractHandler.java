@@ -86,6 +86,7 @@ public final class DNCPContractHandler {
             .setContractSignatureDate(textValue("dateSigned", data))
             .setDescription(desc.length() > 0 ? desc.toString().trim() : null)
             .setNationalProcedureType(procedureType)
+            .setProcedureType(procedureType)
             .addLot(new ParsedTenderLot()
                 .setCpvs(cpvs)
                 .setContractNumber(textValue("id",  data))

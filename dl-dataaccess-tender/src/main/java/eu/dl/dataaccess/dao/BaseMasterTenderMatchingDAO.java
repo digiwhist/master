@@ -20,9 +20,7 @@ public interface BaseMasterTenderMatchingDAO {
      *            "author" of the change
      * @param page
      *            order of the page in the result (for first page set 0)
-     * @param pageSize
-     *            size of page
      * @return set of objects modified after timestamp or empty list
      */
-    List<MasterTender> getModifiedAfterForBuyerProfileMatching(LocalDateTime timestamp, String createdBy, Integer page, Integer pageSize);
+    List<MasterTender> getModifiedAfterForBuyerProfileMatching(LocalDateTime timestamp, String createdBy, Integer page);
 }

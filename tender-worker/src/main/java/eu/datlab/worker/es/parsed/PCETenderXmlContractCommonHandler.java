@@ -36,26 +36,6 @@ public final class PCETenderXmlContractCommonHandler {
     }
 
     /**
-     * Parses national procedure type as code:name.
-     * @param document document to parse
-     * @return parsed national procedure type.
-     */
-    private static String parseNationalProcedureType(final Document document) {
-        String code = selectText("cbc|ProcedureCode", document);
-        String name = selectAttribute("cbc|ProcedureCode", "name", document);
-        if((code == null || code.isEmpty()) && (name == null || name.isEmpty())) {
-            return null;
-        }
-        if(code == null) {
-            code = "";
-        }
-        if(name == null) {
-            name = "";
-        }
-        return code + ":" + name;
-    }
-
-    /**
      * Parses tender XML detail.
      *
      * @param parsedTender parsed tender
@@ -118,7 +98,8 @@ public final class PCETenderXmlContractCommonHandler {
                         Arrays.asList(new ParsedDocument()
                                 .setLanguage(selectText("cac|Language cbc|ID", document))
                                 .setUrl(selectText("cac|Attachment cbc|URI", document))))
-                .setNationalProcedureType(parseNationalProcedureType(document))
+                .setProcedureType(selectText("cbc|ProcedureCode", document))
+                .setNationalProcedureType(selectAttribute("cbc|ProcedureCode", "name", document))
                 .setIsElectronicAuction(selectText("cbc|SubmissionMethodCode", document))
                 .setDocumentsDeadline(parseDocumentsDeadline(document))
                 .setBidDeadline(parseBidDeadline(document))

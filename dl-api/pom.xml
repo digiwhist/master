@@ -96,11 +96,6 @@
 		            	<program>
 		              		<mainClass>eu.datlab.server.Server</mainClass>
 		              		<id>tender_api</id>
-							<jvmSettings>
-								<initialMemorySize>512m</initialMemorySize>
-								<maxMemorySize>3072m</maxMemorySize>
-								<maxStackSize>512m</maxStackSize>
-							</jvmSettings>
 		            	</program>
 		          	</programs>
 		        </configuration>

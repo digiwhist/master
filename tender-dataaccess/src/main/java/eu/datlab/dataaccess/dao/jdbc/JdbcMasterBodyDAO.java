@@ -34,7 +34,7 @@ public class JdbcMasterBodyDAO extends GenericJdbcDAO<MasterBody> implements Mas
      */
     public final boolean existsInPoliticalExposedPersons(final String bvdIdNumber) {
         try {
-            PreparedStatement statement = getConnection().prepareStatement(
+            PreparedStatement statement = connection.prepareStatement(
                     "SELECT * FROM " + schema + ".political_exposed_persons WHERE mi_bvd_id_number = '" +
                             bvdIdNumber + "'");
 

@@ -79,9 +79,4 @@ public class UKBudgetParser extends BaseDatlabBudgetItemParser {
     protected final String getVersion() {
         return VERSION;
     }
-
-    @Override
-    protected final List<ParsedBudgetItem> postProcessSourceSpecificRules(final List<ParsedBudgetItem> parsed, final RawData raw) {
-        return parsed;
-    }
 }

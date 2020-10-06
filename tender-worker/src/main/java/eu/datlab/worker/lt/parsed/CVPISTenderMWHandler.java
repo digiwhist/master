@@ -94,7 +94,7 @@ public final class CVPISTenderMWHandler {
                 .setTitle(parseClThinborderallField("PIRKIMO OBJEKTO PAVADINIMAS", document))
                 .setCpvs(parseCpvs(document))
                 .setLots(parseLots(document, parseBidders(document)))
-                .setNationalProcedureType(parseClThinborderallField("PIRKIMO BŪDO PAVADINIMAS", document))
+                .setProcedureType(parseClThinborderallField("PIRKIMO BŪDO PAVADINIMAS", document))
                 .setIsDps(parseYesNoCheckbox("AR PIRKIMAS ATLIEKAMAS TAIKANT DINAMINĘ PIRKIMŲ SISTEMĄ", document))
                 .addPublication(new ParsedPublication()
                         .setIsIncluded(true)

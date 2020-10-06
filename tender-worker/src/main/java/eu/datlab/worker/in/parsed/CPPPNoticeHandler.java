@@ -50,6 +50,7 @@ public final class CPPPNoticeHandler {
             .setDescription(getValue(context, "Work Description"))
             .setDocumentsLocation(new ParsedAddress()
                 .setUrl(getValue(context, "Tender Document")))
+            .setProcedureType(supplyOrProcedureType)
             .setNationalProcedureType(supplyOrProcedureType)
             .setSupplyType(supplyOrProcedureType)
             .setTitle(getValue(context, "Tender Title"))

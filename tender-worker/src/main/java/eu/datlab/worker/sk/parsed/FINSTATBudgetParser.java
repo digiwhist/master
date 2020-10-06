@@ -121,9 +121,4 @@ public final class FINSTATBudgetParser extends BaseDatlabBudgetItemParser {
 
         return parsed;
     }
-
-    @Override
-    protected List<ParsedBudgetItem> postProcessSourceSpecificRules(final List<ParsedBudgetItem> parsed, final RawData raw) {
-        return parsed;
-    }
 }

@@ -35,26 +35,6 @@ public class ANACPDTTenderParser extends BaseDatlabTenderParser {
     private static final Logger logger = LoggerFactory.getLogger(ANACPDTTenderParser.class);
 
     /**
-     * Parses national procedure type as procedure type from lot node + ":" + procedure type from tender node.
-     * @param tenderNode tender node to parse
-     * @param lotNode lot node to parse
-     * @return national procedure type as procedure type from lot + ":" + procedure type from tender
-     */
-    private static String parseNationalProcedureType(final Element tenderNode, final Element lotNode) {
-        String tenderPT = JsoupUtils.getFirstValueByLabel(tenderNode, "(?i)Procedura");
-        String lotPT = JsoupUtils.getFirstValueByLabel(lotNode, "(?i)Tipo Appalto");
-        if((tenderPT == null || tenderPT.isEmpty()) && (lotPT == null || lotPT.isEmpty())) {
-            return null;
-        }
-        if(tenderPT == null) {
-            tenderPT = "";
-        }
-        if(lotPT == null) {
-            lotPT = "";
-        }
-        return lotPT + ":" + tenderPT;
-    }
-    /**
      * Parses the given raw tender object.
      *
      * @param rawTender
@@ -91,7 +71,7 @@ public class ANACPDTTenderParser extends BaseDatlabTenderParser {
                 .setSourceId(cig)
                 .setSourceFormType(JsoupUtils.getFirstValueByLabel(lotNode, "(?i)Modalità di"))
                 .setIsIncluded(true))
-            .setNationalProcedureType(parseNationalProcedureType(tenderNode, lotNode))
+            .setNationalProcedureType(JsoupUtils.getFirstValueByLabel(tenderNode, "(?i)Procedura"))
             .setEstimatedPrice(parsePrice(JsoupUtils.getFirstLabeledValueNode(tenderNode, "(?i)Importo Complessivo")))
             .addBuyer(new ParsedBody()
                 .setName(JsoupUtils.getFirstValueByLabel(tenderNode, "(?i)Ragione Sociale SA"))
@@ -115,6 +95,7 @@ public class ANACPDTTenderParser extends BaseDatlabTenderParser {
                 .setContractSignatureDate(JsoupUtils.selectText("tr:eq(1) > td:eq(1)", executionNode))
                 .setCompletionDate(JsoupUtils.selectText("tr:eq(1) > td:eq(4)", executionNode))
                 .setStatus(parseLotStatus(executionNode == null ? null : executionNode.getElementById("K165"))))
+            .setProcedureType(JsoupUtils.getFirstValueByLabel(lotNode, "(?i)Tipo Appalto"))
             .setAddressOfImplementation(new ParsedAddress()
                 .setRawAddress(JsoupUtils.getFirstValueByLabel(lotNode, "(?i)Località ISTAT"))
                 .addNuts(JsoupUtils.getFirstValueByLabel(lotNode, "(?i)Località NUTS")))
@@ -243,10 +224,5 @@ public class ANACPDTTenderParser extends BaseDatlabTenderParser {
     @Override
     protected final String countryOfOrigin(final ParsedTender parsed, final RawData raw){
         return "IT";
-    }
-
-    @Override
-    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
-        return parsed;
     }
 }

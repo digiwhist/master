@@ -38,7 +38,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 
 import static eu.dl.dataaccess.utils.DigestUtils.bodyFullHash;
 import static eu.dl.dataaccess.utils.DigestUtils.generateAlternativeBodyHashes;
@@ -134,7 +133,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
 
         if (config.getParam("cache.enabled") != null && config.getParam("cache.enabled").equals("true")) {
             this.cacheEnabled = true;
-            hashCache = CacheFactory.getCache(this.getClass().getName().concat("::"));
+            hashCache = CacheFactory.getCache(this.getClass().getSimpleName().concat("::"));
 
             String repopulate = hashCache.get(hashCachePrefix.concat("repopulate"));
 
@@ -150,6 +149,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
 
 	@Override
     public final void doWork(final Message message) {
+        getTransactionUtils().begin();
         final String cleanTenderId = message.getValue("id");
         ThreadContext.put("clean_tender_id", cleanTenderId);
         CleanTender cleanTender = cleanDao.getById(cleanTenderId);
@@ -291,12 +291,14 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
                 continue;
             }
 
-            HashMap<String, Object> metaData = Optional.ofNullable(body.getMetaData()).orElse(new HashMap<>());
+            HashMap<String, Object> metaData = new HashMap<String, Object>();
+            if (body.getMetaData() != null) {
+                metaData = body.getMetaData();
+            }
 
             // search by manual matching plugin first
             long pluginStartTime = System.currentTimeMillis();
-            MatchingResult manualMatchingResult =
-                manualBodyMatchingPlugin.isMatchable(body) ? manualBodyMatchingPlugin.match(body) : new MatchingResult();
+            MatchingResult manualMatchingResult = manualBodyMatchingPlugin.match(body);
             long pluginEndTime = System.currentTimeMillis();
 
             logMatchingData(pluginStartTime, pluginEndTime, "manual");
@@ -311,6 +313,7 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
                 metaData.put("matchedBy", manualMatchingResult.getMatchedBy());
                 metaData.put("matchingData", manualMatchingResult.getMetaData());
             } else {
+
                 String matchedByHashGroupId = null;
                 if (this.cacheEnabled) {
                     // search for potential matches in cache
@@ -333,14 +336,9 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
                     // try all registered plugins for potential match
                     for (Entry<String, MatchingPlugin<MatchedBody>> entry : bodyPluginRegistry.getPlugins().entrySet()) {
                         MatchingPlugin<MatchedBody> plugin = entry.getValue();
-                        if (!plugin.isMatchable(body)) {
-                            continue;
-                        }
-
                         pluginStartTime = System.currentTimeMillis();
                         MatchingResult matchingResult = plugin.match(body);
                         pluginEndTime = System.currentTimeMillis();
-
                         logMatchingData(pluginStartTime, pluginEndTime, plugin.getClass().getName());
                         matchingTimes.put(plugin.getClass().getName(), pluginEndTime - pluginStartTime);
 
@@ -455,6 +453,10 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
     		hashCache.put(hashCachePrefix.concat(body.getHash()), groupId);
     	}
 
+        if (body.getFullHash() != null) {
+            hashCache.put(hashCachePrefix.concat(body.getFullHash()), groupId);
+        }
+
     	for (WeightedHash hash : body.getAlternativeHashes()) {
     		hashCache.put(hashCachePrefix.concat(hash.getHash()), groupId);
     	}
@@ -467,11 +469,11 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
      * @return groupid or null if nothing found
      */
     private String findByHashes(final MatchedBody body) {
-   		// check first, whether there is not the "same"(in the sense of the equal hash) body
+    		// check first, whether there is not the "same"(in the sense of the equal hash) body
         String groupId = hashCache.get(hashCachePrefix.concat(body.getHash()));
         if (groupId != null) {
-            return groupId;
-        }
+        		return groupId;
+    		}
 
         String winningGroupId = null;
         Double winnerWeight = null;
@@ -524,24 +526,19 @@ public abstract class BaseTenderMatcher extends BaseMatcher {
         logger.debug("Calculated hash '{}' for clean tender '{}' ", hash, matchedTender.getId());
         // check first, whether there is not the "same"(in the sense of the
         // equal hash) body
-        String groupIdByHash = matchedTenderDao.getGroupIdByHash(hash);
-        if (groupIdByHash != null) {
+        List<MatchedTender> sameHash = matchedTenderDao.getByHash(hash);
+        if (!sameHash.isEmpty()) {
             // the same hash found, storing into the same group
-            matchedTender.setGroupId(groupIdByHash);
+            matchedTender.setGroupId(sameHash.get(0).getGroupId());
             matchedTender.setMatchedBy(HASH);
         } else {
             Boolean matched = false;
             // try all registered plugins for potential match
             for (Entry<String, MatchingPlugin<MatchedTender>> entry : tenderPluginRegistry.getPlugins().entrySet()) {
                 MatchingPlugin<MatchedTender> plugin = entry.getValue();
-                if (!plugin.isMatchable(matchedTender)) {
-                    continue;
-                }
-
                 long pluginStartTime = System.currentTimeMillis();
                 MatchingResult matchingResult = plugin.match(matchedTender);
                 long pluginEndTime = System.currentTimeMillis();
-
                 if ((pluginEndTime - pluginStartTime) > PLUGIN_TIME_THRESHOLD) {
                     logger.warn("Execution of tender match plugin {} took {} ms.", plugin,
                             pluginEndTime - pluginStartTime);

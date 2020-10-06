@@ -27,48 +27,30 @@ public abstract class BaseDownloader<T extends Raw> extends BaseRawWorker {
 
     protected RawDAO<T> rawDao;
 
-    protected final int humanize;
-
-    protected final boolean skipExisting;
-
     /**
      * Default constructor.
      */
     protected BaseDownloader() {
         super();        
         rawDao = getRawDataDao();
-
-        String humanizeProperty = this.getClass().getName() + ".humanize";
-        String humanizeValue = config.getParam(humanizeProperty);
-        if (humanizeValue != null) {
-            try {
-                humanize = Integer.valueOf(humanizeValue);
-            } catch (final NumberFormatException ex) {
-                logger.error("Value '{}' of property {} isn't an integer", humanizeValue, humanizeProperty);
-                throw new UnrecoverableException("Configuration property must be an integer", ex);
-            }
-        } else {
-            humanize = 0;
-        }
-
-        if (config.getParam(getName() + ".skipExisting") != null) {
-            skipExisting = config.getParam(getName() + ".skipExisting").equals("1");
-        } else {
-            skipExisting = false;
-        }
     }
 
     @Override
     public final void doWork(final Message message) {
         logger.debug("Doing work for message {}", message);
 
-        if (skipExisting && skipExisting(message)) {
-            logger.debug("Raw data for message '{}' are already downloaded", message.toJson());
-            return;
-        }
-
-        if (humanize > 0) {
-            ThreadUtils.sleep(humanize);
+        String humanizeProperty = this.getClass().getName() + ".humanize";
+        String humanize = config.getParam(humanizeProperty);
+        if (humanize != null) {            
+            try {
+                int ms = Integer.valueOf(humanize);
+                if (ms > 0) {
+                    ThreadUtils.sleep(ms);
+                }
+            } catch (final NumberFormatException ex) {
+                logger.error("Value '{}' of property {} isn't an integer", humanize, humanizeProperty);
+                throw new UnrecoverableException("Configuration property must be an integer", ex);
+            }
         }
 
         // download and populate raw data (there might me more records at once => list of raw data objects)
@@ -76,6 +58,7 @@ public abstract class BaseDownloader<T extends Raw> extends BaseRawWorker {
 
         // save all the stuff
         for (T rawDataItem : rawData) {
+            getTransactionUtils().begin();
 
             // generate persistent id if not already set by the worker logic
             if (rawDataItem.getPersistentId() == null) {
@@ -85,6 +68,7 @@ public abstract class BaseDownloader<T extends Raw> extends BaseRawWorker {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSSSSSSS");
             rawDataItem.setProcessingOrder(Timestamp.valueOf(LocalDateTime.now()).toLocalDateTime().format(formatter));
             final String savedId = rawDao.save(rawDataItem);
+            getTransactionUtils().commit();
             logger.info("Stored raw data as {}", savedId);
 
             // post-processing, doesn't affect raw record
@@ -96,15 +80,6 @@ public abstract class BaseDownloader<T extends Raw> extends BaseRawWorker {
             publishMessage(outgoingMessage);
         }
     }
-
-    /**
-     * Checks whether skip incoming message. Method is taking effect only in the case of enabled skipExisting.
-     *
-     * @param message
-     *      incoming message
-     * @return TRUE for skip, otherwise FALSE
-     */
-    protected abstract boolean skipExisting(Message message);
 
     @Override
     public final void resend(final String version, final String dateFrom, final String dateTo) {

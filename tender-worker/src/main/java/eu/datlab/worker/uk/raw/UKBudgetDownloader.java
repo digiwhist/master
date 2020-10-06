@@ -51,6 +51,8 @@ public final class UKBudgetDownloader extends BaseRawWorker {
 
         logger.info("Parsed downloaded data from PDF to Text {}");
 
+        getTransactionUtils().begin();
+
         if (rawData.getPersistentId() == null) {
             rawData.setPersistentId(generatePersistentId(rawData, getSourceId()));
         }

@@ -84,6 +84,7 @@ public final class DNCPAwardHandler {
             .setTitle(textValue("title", data))
             .setFinalPrice(DNCPParserUtils.parsePrice(path("value", data)))
             .setNationalProcedureType(procedureType)
+            .setProcedureType(procedureType)
             // create separate lot for each supplier
             .setLots(DNCPParserUtils.parseList(path("suppliers", data).elements(),
                 n -> {

@@ -53,21 +53,13 @@ public final class APATenderCsvDirectContractHandler {
             DATA_ANUNT, TIP_INCHEIERE_CONTRACT, NUMAR_CONTRACT, DATA_CONTRACT, TITLU_CONTRACT, VALOARE, MONEDA,
             VALOARE_RON, VALOARE_EUR, CPV_CODE_ID, CPV_CODE};
 
-    private static final String[] CSV_NEW_HEADER_1 = {CASTIGATOR, CASTIGATOR_CUI, CASTIGATOR_TARA, CASTIGATOR_LOCALITATE,
+    private static final String[] CSV_NEW_HEADER = {CASTIGATOR, CASTIGATOR_CUI, CASTIGATOR_TARA, CASTIGATOR_LOCALITATE,
             CASTIGATOR_ADRESA, TIP_PROCEDURA, AUTORITATE_CONTRACTANTA, AUTORITATE_CONTRACTANTA_CU, NUMAR_ANUNT,
             DATA_ANUNT, TIP_INCHEIERE_CONTRACT, NUMAR_CONTRACT, DATA_CONTRACT, TITLU_CONTRACT, VALOARE, MONEDA,
             VALOARE_RON, VALOARE_EUR, CPV_CODE_ID, CPV_CODE, DESCRIERE};
 
-    private static final String[] CSV_NEW_HEADER_2 = {CASTIGATOR, CASTIGATOR_CUI, CASTIGATOR_TARA, CASTIGATOR_LOCALITATE,
-            CASTIGATOR_ADRESA, TIP_PROCEDURA, AUTORITATE_CONTRACTANTA, AUTORITATE_CONTRACTANTA_CU, NUMAR_ANUNT,
-            DATA_ANUNT, DESCRIERE, TIP_INCHEIERE_CONTRACT, NUMAR_CONTRACT, DATA_CONTRACT, TITLU_CONTRACT, VALOARE,
-            MONEDA, VALOARE_RON, VALOARE_EUR, CPV_CODE_ID, CPV_CODE};
-
     private static final CSVFormat CSV_OLD_FORMAT = CSVFormat.newFormat('^').withHeader(CSV_OLD_HEADER).withIgnoreEmptyLines(true);
-    private static final CSVFormat CSV_NEW_FORMAT_1 =
-            CSVFormat.newFormat('^').withHeader(CSV_NEW_HEADER_1).withIgnoreEmptyLines(true);
-    private static final CSVFormat CSV_NEW_FORMAT_2 =
-            CSVFormat.newFormat('^').withHeader(CSV_NEW_HEADER_2).withIgnoreEmptyLines(true);
+    private static final CSVFormat CSV_NEW_FORMAT = CSVFormat.newFormat('^').withHeader(CSV_NEW_HEADER).withIgnoreEmptyLines(true);
 
     /**
      * Suppress default constructor for noninstantiability.
@@ -85,21 +77,12 @@ public final class APATenderCsvDirectContractHandler {
             final List<ParsedTender> parsedTenders = new ArrayList<>();
 
             boolean isNew = false;
-            CSVFormat format = null;
             APACSVReader reader;
-            if (raw.getSourceData().split("\n", 2)[0].toLowerCase().contains("descriere")) {
-                // length of both new formats are the same
-                reader = new APACSVReader(raw.getSourceData(), CSV_NEW_HEADER_1.length);
+            if (raw.getSourceData().split("\n", 2)[0].contains("DESCRIERE")) {
+                reader = new APACSVReader(raw.getSourceData(), CSV_NEW_HEADER.length);
                 isNew = true;
-                // DESCRIERE is in the middle of the header
-                if(raw.getSourceData().split("\n", 2)[0].split("(?i)descriere")[1].contains("^")) {
-                    format = CSV_NEW_FORMAT_2;
-                } else {
-                    format = CSV_NEW_FORMAT_1;
-                }
             } else {
                 reader = new APACSVReader(raw.getSourceData(), CSV_OLD_HEADER.length);
-                format = CSV_OLD_FORMAT;
             }
 
             reader.readLine(); // skip header
@@ -109,7 +92,12 @@ public final class APATenderCsvDirectContractHandler {
                 if(line.isEmpty()) {
                     continue;
                 }
-                CSVParser csvParser = CSVParser.parse(line, format);
+                CSVParser csvParser;
+                if (isNew) {
+                    csvParser = CSVParser.parse(line, CSV_NEW_FORMAT);
+                } else {
+                    csvParser = CSVParser.parse(line, CSV_OLD_FORMAT);
+                }
 
                 for (CSVRecord tender : csvParser) {
                     parsedTenders.add(new ParsedTender()
@@ -132,6 +120,7 @@ public final class APATenderCsvDirectContractHandler {
                                                     .setNetAmountEur(tender.get(VALOARE_EUR))))
                                     .setContractSignatureDate(tender.get(DATA_CONTRACT)))
                             .setNationalProcedureType(tender.get(TIP_PROCEDURA))
+                            .setProcedureType(tender.get(TIP_PROCEDURA))
                             .addBuyer(new ParsedBody()
                                     .setName(tender.get(AUTORITATE_CONTRACTANTA))
                                     .addBodyId(new BodyIdentifier()

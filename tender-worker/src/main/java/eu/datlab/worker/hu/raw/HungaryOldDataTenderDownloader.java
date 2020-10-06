@@ -28,11 +28,6 @@ public class HungaryOldDataTenderDownloader extends BaseDownloader<RawData> {
     private static final int COLUMNS_COUNT = 573;
 
     @Override
-    protected final boolean skipExisting(final Message message) {
-        return false;
-    }
-
-    @Override
     public final RawDAO getRawDataDao() {
         return DAOFactory.getDAOFactory().getRawTenderDAO(getName(), getVersion());
     }

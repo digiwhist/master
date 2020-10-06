@@ -36,6 +36,7 @@ import eu.dl.worker.master.plugin.generic.comparators.StringComparator;
 import eu.dl.worker.master.plugin.generic.converter.TenderConverter;
 import eu.dl.worker.master.plugin.specific.AwardCriteriaPlugin;
 import eu.dl.worker.master.plugin.specific.FundingsPlugin;
+import eu.dl.worker.master.plugin.specific.RobustPricePlugin;
 
 import java.util.Arrays;
 
@@ -95,7 +96,8 @@ public abstract class BaseDatlabTenderMaster extends BaseTenderMaster<MatchedTen
                         "cancellationReason", "isWholeTenderCancelled")))
                 .registerPlugin("Address", new AddressPlugin<>(Arrays.asList("documentsLocation",
                         "addressOfImplementation")))
-                .registerPlugin("Documents", new TenderDocumentPlugin());
+                .registerPlugin("Documents", new TenderDocumentPlugin())
+                .registerPlugin("RobustPrice", new RobustPricePlugin());
 
         // register Longest plugin in loop for each mastered value
         for (String s : new String[]{"deposits", "eligibilityCriteria", "personalRequirements", "economicRequirements",

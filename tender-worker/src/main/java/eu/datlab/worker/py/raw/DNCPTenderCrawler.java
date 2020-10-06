@@ -49,7 +49,7 @@ public final class DNCPTenderCrawler extends BaseDatlabIncrementalCrawler {
 
     private static final int CONNECTION_TIMEOUT = 60000;
 
-    private static final int READ_TIMEOUT = 300000;
+    private static final int READ_TIMEOUT = 30000;
 
     private static final String BIDDERS_CSV_URL = "https://www.contrataciones.gov.py/licitaciones/adjudicacion/%s/oferentes.csv";
 

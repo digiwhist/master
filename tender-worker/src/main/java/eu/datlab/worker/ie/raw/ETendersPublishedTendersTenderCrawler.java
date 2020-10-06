@@ -11,8 +11,7 @@ import java.time.Month;
 public final class ETendersPublishedTendersTenderCrawler extends BaseETendersTenderCrawler {
     private static final LocalDate OLDEST_NOTICE_DATE = LocalDate.of(2004, Month.JANUARY, 20);
 
-    // Published tenders
-    private static final String FORM_TYPE_OPTION_TEXT = "1";
+    private static final String FORM_TYPE_OPTION_TEXT = "Published tenders";
 
     @Override
     protected LocalDate getDefaultStartDate() {

@@ -22,7 +22,7 @@ public class LotDecisionPeriodIndicatorPlugin extends LotIndicatorPlugin {
             double value = IndicatorUtils.isMissingBidDeadlineRedFlag(tender.getCountry()) ? 0d : 100d;
             return calculated(value);
         } else if (tender.getBidDeadline() != null && lot.getAwardDecisionDate() != null) {
-            long periodLength = ChronoUnit.DAYS.between(tender.getBidDeadline().toLocalDate(), lot.getAwardDecisionDate());
+            long periodLength = ChronoUnit.DAYS.between(lot.getAwardDecisionDate(), tender.getBidDeadline());
 
             HashMap<String, Object> metaData = new HashMap<>();
             metaData.put("decisionPeriodLength", periodLength);

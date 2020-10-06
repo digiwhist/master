@@ -128,6 +128,7 @@ public final class APATenderExcelCFTHandler {
                             .setNetAmount(estimatedPriceNetAmount)
                             .setCurrency(estimatedPriceCurrency))
                     .setNationalProcedureType(procedureType)
+                    .setProcedureType(procedureType)
                     .setSelectionMethod(selectionMethod)
                     .addBuyer(buyer)
                     .setBuyerAssignedId(buyerAssignedId)

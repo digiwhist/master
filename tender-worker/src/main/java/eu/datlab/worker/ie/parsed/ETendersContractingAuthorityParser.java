@@ -56,10 +56,4 @@ public class ETendersContractingAuthorityParser extends BaseContractingAuthority
     public final String getVersion() {
         return VERSION;
     }
-
-    @Override
-    protected final List<ParsedContractingAuthority> postProcessSourceSpecificRules(final List<ParsedContractingAuthority> parsed,
-                                                                                    final RawData raw) {
-        return parsed;
-    }
 }

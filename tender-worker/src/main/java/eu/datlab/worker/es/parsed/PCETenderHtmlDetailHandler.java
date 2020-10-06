@@ -73,7 +73,7 @@ public final class PCETenderHtmlDetailHandler {
                 .setName(JsoupUtils.selectText(getIdSelector("text_OC_con"), document)))
             .setAddressOfImplementation(new ParsedAddress()
                 .setRawAddress(JsoupUtils.selectText(getIdSelector("text_LugarEjecucion"), document)))
-            .setNationalProcedureType(JsoupUtils.selectText("text_Procedimiento", document));
+            .setProcedureType(JsoupUtils.selectText("text_Procedimiento", document));
 
         String cpv = JsoupUtils.selectText(getIdSelector("text_CPV"), document);
         if (cpv != null) {

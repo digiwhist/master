@@ -24,28 +24,25 @@ public class NetworkUtils {
      * This methods starts Tor connection and reconfigures JVM to use it for all
      * HTTP communication.
      */
-    public static void enableProxyForHttp() {
-        logger.info("Configuring proxy service");
+    public static void enableTorForHttp() {
+        logger.info("Starting TOR service");
 
         System.getProperties().put("proxySet", "true");
-        System.getProperties().put("http.proxyHost", config.getParam("proxy.host"));
-        System.getProperties().put("http.proxyPort", config.getParam("proxy.port"));
-        System.getProperties().put("http.nonProxyHosts", config.getParam("proxy.nonProxyHosts"));
-        System.getProperties().put("https.proxyHost", config.getParam("proxy.host"));
-        System.getProperties().put("https.proxyPort", config.getParam("proxy.port"));
-        System.getProperties().put("https.nonProxyHosts", config.getParam("proxy.nonProxyHosts"));
+        System.getProperties().put("socksProxyHost", config.getParam("tor.socksProxyHost"));
+        System.getProperties().put("socksProxyPort", config.getParam("tor.socksProxyPort"));
+        System.getProperties().put("socksNonProxyHosts", config.getParam("tor.socksNonProxyHosts"));
 
-        logger.info("Proxy service configured, HTTP traffic will be redirected via proxy from now on.");
+        logger.info("TOR service started, HTTP traffic will be redirected via TOR from now on.");
     }
 
     /**
      * This method disables Tor usage for http traffic.
      */
-    public static void disableProxyForHttp() {
-        logger.info("Stopping proxy service");
+    public static void disableTorForHttp() {
+        logger.info("Stopping TOR service");
 
         System.getProperties().put("proxySet", "false");
 
-        logger.info("Proxy service stopped.");
+        logger.info("TOR service stopped.");
     }
 }

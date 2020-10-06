@@ -73,11 +73,6 @@ public final class UZPJsonTenderDownloader<T extends Raw> extends BaseDownloader
     }
 
     @Override
-    protected boolean skipExisting(final Message message) {
-        return false;
-    }
-
-    @Override
     public List<T> downloadAndPopulateRawData(final Message message) {
         final String sourceDataUrl = message.getValue("url");
 

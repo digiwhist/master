@@ -43,6 +43,7 @@ public class UvoTenderProcedureTypePlugin extends BaseCleaningPlugin<ParsedTende
 
     @Override
     public final CleanTender clean(final ParsedTender parsedTender, final CleanTender cleanTender) {
+        parsedTender.setProcedureType(parsedTender.getNationalProcedureType());
         return new TenderProcedureTypePlugin(mapping, accelerated).clean(parsedTender, cleanTender);
     }
 }

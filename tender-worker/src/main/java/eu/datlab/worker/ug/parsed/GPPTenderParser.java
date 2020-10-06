@@ -9,7 +9,6 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import eu.datlab.dataaccess.dto.codetables.PublicationSources;
 import eu.datlab.worker.parser.BaseDatlabTenderParser;
 import eu.dl.core.UnrecoverableException;
-import eu.dl.dataaccess.dto.codetables.OCDSReleaseTag;
 import eu.dl.dataaccess.dto.ocds.OCDSOrganization;
 import eu.dl.dataaccess.dto.ocds.OCDSRelease;
 import eu.dl.dataaccess.dto.ocds.OCDSReleasePackage;
@@ -34,7 +33,8 @@ import java.util.List;
 public class GPPTenderParser extends BaseDatlabTenderParser {
     private static final String VERSION = "1.0";
 
-    private final ObjectMapper mapper;
+    private static final String API_URL = PublicationSources.UG_GPP + "api/v1/releases/";
+
     /**
      * LocalDateTime deserializer.
      */
@@ -63,32 +63,23 @@ public class GPPTenderParser extends BaseDatlabTenderParser {
         }
     }
 
-    /**
-     * Object mapper initialization.
-     */
-    public GPPTenderParser() {
-        super();
-
-        JavaTimeModule module = new JavaTimeModule();
-        module.addDeserializer(LocalDateTime.class, new GPPLocalDateTimeDeserializer());
-
-        mapper = new ObjectMapper();
-        mapper.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
-        mapper.registerModule(module);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    }
 
     @Override
     public final List<ParsedTender> parse(final RawData rawData) {
         HashMap<String, Object> metaData = rawData.getMetaData();
-
-        String tagString = metaData != null ? (String) metaData.get("tag") : null;
-        if (tagString == null) {
-            logger.error("Raw message {} doesn't include OCDS release tag", rawData.getId());
+        String tag = metaData != null ? (String) metaData.get("tag") : null;
+        if (tag == null) {
+            logger.error("Raw message {} doesn't have set OCDS release tag", rawData.getId());
             throw new UnrecoverableException("OCDS release tag is empty");
         }
 
-        OCDSReleaseTag tag = OCDSReleaseTag.valueOf(tagString.toUpperCase());
+        JavaTimeModule module = new JavaTimeModule();
+        module.addDeserializer(LocalDateTime.class, new GPPLocalDateTimeDeserializer());
+
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.enable(DeserializationFeature.USE_BIG_DECIMAL_FOR_FLOATS);
+        mapper.registerModule(module);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
         OCDSReleasePackage releasePackage;
         try {
@@ -107,27 +98,28 @@ public class GPPTenderParser extends BaseDatlabTenderParser {
                     .setPublicationDate(GPPParserUtils.datetimeToString(r.getDate()))
                     .setSource(PublicationSources.UG_GPP)
                     .setIsIncluded(true)
-                    .setSourceFormType(tag.name())
+                    .setSourceFormType(tag)
+                    .setFormType(tag)
                     .setLanguage(r.getLanguage())
-                    .setSourceTenderId(r.getOcid())
-                    .setSourceId(r.getId())
-                    .setMachineReadableUrl(rawData.getSourceUrl().toString()))
+                    .setSourceTenderId(r.getId())
+                    .setMachineReadableUrl(r.getOcid() != null && !r.getOcid().equals("_OCID_")
+                        ? API_URL + r.getOcid() + "?tag=" + tag : null))
                 .addBuyer(GPPParserUtils.getBody(r.getBuyer(), bodies));
 
             switch (tag) {
-                case CONTRACT:
+                case "contract":
                     tender = GPPContractHandler.parse(tender, r);
                     break;
-                case PLANNING:
+                case "planning":
                     tender = GPPPlanningHandler.parse(tender, r);
                     break;
-                case TENDER:
+                case "tender":
                     tender = GPPTenderHandler.parse(tender, r);
                     break;
-                case AWARD:
+                case "award":
                     tender = GPPAwardHandler.parse(tender, r);
                     break;
-                case IMPLEMENTATION:
+                case "implementation":
                     tender = GPPImplementationHandler.parse(tender, r);
                     break;
                 default:
@@ -151,10 +143,5 @@ public class GPPTenderParser extends BaseDatlabTenderParser {
     @Override
     protected final String countryOfOrigin(final ParsedTender parsed, final RawData raw){
         return "UG";
-    }
-
-    @Override
-    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
-        return parsed;
     }
 }

@@ -143,9 +143,4 @@ public class RulersPublicOfficialParser extends BasePublicOfficialParser {
     private String parseTextByHtmlTag(final String string, final String jsoupSelector) {
         return Jsoup.parse(string).select(jsoupSelector).text();
     }
-
-    @Override
-    protected final List<ParsedPublicOfficial> postProcessSourceSpecificRules(final List<ParsedPublicOfficial> parsed, final RawData raw) {
-        return parsed;
-    }
 }

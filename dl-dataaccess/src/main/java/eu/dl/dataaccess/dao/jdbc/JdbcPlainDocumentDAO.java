@@ -26,7 +26,7 @@ public class JdbcPlainDocumentDAO extends GenericJdbcDAO<PlainDocument> implemen
     @Override
     public final PlainDocument getLastByHash(final String hash) {
         try {
-            PreparedStatement statement = getConnection().prepareStatement(
+            PreparedStatement statement = connection.prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE data @> '{ \"hash\":\"" + sanitize(
                             hash) + "\"}'");
 

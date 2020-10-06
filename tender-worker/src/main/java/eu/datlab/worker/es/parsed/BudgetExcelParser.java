@@ -98,9 +98,4 @@ public final class BudgetExcelParser extends BaseDatlabBudgetItemParser {
             return null;
         }
     }
-
-    @Override
-    protected List<ParsedBudgetItem> postProcessSourceSpecificRules(final List<ParsedBudgetItem> parsed, final RawData raw) {
-        return parsed;
-    }
 }
