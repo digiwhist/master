@@ -48,7 +48,7 @@ public class KHTenderParser extends BaseDatlabTenderParser {
         // parse from from overview
         ParsedTender parsedTender = new ParsedTender()
                 .setSupplyType(getTdUnderTh("Beszerzés tárgya:", form))
-                .setProcedureType(getTdUnderTh("Eljárás fajtája:", form))
+                .setNationalProcedureType(getTdUnderTh("Eljárás fajtája:", form))
                 .setBidDeadline(getTdUnderTh("Ajánlattételi/részvételi jelentkezési határidő:", form))
                 .addCpv(new ParsedCPV()
                         .setCode(getTdUnderTh("CPV Kód:", form))
@@ -213,15 +213,6 @@ public class KHTenderParser extends BaseDatlabTenderParser {
                     .setLotNumber("1")
                     .setCpvs(parsedTender.getCpvs())
                     .setEstimatedPrice(parsedTender.getEstimatedPrice()));
-        }
-
-        if (parsedTender.getProcedureType() == null) {
-            parsedTender.setProcedureType(getCheckedValue("IV.1.1\\) Az eljárás fajtája",
-                    "IV.2\\) Bírálati szempontok", part4));
-        }
-
-        if (parsedTender.getNationalProcedureType() == null) {
-            parsedTender.setNationalProcedureType(parsedTender.getProcedureType());
         }
 
         if (parsedTender.getSelectionMethod() == null) {
@@ -730,5 +721,10 @@ public class KHTenderParser extends BaseDatlabTenderParser {
     @Override
     protected final String countryOfOrigin(final ParsedTender parsed, final RawData raw) {
         return "HU";
+    }
+
+    @Override
+    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
+        return parsed;
     }
 }

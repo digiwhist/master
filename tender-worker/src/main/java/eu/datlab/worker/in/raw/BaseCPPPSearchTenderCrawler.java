@@ -62,11 +62,7 @@ public abstract class BaseCPPPSearchTenderCrawler extends BaseCrawler {
         }
 
         try {
-            getTransactionUtils().begin();
-
             crawlTenderCategory(regex);
-
-            getTransactionUtils().commit();
         } catch (final Exception e) {
             logger.error("Crawling failed", e);
             throw new UnrecoverableException("Crawling failed.", e);

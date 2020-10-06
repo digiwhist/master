@@ -1,17 +1,17 @@
 package eu.datlab.worker.master.statistic;
 
-import java.util.Arrays;
-
 import eu.datlab.dataaccess.dao.DAOFactory;
-import eu.dl.dataaccess.utils.PopulateUtils;
 import eu.dl.dataaccess.dao.MasterBodyDAO;
 import eu.dl.dataaccess.dao.MasterTenderDAO;
 import eu.dl.dataaccess.dao.TransactionUtils;
 import eu.dl.dataaccess.dto.codetables.TenderSize;
 import eu.dl.dataaccess.dto.master.MasterTender;
+import eu.dl.dataaccess.utils.PopulateUtils;
 import eu.dl.worker.BaseWorker;
 import eu.dl.worker.Message;
 import eu.dl.worker.master.utils.TenderSizeUtils;
+
+import java.util.Arrays;
 
 /**
  * This worker helpes to generate messages for statistic calulations workers.
@@ -70,8 +70,6 @@ public final class TenderSizeWorker extends BaseWorker {
 
     @Override
     public void doWork(final Message message) {
-        transactionUtils.begin();
-    		
         String id = message.getValue("id");
 
         final MasterTender tender = masterDao.getById(id);
@@ -92,8 +90,6 @@ public final class TenderSizeWorker extends BaseWorker {
                 masterDao.save(tender);
             }
         }
-
-        transactionUtils.commit();
     }
 
     @Override

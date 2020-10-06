@@ -1,5 +1,16 @@
 package eu.dl.worker.raw.downloader;
 
+import eu.dl.core.RecoverableException;
+import eu.dl.core.UnrecoverableException;
+import eu.dl.core.storage.StorageService;
+import eu.dl.core.storage.StorageServiceFactory;
+import eu.dl.dataaccess.dto.raw.Raw;
+import eu.dl.worker.Message;
+import eu.dl.worker.raw.utils.DownloaderUtils;
+import eu.dl.worker.utils.NetworkUtils;
+import org.apache.commons.io.IOUtils;
+import org.jsoup.Connection;
+
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,18 +22,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
-import eu.dl.worker.raw.utils.DownloaderUtils;
-import org.apache.commons.io.IOUtils;
-import org.jsoup.Connection;
-
-import eu.dl.core.RecoverableException;
-import eu.dl.core.UnrecoverableException;
-import eu.dl.core.storage.StorageService;
-import eu.dl.core.storage.StorageServiceFactory;
-import eu.dl.dataaccess.dto.raw.Raw;
-import eu.dl.worker.Message;
-import eu.dl.worker.utils.NetworkUtils;
-
 /**
  * Simple HTTP downloader encapsulates functionality for downloading source data
  * a creating raw data object.
@@ -33,8 +32,6 @@ import eu.dl.worker.utils.NetworkUtils;
 public abstract class BaseHttpDownloader<T extends Raw> extends BaseDownloader<T> {
     private static final String VERSION = "1";
 
-    private final boolean skipExisting;
-
     /**
      * Default constructor.
      */
@@ -42,16 +39,21 @@ public abstract class BaseHttpDownloader<T extends Raw> extends BaseDownloader<T
         super();
 
         // check whether TOR should be started
-        if (config.getParam(getName() + ".torEnabled") != null
-                && config.getParam(getName() + ".torEnabled").equals("1")) {
-            NetworkUtils.enableTorForHttp();
+        if (config.getParam(getName() + ".proxyEnabled") != null
+                && config.getParam(getName() + ".proxyEnabled").equals("1")) {
+            NetworkUtils.enableProxyForHttp();
+        }
+    }
+
+    @Override
+    protected final boolean skipExisting(final Message message) {
+        final String sourceDataUrl = message.getValue("url");
+        if (sourceDataUrl != null && skipExisting && rawDao.getBySourceUrl(getName(), getVersion(), sourceDataUrl) != null) {
+            logger.info("Raw data from {} are already downloaded", sourceDataUrl);
+            return true;
         }
 
-        if (config.getParam(getName() + ".skipExisting") != null) {
-            skipExisting = config.getParam(getName() + ".skipExisting").equals("1");
-        } else {
-            skipExisting = false;
-        }
+        return false;
     }
 
     @Override

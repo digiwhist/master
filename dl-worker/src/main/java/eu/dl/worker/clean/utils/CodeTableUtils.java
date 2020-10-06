@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,6 +153,61 @@ public final class CodeTableUtils {
 
         logger.error("Cleaning failed for {} - unique value not found for {}, throwing an exception", enumClass,
             inputForCleaning);
+        return null;
+    }
+
+    /**
+     * Maps the regular expressions to enum value. Mapping should be provided in a from of
+     * Enum.APPLE => (Pattern, Pattern, ...)
+     * Enum.MAPPLE => (Pattern, ...)
+     *
+     * If there is direct match by pattern, value is returned. Otherwise returns default value if exists or NULL.
+     *
+     * @param input
+     *         value to be mapped
+     * @param mapping
+     *         mapping
+     * @param defaultEnumValue
+     *         the not null enum value that is returned if the match is not found
+     *
+     * @return mapped value
+     */
+    public static Enum mapRegex(final String input, final Map<Enum, List<Pattern>> mapping, final Enum defaultEnumValue) {
+        logger.debug("Mapping value {}", input);
+
+        final String inputForCleaning = StringUtils.prepareStringForCleaning(input);
+        if (inputForCleaning == null || inputForCleaning.isEmpty() || mapping == null) {
+            return null;
+        } else if (mapping.isEmpty()) {
+            return defaultEnumValue;
+        }
+
+        String enumClass;
+        if (defaultEnumValue != null) {
+            enumClass = defaultEnumValue.getClass().getName();
+        } else {
+            enumClass = mapping.keySet().stream()
+                .filter(Objects::nonNull)
+                .map(n -> n.getClass().getName())
+                .findFirst()
+                .orElse(null);
+        }
+
+        for (Map.Entry<Enum, List<Pattern>> entry : mapping.entrySet()) {
+            Enum key = entry.getKey();
+            for (Pattern p : entry.getValue()) {
+                if (p.matcher(inputForCleaning).find()) {
+                    logger.debug("Regex '{}' matched, returning mapping result '{}'", p.pattern(), key);
+                    return key;
+                }
+            }
+        }
+
+        if (defaultEnumValue != null) {
+            return defaultEnumValue;
+        }
+
+        logger.error("Cleaning failed for {} - unique value not found for {}, throwing an exception", enumClass, inputForCleaning);
         return null;
     }
 

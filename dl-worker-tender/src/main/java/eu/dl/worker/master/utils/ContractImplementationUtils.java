@@ -1,5 +1,7 @@
 package eu.dl.worker.master.utils;
 
+import eu.dl.dataaccess.dto.codetables.PublicationFormType;
+import eu.dl.dataaccess.dto.generic.CPV;
 import eu.dl.dataaccess.dto.generic.Payment;
 import eu.dl.dataaccess.dto.generic.Price;
 import eu.dl.dataaccess.dto.generic.Publication;
@@ -7,15 +9,17 @@ import eu.dl.dataaccess.dto.master.MasterBid;
 import eu.dl.dataaccess.dto.master.MasterBody;
 import eu.dl.dataaccess.dto.master.MasterTender;
 import eu.dl.dataaccess.dto.master.MasterTenderLot;
-import eu.dl.dataaccess.dto.matched.MatchedBid;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 import eu.dl.dataaccess.dto.matched.MatchedTender;
-import eu.dl.dataaccess.dto.matched.MatchedTenderLot;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Utility class used to handle contract implementations.
@@ -30,78 +34,126 @@ public final class ContractImplementationUtils {
 
     /**
      * This method updates master tender with data about contract implementations. There are payments
-     * mastered including the contract implementations skipped in previous phase. Additionaly, the publication
+     * mastered including the contract implementations skipped in previous phase. Additionally, the publication
      * info is added to set of publications.
      *
-     * @param tender master tender
-     * @param contractImplementations matched tenders - contract implementatiions
+     * @param tender
+     *      master tender
+     * @param implementations
+     *      matched tenders - contract implementations
      */
-    public static void addPaymentsFromContractImplementations(
-            final MasterTender tender, final List<MatchedTender> contractImplementations) {
-        if (tender == null || tender.getLots() == null || tender.getLots().isEmpty()) {
+    public static void addPaymentsFromContractImplementations(final MasterTender tender, final List<MatchedTender> implementations) {
+        if (tender == null || tender.getLots() == null || tender.getLots().isEmpty()
+                || implementations == null || implementations.isEmpty()) {
             return;
         }
 
-        if (contractImplementations != null && !contractImplementations.isEmpty()) {
-            for (MatchedTender contractImplementation : contractImplementations) {
-                List<MatchedBid> winningBids =  getWinningBids(contractImplementation);
-                List<MasterBid> masterWinningBids = getWinningBids(tender);
-                if (winningBids != null && !winningBids.isEmpty()
-                        && masterWinningBids != null && !masterWinningBids.isEmpty()) {
-                    // iterate over bids and try to find corresponding one on the master tender
-                    for (MatchedBid bid : winningBids) {
-                        for (MasterBid masterBid : masterWinningBids) {
-                            if (isSameBidderInBoth(bid.getBidders(), masterBid.getBidders())) {
-                                if (masterBid.getPayments() == null || masterBid.getPayments().isEmpty()) {
-                                    masterBid.setPayments(bid.getPayments());
-                                } else {
-                                    masterBid.setPayments(addPayments(masterBid.getPayments(), bid.getPayments()));
+        List<MasterBid> masterWinningBids = getWinningBids(tender);
+        if (masterWinningBids.isEmpty()) {
+            return;
+        }
+
+        List<Publication> newPublications = new ArrayList<>();
+
+        implementations.stream()
+            .filter(t -> t.getLots() != null)
+            .forEach(t -> {
+                Publication contractImplementation = getIncludedPublication(t, PublicationFormType.CONTRACT_IMPLEMENTATION);
+
+                LocalDate publicationDate = contractImplementation.getPublicationDate();
+
+                t.getLots().stream()
+                    .filter(l -> l.getBids() != null)
+                    .forEach(l -> {
+                        LocalDate paymentDate = ObjectUtils.firstNonNull(l.getContractSignatureDate(), l.getAwardDecisionDate(),
+                            t.getContractSignatureDate(), t.getAwardDecisionDate(), publicationDate);
+
+                        String impMainCpv = getMainCpvCode(l.getCpvs());
+
+                        l.getBids().stream()
+                            .filter(b -> Boolean.TRUE.equals(b.getIsWinning()))
+                            .forEach(b -> {
+                                Price paymentPrice = b.getPrice() != null ? b.getPrice() : t.getFinalPrice();
+                                Payment payment = new Payment().setPrice(paymentPrice).setPaymentDate(paymentDate);
+
+                                // search by bidders
+                                for (MasterBid masterBid : masterWinningBids) {
+                                    if (isSameBidderInBoth(b.getBidders(), masterBid.getBidders())) {
+                                        masterBid.setPayments(addPayment(masterBid.getPayments(), payment));
+                                        break;
+                                    }
                                 }
+                            });
+                    });
 
-                                tender.setPublications(addPublications(tender.getPublications(),
-                                        getIsIncludedPublications(contractImplementation)));
+                newPublications.add(contractImplementation);
+            });
 
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+        if (!newPublications.isEmpty()) {
+            // contract implementation urls
+            List<URL> urls = newPublications.stream()
+                .filter(p -> Boolean.TRUE.equals(p.getIsIncluded()))
+                .map(p -> ObjectUtils.firstNonNull(p.getHumanReadableUrl(), p.getMachineReadableUrl()))
+                .collect(Collectors.toList());
+
+            // remove non-included CONTRACT_AWARD with same human(machine)ReadableUrl
+            List<Publication> finalPublications = tender.getPublications().stream()
+                .filter(p -> !(Boolean.FALSE.equals(p.getIsIncluded()) && p.getFormType() == PublicationFormType.CONTRACT_AWARD
+                    && ObjectUtils.anyNotNull(p.getHumanReadableUrl(), p.getMachineReadableUrl())
+                    && urls.contains(ObjectUtils.firstNonNull(p.getHumanReadableUrl(), p.getMachineReadableUrl()))))
+                .collect(Collectors.toList());
+
+            finalPublications = addPublications(finalPublications, newPublications);
+
+            tender.setPublications(finalPublications);
         }
     }
 
     /**
-     * Returns all winning bids with payments and bidders.
-     *
-     * @param tender tender
-     *
-     * @return list of winning bids with at least one bidder and at least one payment
+     * @param tender
+     *      master tender. It should contain the lots.
+     * @param lotGetter
+     *      the function that returns the value of lot which is considered in comparison
+     * @param value
+     *      the value which is compared with lot's value
+     * @return the first suitable lot or NULL.
      */
-    private static List<MatchedBid> getWinningBids(final MatchedTender tender) {
-        List<MatchedBid> result = new ArrayList<>();
-        if (tender != null && tender.getLots() != null) {
-            for (MatchedTenderLot lot : tender.getLots()) {
-                if (lot.getBids() != null) {
-                    for (MatchedBid bid : lot.getBids()) {
-                        if (bid.getIsWinning()
-                                && bid.getBidders() != null && !bid.getBidders().isEmpty()
-                                && bid.getPayments() != null && !bid.getPayments().isEmpty()) {
+    private static MasterTenderLot findLotBy(final MasterTender tender, final Function<MasterTenderLot, String> lotGetter,
+                                             final String value) {
+        if (tender == null || tender.getLots() == null) {
+            return null;
+        }
 
-                            result.add(bid);
-                        }
-                    }
-                }
+        for (MasterTenderLot l : tender.getLots()) {
+            String lotValue = lotGetter.apply(l);
+            if (ObjectUtils.allNotNull(lotValue, value) && Objects.equals(lotValue, value)) {
+                return l;
             }
         }
 
-        return result;
+        return null;
+    }
+
+    /**
+     * @param cpvs
+     *      list of cpvs
+     * @return first non-null main cpv code or NULL
+     */
+    private static String getMainCpvCode(final List<CPV> cpvs) {
+        if (cpvs == null || cpvs.isEmpty()) {
+            return null;
+        }
+
+        return cpvs.stream()
+            .filter(n -> Boolean.TRUE.equals(n.getIsMain()))
+            .map(CPV::getCode).filter(Objects::nonNull).findFirst().orElse(null);
     }
 
     /**
      * Returns all winning bids with bidders.
      *
-     * @param tender tender
-     *
+     * @param tender
+     *      tender
      * @return list of winning bids with at least one bidder and at least one payment
      */
     private static List<MasterBid> getWinningBids(final MasterTender tender) {
@@ -122,51 +174,12 @@ public final class ContractImplementationUtils {
     }
 
     /**
-     * Gets all isIncluded publications.
-     *
-     * @param matchedTender where to search for publications
-     *
-     * @return publications found
-     */
-    private static List<Publication> getIsIncludedPublications(final MatchedTender matchedTender) {
-        List<Publication> result = new ArrayList<>();
-        if (matchedTender.getPublications() != null) {
-            for (Publication publication : matchedTender.getPublications()) {
-                if (publication.getIsIncluded()) {
-                    result.add(publication);
-                }
-            }
-        }
-        return result;
-    }
-
-
-    /**
-     * Gets all isIncluded publications.
-     *
-     * @param masterTender where to search for publications
-     *
-     * @return publications found
-     */
-    private static List<Publication> getIsIncludedPublications(final MasterTender masterTender) {
-        List<Publication> result = new ArrayList<>();
-        if (masterTender.getPublications() != null) {
-            for (Publication publication : masterTender.getPublications()) {
-                if (publication.getIsIncluded()) {
-                    result.add(publication);
-                }
-            }
-        }
-        return result;
-    }
-
-
-    /**
      * Checks whether there is the same bidder (the same groupId) in both arrays.
      *
-     * @param matchedBodies matched bodies
-     * @param masterBodies master bodies
-     *
+     * @param matchedBodies
+     *      matched bodies
+     * @param masterBodies
+     *      master bodies
      * @return result of check
      */
     private static Boolean isSameBidderInBoth(final List<MatchedBody> matchedBodies,
@@ -186,17 +199,16 @@ public final class ContractImplementationUtils {
     /**
      * This method adds new payments to the list of existing ones.
      *
-     * @param originalPayments target
-     * @param newPayments payments to be added
-     *
+     * @param originalPayments
+     *      target
+     * @param newPayments
+     *      payments to be added
      * @return merged list
      */
-    public static List<Payment> addPayments(final List<Payment> originalPayments,
-            final List<Payment> newPayments) {
+    public static List<Payment> addPayments(final List<Payment> originalPayments, final List<Payment> newPayments) {
         if (originalPayments == null) {
             return newPayments;
         }
-
         if (newPayments == null) {
             return originalPayments;
         }
@@ -218,9 +230,27 @@ public final class ContractImplementationUtils {
     }
 
     /**
+     * This method adds new payment to the list of existing ones.
+     *
+     * @param originalPayments
+     *      target
+     * @param newPayment
+     *      payment to be added
+     * @return merged list
+     */
+    public static List<Payment> addPayment(final List<Payment> originalPayments, final Payment newPayment) {
+        List<Payment> newPayments = new ArrayList<>();
+        newPayments.add(newPayment);
+        return addPayments(originalPayments, newPayments);
+    }
+
+    /**
      * Compares two payments based on date and Price value.
-     * @param firstPayment payment
-     * @param secondPayment payment
+     *
+     * @param firstPayment
+     *      payment
+     * @param secondPayment
+     *      payment
      * @return true if payments are the same ones, false for inequality and null values
      */
     public static Boolean compare(final Payment firstPayment, final Payment secondPayment) {
@@ -282,9 +312,10 @@ public final class ContractImplementationUtils {
     /**
      * This method adds new publications to the list of existing ones.
      *
-     * @param originalPublications target
-     * @param newPublications publications to be added
-     *
+     * @param originalPublications
+     *      target
+     * @param newPublications
+     *      publications to be added
      * @return merged list
      */
     public static List<Publication> addPublications(final List<Publication> originalPublications,
@@ -314,9 +345,30 @@ public final class ContractImplementationUtils {
     }
 
     /**
-     * Compares two publications based on publication date, isIncluded and .
-     * @param firstPublication publicaton
-     * @param secondPublication publication
+     * Gets first included publication of given form type.
+     *
+     * @param matchedTender
+     *      where to search for publications
+     * @param formType
+     *      form type
+     * @return publications found
+     */
+    private static Publication getIncludedPublication(final MatchedTender matchedTender, final PublicationFormType formType) {
+        if (matchedTender.getPublications() != null) {
+            return matchedTender.getPublications().stream()
+                    .filter(p -> Boolean.TRUE.equals(p.getIsIncluded()) && formType == p.getFormType())
+                    .findFirst().orElse(null);
+        }
+        return null;
+    }
+
+    /**
+     * Compares two publications.
+     *
+     * @param firstPublication
+     *      publication
+     * @param secondPublication
+     *      publication
      * @return true if publications are the same ones, false for inequality and null values
      */
     public static Boolean compare(final Publication firstPublication, final Publication  secondPublication) {

@@ -34,12 +34,11 @@ public abstract class BaseParser<V extends Raw, T extends Parsable> extends Base
 
     @Override
     public final void doWork(final Message message) {
-        getTransactionUtils().begin();
         final String rawItemId = message.getValue("id");
         ThreadContext.put("raw_tender_id", rawItemId);
         final V rawItem = rawDao.getById(rawItemId);
 
-        final List<T> parsedItems = parse(rawItem);
+        List<T> parsedItems = parse(rawItem);
         logger.debug("Number of tenders parsed: {}", parsedItems.size());
 
         // set raw ids to parsed items
@@ -47,13 +46,15 @@ public abstract class BaseParser<V extends Raw, T extends Parsable> extends Base
             parsedItem.setRawObjectId(rawItemId);
         }
 
-        final List<T> processedParsedItems = postProcess(parsedItems, rawItem);
+        parsedItems = postProcess(parsedItems, rawItem);
+
+        parsedItems = postProcessSourceSpecificRules(parsedItems, rawItem);
 
         int counter = 1;
         String rawPersistentId = rawItem.getPersistentId();
         
         // send messages about processed items
-        for (T parsedTender : processedParsedItems) {
+        for (T parsedTender : parsedItems) {
             parsedTender.setRawObjectId(rawItemId);
             
             // generate persistent id
@@ -136,6 +137,17 @@ public abstract class BaseParser<V extends Raw, T extends Parsable> extends Base
      * @return list of post processed items
      */
     protected abstract List<T> postProcess(List<T> parsed, V raw);
+
+    /**
+     * Source specific post processing of parsed items. For example lot IDs are generated here.
+     *
+     * @param parsed
+     *            list of parsed items to be post processed
+     * @param raw
+     *            raw item to be parsed
+     * @return list of post processed items
+     */
+    protected abstract List<T> postProcessSourceSpecificRules(List<T> parsed, V raw);
 
     /**
      * Publishes new message with id of saved parsed entity (eg. tender,

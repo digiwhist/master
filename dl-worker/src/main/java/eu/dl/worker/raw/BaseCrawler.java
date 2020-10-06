@@ -19,9 +19,9 @@ public abstract class BaseCrawler extends BaseRawWorker {
      */
     public BaseCrawler() {
         // check whether TOR should be started
-        if (config.getParam(getName() + ".torEnabled") != null
-                && config.getParam(getName() + ".torEnabled").equals("1")) {
-            NetworkUtils.enableTorForHttp();
+        if (config.getParam(getName() + ".proxyEnabled") != null
+                && config.getParam(getName() + ".proxyEnabled").equals("1")) {
+            NetworkUtils.enableProxyForHttp();
         }
     }
 

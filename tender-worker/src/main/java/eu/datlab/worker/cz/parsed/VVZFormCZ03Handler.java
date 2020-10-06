@@ -225,7 +225,11 @@ final class VVZFormCZ03Handler extends VVZCzFormsHandler {
      * @return unit name of unit price
      */
     private static String parseUnitName(final Element priceSection) {
-        return VVZTenderParserUtils.getFieldValue(priceSection, ".*\\.UnitPriceTotal\\.UnitName$");
+        String name = VVZTenderParserUtils.getFieldValue(priceSection, ".*\\.UnitPriceTotal\\.UnitName$");
+        if (name == null) {
+            name = VVZTenderParserUtils.getFieldValue(priceSection, ".*\\.Unit\\.UnitName$");
+        }
+        return name;
     }
 
     /**
@@ -237,7 +241,11 @@ final class VVZFormCZ03Handler extends VVZCzFormsHandler {
      * @return unit price net amount
      */
     private static String parseUnitPriceNetAmount(final Element priceSection) {
-        return VVZTenderParserUtils.getFieldValue(priceSection, ".*\\.UnitPriceTotal\\.ValueFrom$");
+        String amount = VVZTenderParserUtils.getFieldValue(priceSection, ".*\\.UnitPriceTotal\\.ValueFrom$");
+        if (amount == null) {
+            amount = VVZTenderParserUtils.getFieldValue(priceSection, ".*\\.Unit\\.ValueFrom");
+        }
+        return amount;
     }
 
     // ---------------------------------

@@ -93,7 +93,7 @@ public class UZPJsonTenderParser extends BaseDatlabTenderParser {
                     .setIsCentralProcurement(textValue("czy_przeprowadza_centralny_zamawiajacy", rawTender))
                     .setIsJointProcurement(textValue("czy_przeprowadza_podmiot_zamawiajacy_powierzyl", rawTender))
                     .setSelectionMethod(textValue("tryb_udzielenia_zamowienia", rawTender))
-                    .setProcedureType(textValue("rodzaj_zamowienia", rawTender))
+                    .setNationalProcedureType(textValue("rodzaj_zamowienia", rawTender))
                     .addCpv(new ParsedCPV()
                             .setIsMain(Boolean.TRUE.toString())
                             .setCode(textValue(new String[]{
@@ -131,5 +131,10 @@ public class UZPJsonTenderParser extends BaseDatlabTenderParser {
     @Override
     protected final String getVersion() {
         return VERSION;
+    }
+
+    @Override
+    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
+        return parsed;
     }
 }

@@ -73,7 +73,12 @@ public class ManualMatchingPlugin<T extends ManuallyMatchable> implements Matchi
 
         return matchingResult;
     }
-	
+
+    @Override
+    public final boolean isMatchable(final T item) {
+        return true;
+    }
+
 	/**
 	 * Populates cache with already stored results.
 	 */

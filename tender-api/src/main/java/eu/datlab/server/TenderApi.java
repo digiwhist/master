@@ -1,8 +1,6 @@
 package eu.datlab.server;
 
 import eu.datlab.dataaccess.dao.DAOFactory;
-import eu.datlab.dataaccess.dao.ZIndexIndicatorDAO;
-import eu.datlab.dataaccess.dto.zindex.ZIndexIndicator;
 import eu.dl.dataaccess.dao.CleanTenderDAO;
 import eu.dl.dataaccess.dao.MasterBodyDAO;
 import eu.dl.dataaccess.dao.MasterTenderApiDAO;
@@ -52,8 +50,6 @@ public final class TenderApi extends BaseServer {
 
     private PopulateUtils populateUtils;
 
-    private ZIndexIndicatorDAO zindexDao;
-
     /**
      * Default output format.
      */
@@ -87,7 +83,6 @@ public final class TenderApi extends BaseServer {
 
         registerMasterBodyEndpoints();
 
-        reqisterZindexIndicatorEnponoits();
     }
 
 
@@ -130,10 +125,16 @@ public final class TenderApi extends BaseServer {
             String source = request.queryParams("source");
             String format = request.queryParamOrDefault("format", DEFAULT_FORMAT).toLowerCase();
             Boolean opentender = Boolean.valueOf(request.queryParamOrDefault("opentender", DEFAULT_IS_OPENTENDER));
+            String pageSize = request.queryParams("page_size");
 
             transactionUtils.begin();
 
-            List<MasterTender> result = masterDao.getModifiedAfter(timestamp, source, country, page, opentender);
+            List<MasterTender> result;
+            if (pageSize != null) {
+                result = masterDao.getModifiedAfter(timestamp, source, country, page, opentender, getInteger(pageSize));
+            } else {
+                result = masterDao.getModifiedAfter(timestamp, source, country, page, opentender);
+            }
 
             populateUtils.populateBodies(result);
             transactionUtils.commit();
@@ -207,10 +208,11 @@ public final class TenderApi extends BaseServer {
             LocalDateTime timestamp = getDate(request.queryParams("timestamp"));
             Integer page = getInteger(request.queryParams("page"));
             String source = request.queryParams("source");
+            String pageSize = request.queryParams("page_size");
 
             transactionUtils.begin();
 
-            List<MasterTender> result = masterDao.getModifiedAfterForBuyerProfileMatching(timestamp, source, page);
+            List<MasterTender> result = masterDao.getModifiedAfterForBuyerProfileMatching(timestamp, source, page, getInteger(pageSize));
 
             populateUtils.populateBodies(result);
             transactionUtils.commit();
@@ -236,26 +238,6 @@ public final class TenderApi extends BaseServer {
     }
 
     /**
-     * Registers endpoints for zindex indicators API.
-     */
-    private void reqisterZindexIndicatorEnponoits() {
-        get("/protected/zindex", "application/json", (request, response) -> {
-            transactionUtils.begin();
-            List<ZIndexIndicator> result = zindexDao.getAll();
-            transactionUtils.commit();
-            return result;
-        }, new JsonTransformer());
-
-        get("/protected/zindex/name/:name", "application/json", (request, response) -> {
-            String name = request.params("name");
-            transactionUtils.begin();
-            List<ZIndexIndicator> result = zindexDao.getByName(name);
-            transactionUtils.commit();
-            return result;
-        }, new JsonTransformer());
-    }
-
-    /**
      * Inits DAOs and similar.
      */
     private void init() {
@@ -268,8 +250,6 @@ public final class TenderApi extends BaseServer {
         masterBodyDao = DAOFactory.getDAOFactory().getMasterBodyDAO(NAME, VERSION);
 
         populateUtils = new PopulateUtils(masterBodyDao);
-
-        zindexDao = DAOFactory.getDAOFactory().getZIndexIndicatorDAO(NAME, VERSION);
     }
 
     /**

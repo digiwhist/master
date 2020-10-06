@@ -49,7 +49,7 @@ public abstract class BaseBodiesPoolMatchingPlugin<T extends MatchedBody, U exte
     @Override
     public final MatchingResult match(final T item) {
         final MatchingResult matchingResult = new MatchingResult();
-        
+
         final List<U> matchedPoolBodies = getBodiesPool(item);
 
         logger.info("Body pool includes {} items", matchedPoolBodies.size());

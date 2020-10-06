@@ -1,7 +1,7 @@
 package eu.datlab.worker.ug.parsed;
 
+import eu.dl.dataaccess.dto.ocds.OCDSPlanning;
 import eu.dl.dataaccess.dto.ocds.OCDSRelease;
-import eu.dl.dataaccess.dto.ocds.OCDSTender;
 import eu.dl.dataaccess.dto.parsed.ParsedTender;
 /**
  * Planning handler.
@@ -22,15 +22,10 @@ public final class GPPPlanningHandler {
      * @return parsed tender
      */
     public static ParsedTender parse(final ParsedTender t, final OCDSRelease r) {
-        OCDSTender tender = r.getTender();
+        OCDSPlanning planning = r.getPlanning();
 
-        t.setTitle(tender.getTitle())
-            .setEstimatedPrice(GPPParserUtils.parsePrice(tender.getValue()))
-            .setSupplyType(GPPParserUtils.enumToString(tender.getMainProcurementCategory()))
-            .setProcedureType(GPPParserUtils.enumToString(tender.getProcurementMethod()))
-            .setNationalProcedureType(tender.getProcurementMethodDetails());
-
-        GPPParserUtils.updateTenderDeadlines(t, tender);
+        t.setTitle(planning.getProject())
+            .setEstimatedPrice(GPPParserUtils.parsePrice(planning.getBudget().getAmount()));
 
         return t;
     }

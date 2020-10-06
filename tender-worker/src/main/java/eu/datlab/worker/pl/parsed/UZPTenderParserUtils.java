@@ -166,7 +166,6 @@ public final class UZPTenderParserUtils {
             .setTitle(JsoupUtils.selectText("nazwa_zamowienia, nazwa_konkursu", document))
             .setDescription(JsoupUtils.selectText("przedmiot_zam", document))
             .setSupplyType(JsoupUtils.selectText("rodz_zam", document))
-            .setProcedureType(nationalProcedureType)
             .setNationalProcedureType(nationalProcedureType)
             .setCpvs(UZPTenderParserUtils.parseCPVs(document));
 

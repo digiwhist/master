@@ -56,7 +56,6 @@ public final class BASENoticeTenderParser extends BaseDatlabTenderParser {
                 .setPublicationDate(publicationDate))
             .setSupplyType(BASETenderParserUtils.getFirstValueByLabel(table, "Tipo(\\(s\\))? de contrato"))
             .setNationalProcedureType(procedureType)
-            .setProcedureType(procedureType)
             .addBuyer(BASETenderParserUtils.parseBody(
                 JsoupUtils.getFirstLabeledValueNode(table, "Entidade emissora \\- Nome, NIF")))
             .setDescription(BASETenderParserUtils.getFirstValueByLabel(table, "Descrição"))
@@ -156,5 +155,10 @@ public final class BASENoticeTenderParser extends BaseDatlabTenderParser {
     @Override
     protected String countryOfOrigin(final ParsedTender parsed, final RawData raw){
         return "PT";
+    }
+
+    @Override
+    protected List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
+        return parsed;
     }
 }

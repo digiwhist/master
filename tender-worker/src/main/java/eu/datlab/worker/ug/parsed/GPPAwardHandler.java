@@ -2,6 +2,7 @@ package eu.datlab.worker.ug.parsed;
 
 import eu.dl.dataaccess.dto.ocds.OCDSAward;
 import eu.dl.dataaccess.dto.ocds.OCDSOrganization;
+import eu.dl.dataaccess.dto.ocds.OCDSPeriod;
 import eu.dl.dataaccess.dto.ocds.OCDSRelease;
 import eu.dl.dataaccess.dto.ocds.OCDSTender;
 import eu.dl.dataaccess.dto.parsed.ParsedBid;
@@ -31,17 +32,9 @@ public final class GPPAwardHandler {
      * @return parsed tender
      */
     public static ParsedTender parse(final ParsedTender t, final OCDSRelease r) {
-        OCDSTender tender = r.getTender();
-
         List<OCDSAward> awards= r.getAwards();
 
         List<OCDSOrganization> bodies = r.getParties();
-
-        t.setTitle(tender.getTitle())
-            .setFinalPrice(GPPParserUtils.parsePrice(tender.getValue()))
-            .setSupplyType(GPPParserUtils.enumToString(tender.getMainProcurementCategory()))
-            .setProcedureType(GPPParserUtils.enumToString(tender.getProcurementMethod()))
-            .setNationalProcedureType(tender.getProcurementMethodDetails());
 
         if (awards != null) {
             t.setLots(awards.stream().map(a -> {
@@ -51,12 +44,16 @@ public final class GPPAwardHandler {
                     .setLotId(a.getId())
                     .setDescription(a.getDescription())
                     .setAwardDecisionDate(GPPParserUtils.datetimeToString(a.getDate()))
+                    .setEstimatedStartDate(GPPParserUtils.periodDatetimeToString(a.getContractPeriod(),
+                            OCDSPeriod::getStartDate))
+                    .setEstimatedCompletionDate(GPPParserUtils.periodDatetimeToString(a.getContractPeriod(),
+                            OCDSPeriod::getEndDate))
                     .addBid(new ParsedBid()
                         .setIsWinning(Boolean.TRUE.toString())
                         .setPrice(GPPParserUtils.parsePrice(a.getValue()))
                         .setBidders(a.getSuppliers().stream()
                             .map(s -> GPPParserUtils.getBody(s, bodies)).collect(Collectors.toList()))
-                        .addPayment(new ParsedPayment().setPrice(GPPParserUtils.parsePrice(a.getValue())))); // ?
+                        .addPayment(new ParsedPayment().setPrice(GPPParserUtils.parsePrice(a.getValue()))));
 
                 if (r.getTender() != null) {
                     lot.setBidsCount(GPPParserUtils.numberToString(r.getTender().getNumberOfTenderers()));
@@ -65,7 +62,10 @@ public final class GPPAwardHandler {
                 return lot;
             }).collect(Collectors.toList()));
         }
-
+        OCDSTender tender = r.getTender();
+        if(tender != null) {
+            t.setAwardDecisionDate(GPPParserUtils.periodDatetimeToString(tender.getAwardPeriod(), OCDSPeriod::getEndDate));
+        }
         return t;
     }
 

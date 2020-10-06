@@ -1,6 +1,13 @@
 
 package eu.datlab.dataaccess.dao.jdbc;
 
+import eu.datlab.dataaccess.dto.matched.BVDEtalonBody;
+import eu.dl.core.UnrecoverableException;
+import eu.dl.dataaccess.dao.EtalonBodyDAO;
+import eu.dl.dataaccess.dao.jdbc.BaseJdbcDAO;
+import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
+import eu.dl.dataaccess.dto.matched.MatchedGroupInfo;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -9,13 +16,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import eu.datlab.dataaccess.dto.matched.BVDEtalonBody;
-import eu.dl.core.UnrecoverableException;
-import eu.dl.dataaccess.dao.EtalonBodyDAO;
-import eu.dl.dataaccess.dao.jdbc.BaseJdbcDAO;
-import eu.dl.dataaccess.dto.codetables.BodyIdentifier;
-import eu.dl.dataaccess.dto.matched.MatchedGroupInfo;
 
 /**
  * JDBC DAO implementation for BvD etalon bodies.
@@ -44,7 +44,7 @@ public class JdbcBVDEtalonBodyDAO extends BaseJdbcDAO<BVDEtalonBody> implements 
         }
 
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM bvd.registry_information WHERE " + restriction.toString() + ";");
 
             ResultSet rs = statement.executeQuery();
@@ -81,7 +81,7 @@ public class JdbcBVDEtalonBodyDAO extends BaseJdbcDAO<BVDEtalonBody> implements 
         }
 
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM bvd.registry_information WHERE " + restriction.toString() + ";");
             long pluginStartTime = System.currentTimeMillis();
             ResultSet rs = statement.executeQuery();
@@ -108,8 +108,7 @@ public class JdbcBVDEtalonBodyDAO extends BaseJdbcDAO<BVDEtalonBody> implements 
     @Override
     public final BVDEtalonBody getById(final String id) {
         try {
-            PreparedStatement statement = connection
-                    .prepareStatement("SELECT * FROM bvd.registry_information  WHERE id = ?;");
+            PreparedStatement statement = getConnection().prepareStatement("SELECT * FROM bvd.registry_information  WHERE id = ?;");
 
             statement.setInt(1, Integer.valueOf(id));
             ResultSet rs = statement.executeQuery();
@@ -137,7 +136,7 @@ public class JdbcBVDEtalonBodyDAO extends BaseJdbcDAO<BVDEtalonBody> implements 
     @Override
     public final List<BVDEtalonBody> findAll(final int pageNumber, final int pageSize, final int offset) {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM bvd.registry_information ORDER BY id LIMIT ? OFFSET ?;");
             
             statement.setInt(1, pageSize);
@@ -164,7 +163,7 @@ public class JdbcBVDEtalonBodyDAO extends BaseJdbcDAO<BVDEtalonBody> implements 
     @Override
     public final void updateDigestsAndBodyIdsAndNuts(final BVDEtalonBody body) {
         try {
-            PreparedStatement statement = connection.prepareStatement("UPDATE bvd.registry_information SET "
+            PreparedStatement statement = getConnection().prepareStatement("UPDATE bvd.registry_information SET "
                 + "digest = ?, standardizedname = ?, standardizedaddress = ?, nuts3 = ?, european_vat_number = ?,"
                 + " statistical_number = ?, trade_register_number = ?, vattax_number = ?, digest2 = ? WHERE id = ?;");
 
@@ -314,7 +313,7 @@ public class JdbcBVDEtalonBodyDAO extends BaseJdbcDAO<BVDEtalonBody> implements 
 	@Override
 	public final List<BVDEtalonBody> findAllById(final int id, final int amount) {
 		try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM bvd.registry_information WHERE id >= ? ORDER BY id LIMIT ?;");
             
             statement.setInt(1, id);

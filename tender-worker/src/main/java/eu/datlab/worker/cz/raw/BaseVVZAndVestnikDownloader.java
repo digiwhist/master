@@ -36,9 +36,9 @@ public abstract class BaseVVZAndVestnikDownloader extends BaseDownloader<RawData
         super();
 
         // check whether TOR should be started
-        if (config.getParam(getName() + ".torEnabled") != null
-            && config.getParam(getName() + ".torEnabled").equals("1")) {
-            NetworkUtils.enableTorForHttp();
+        if (config.getParam(getName() + ".proxyEnabled") != null
+            && config.getParam(getName() + ".proxyEnabled").equals("1")) {
+            NetworkUtils.enableProxyForHttp();
         }
 
         if (config.getParam(getName() + ".skipExisting") != null) {
@@ -47,6 +47,18 @@ public abstract class BaseVVZAndVestnikDownloader extends BaseDownloader<RawData
             skipExisting = false;
         }
 
+    }
+
+    @Override
+    protected final boolean skipExisting(final Message message) {
+        final String sourceDataUrl = message.getValue("url");
+        RawData existing = rawDao.getBySourceUrl(getName(), getVersion(), sourceDataUrl);
+        if (existing != null) {
+            logger.info("Raw data from {} are already downloaded", sourceDataUrl);
+            return true;
+        }
+
+        return false;
     }
 
     @Override

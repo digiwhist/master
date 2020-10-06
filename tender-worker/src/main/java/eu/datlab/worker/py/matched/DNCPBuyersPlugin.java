@@ -5,6 +5,7 @@ import eu.dl.dataaccess.dto.codetables.BodyType;
 import eu.dl.dataaccess.dto.matched.MatchedBody;
 import eu.dl.worker.matched.plugin.MatchingPlugin;
 import eu.dl.worker.matched.plugin.MatchingResult;
+import org.apache.commons.lang3.ObjectUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,10 +37,6 @@ public class DNCPBuyersPlugin implements MatchingPlugin<MatchedBody> {
     public final MatchingResult match(final MatchedBody item) {
         final MatchingResult matchingResult = new MatchingResult();
 
-        if (item.getRole() != BodyType.BUYERS) {
-            return matchingResult;
-        }
-
         final List<MatchedBody> matchedPoolBodies = dao.getByNameAndRole(item.getName(), item.getRole());
 
         if (!matchedPoolBodies.isEmpty()) {
@@ -57,5 +54,10 @@ public class DNCPBuyersPlugin implements MatchingPlugin<MatchedBody> {
         }
 
         return matchingResult;
+    }
+
+    @Override
+    public final boolean isMatchable(final MatchedBody item) {
+        return ObjectUtils.allNotNull(item.getName(), item.getRole()) && item.getRole() == BodyType.BUYERS;
     }
 }

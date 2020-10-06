@@ -1,14 +1,14 @@
 package eu.dl.dataaccess.dao.jdbc;
 
+import eu.dl.core.UnrecoverableException;
+import eu.dl.dataaccess.dao.ExchangeRatesDAO;
+import eu.dl.dataaccess.dto.ExchangeRates;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
-import eu.dl.core.UnrecoverableException;
-import eu.dl.dataaccess.dao.ExchangeRatesDAO;
-import eu.dl.dataaccess.dto.ExchangeRates;
 
 /**
  * JDBC implementation of exchange rates dao.
@@ -21,7 +21,7 @@ public class JdbcExhangeRatesDAO extends GenericJdbcDAO<ExchangeRates> implement
     @Override
     public final ExchangeRates getByDate(final LocalDate date) {
         try {
-            PreparedStatement statement = connection.prepareStatement(
+            PreparedStatement statement = getConnection().prepareStatement(
                     "SELECT * FROM " + getTableWithSchema() + " WHERE data @> '{ \"date\":\"" +
                             sanitizeForJsonString(date.format(DateTimeFormatter.ISO_LOCAL_DATE)) + "\"}' ");
 

@@ -26,7 +26,7 @@ public final class APATenderExcelDirectContractHandler {
     private static final String BIDDER_NAME = "castigator";  // Castigator in 2007 and CASTIGATOR in 2019
     private static final String BIDDER_IDS = "castigatorcui";
     private static final String BIDDER_COUNTRY = "castigatortara";
-    private static final String BIDDER_CITY = "ccastigatorlocalitate";
+    private static final String BIDDER_CITY = "castigatorlocalitate";
     private static final String BIDDER_RAW_ADDRESS = "castigatoradresa";
     private static final String PROCEDURE_TYPE = "tipprocedura";
     private static final String BUYER_NAME = "autoritatecontractanta";
@@ -113,7 +113,6 @@ public final class APATenderExcelDirectContractHandler {
                                     .setIsWinning(String.valueOf(true)))
                             .setContractSignatureDate(contractSignatureDate))
                     .setNationalProcedureType(procedureType)
-                    .setProcedureType(procedureType)
                     .addBuyer(new ParsedBody()
                             .setName(buyerName)
                             .addBodyId(new BodyIdentifier()

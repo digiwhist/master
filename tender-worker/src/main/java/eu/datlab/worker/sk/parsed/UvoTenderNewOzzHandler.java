@@ -319,18 +319,21 @@ final class UvoTenderNewOzzHandler {
                     "div:containsOwn(ktorá sa brala do úvahy) > span + span + span",
                     "div:containsOwn(Celková hodnota zákazky/časti):not(:matches(odhadovaná|predpokladaná|edna)) + div > span + span" +
                         " + span",
+                    "div:containsOwn(Celková hodnota zákazky/časti):not(:matches(odhadovaná|predpokladaná|edna)) > span + span + span",
                     "div:has(span:containsOwn(Hodnota ocenení)) + div > span + span + span"
                 },
                 new String[]{
                     "div:containsOwn(Hodnota (ktorá sa brala do úvahy)) > span",
                     "div:containsOwn(ktorá sa brala do úvahy) > span",
                     "div:containsOwn(Celková hodnota zákazky/časti):not(:matches(odhadovaná|predpokladaná|edna)) + div > span",
+                    "div:containsOwn(Celková hodnota zákazky/časti):not(:matches(odhadovaná|predpokladaná|edna)) > span",
                     "div:has(span:containsOwn(Hodnota ocenení)) + div > span"
                 },
                 new String[]{
                     "div:containsOwn(Hodnota (ktorá sa brala do úvahy)) > span + span",
                     "div:containsOwn(ktorá sa brala do úvahy) > span + span",
                     "div:containsOwn(Celková hodnota zákazky/časti):not(:matches(odhadovaná|predpokladaná|edna)) + div > span + span",
+                    "div:containsOwn(Celková hodnota zákazky/časti):not(:matches(odhadovaná|predpokladaná|edna)) > span + span",
                     "div:has(span:containsOwn(Hodnota ocenení)) + div > span + span"
                 },
                 null));

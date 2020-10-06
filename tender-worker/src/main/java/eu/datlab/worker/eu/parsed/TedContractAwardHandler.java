@@ -99,7 +99,6 @@ public final class TedContractAwardHandler {
                     JsoupUtils.selectFirst("TENDERS_REQUESTS_APPLICATIONS_MUST_BE_SENT_TO", contractingBodyNode)))
             .setDescription(JsoupUtils.selectText("DESCRIPTION_AWARD_NOTICE_INFORMATION > SHORT_CONTRACT_DESCRIPTION,"
                 + "DESCRIPTION_AWARD_NOTICE_INFORMATION_DEFENCE > SHORT_CONTRACT_DESCRIPTION", contractNode))
-            .setProcedureType(procedureType)
             .setNationalProcedureType(procedureType)
             .setSupplyType(JsoupUtils.selectAttribute("TYPE_CONTRACT_LOCATION_W_PUB > TYPE_CONTRACT", "VALUE", contractNode))
             .setAddressOfImplementation(TedTenderParserUtils.parseAddressOfImplementation(contractNode))

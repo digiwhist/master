@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 /**
  * Base correction executor which applies corrections of datetime fields.
  */
-public abstract class BaseDateCorrectionExecutor extends BaseCorrectionExecutor<LocalDateTime> {
+public abstract class BaseDateCorrectionExecutor extends SimpleCorrectionExecutor<LocalDateTime> {
     @Override
     protected final LocalDateTime getCorrectionOrigin(final Corrigendum c) {
         return c.getOriginalDate();

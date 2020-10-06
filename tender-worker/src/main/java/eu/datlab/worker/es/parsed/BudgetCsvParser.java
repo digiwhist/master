@@ -88,4 +88,9 @@ public class BudgetCsvParser extends BaseDatlabBudgetItemParser {
                 .setValue(csvRecord.get(valueSelector))
                 .setSource(source);
     }
+
+    @Override
+    protected final List<ParsedBudgetItem> postProcessSourceSpecificRules(final List<ParsedBudgetItem> parsed, final RawData raw) {
+        return parsed;
+    }
 }

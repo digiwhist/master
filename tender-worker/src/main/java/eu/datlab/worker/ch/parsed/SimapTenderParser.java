@@ -189,4 +189,10 @@ public class SimapTenderParser extends BaseDatlabTenderParser {
     protected final String countryOfOrigin(final ParsedTender parsed, final RawData raw){
         return "CH";
     }
+
+    @Override
+    protected final List<ParsedTender> postProcessSourceSpecificRules(final List<ParsedTender> parsed, final RawData raw) {
+        return parsed;
+    }
+
 }

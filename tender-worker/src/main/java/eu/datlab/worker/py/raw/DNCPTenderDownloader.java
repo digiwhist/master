@@ -44,6 +44,11 @@ public final class DNCPTenderDownloader extends BaseDownloader<RawData> {
     private static final String VERSION = "1.0";
 
     @Override
+    protected boolean skipExisting(final Message message) {
+        return false;
+    }
+
+    @Override
     public List<RawData> downloadAndPopulateRawData(final Message message) {
         // init raw data
         final RawData rawData = rawDao.getEmptyInstance();

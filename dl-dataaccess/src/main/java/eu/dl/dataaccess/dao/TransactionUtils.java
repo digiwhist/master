@@ -6,6 +6,11 @@ package eu.dl.dataaccess.dao;
  */
 public interface TransactionUtils {
     /**
+     * Closes connections.
+     */
+    void close();
+
+    /**
      * Begins new transaction.
      */
     void begin();

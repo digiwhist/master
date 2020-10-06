@@ -23,6 +23,7 @@ import java.util.List;
 
 import static eu.datlab.worker.fr.BOAMPTenderUtils.ARCHIVE_URL_METADATA_KEY;
 import static eu.datlab.worker.fr.BOAMPTenderUtils.FILE_PATH_METADATA_KEY;
+import static eu.datlab.worker.fr.BOAMPTenderUtils.FILE_NAME_METADATA_KEY;
 import static eu.datlab.worker.fr.BOAMPTenderUtils.HTML_SOURCE_DATA_METADATA_KEY;
 import static eu.datlab.worker.fr.BOAMPTenderUtils.HTML_SOURCE_URL_METADATA_KEY;
 import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
@@ -35,6 +36,11 @@ import static org.apache.commons.codec.digest.DigestUtils.sha256Hex;
  */
 public class BOAMPTenderDownloader extends BaseDownloader<RawData> {
     private static final String VERSION = "1";
+
+    @Override
+    protected final boolean skipExisting(final Message message) {
+        return false;
+    }
 
     @Override
     public final RawDAO getRawDataDao() {
@@ -58,6 +64,7 @@ public class BOAMPTenderDownloader extends BaseDownloader<RawData> {
 
         // get message parameters
         final String filePath = message.getValue(FILE_PATH_METADATA_KEY);
+        final String fileName = message.getValue(FILE_NAME_METADATA_KEY);
         final String archiveUrl = message.getValue(ARCHIVE_URL_METADATA_KEY);
 
         // set source URL of archive on FTP where the XML file is
@@ -75,10 +82,10 @@ public class BOAMPTenderDownloader extends BaseDownloader<RawData> {
             throw new UnrecoverableException("File was not loaded", e);
         }
         // set source file name
-        rawData.setSourceFileName(filePath.substring(filePath.lastIndexOf('/') + 1));
+        rawData.setSourceFileName(fileName.substring(fileName.lastIndexOf('/') + 1));
 
         // set metadata (URL and content of HTML page)
-        final String publicationSourceId = BOAMPTenderUtils.getPublicationSourceIdFrom(filePath);
+        final String publicationSourceId = BOAMPTenderUtils.getPublicationSourceIdFrom(fileName);
         final String publicationWebUrl = String.format(BOAMPTenderUtils.PUBLICATION_PERMALINK_PATTERN,
                 publicationSourceId);
         final HashMap<String, Object> metaData = new HashMap<>();

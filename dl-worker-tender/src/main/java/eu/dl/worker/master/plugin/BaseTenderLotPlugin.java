@@ -259,7 +259,7 @@ public abstract class BaseTenderLotPlugin<T extends MatchedTender, W extends Mas
         }
 
         // if all the tenders have one lot only, skip the algorithm and match them as one lot without any comparisons
-        if (lotLists.stream().allMatch(lotList -> lotList.size() == 1)) {
+        if (!Boolean.TRUE.equals(getFinalItem().getIsDps()) && lotLists.stream().allMatch(lotList -> lotList.size() == 1)) {
             return Arrays.asList(lotLists.stream().flatMap(List::stream).collect(Collectors.toList()));
         }
 

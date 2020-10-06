@@ -5,6 +5,8 @@ import eu.dl.core.config.MisconfigurationException;
 import eu.dl.dataaccess.dto.codetables.PublicationFormType;
 import eu.dl.dataaccess.dto.master.MasterTender;
 
+import java.math.BigDecimal;
+
 /**
  * Utils class for indicator calculations.
  */
@@ -33,6 +35,34 @@ public final class IndicatorUtils {
                 String[] interval = period.split("-");
                 if (interval.length == 2) {
                     if (periodLength >= Long.valueOf(interval[0]) && periodLength <= Long.valueOf(interval[1])) {
+                        return true;
+                    }
+                } else {
+                    throw new MisconfigurationException("Unable to parse " + period + " into interval");
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Checks whether the periodLength is in period described by periodDescription
+     * i.e. 0.5 is in 0-0.18;1.5-3. Limits are not included.
+     *
+     * @param periodDescription periods described as 0-12;45-60 etc.
+     * @param periodLength period length
+     *
+     * @return true if the value fits in at least one period
+     */
+    public static Boolean isValueInPeriod(final String periodDescription, final BigDecimal periodLength) {
+        if (periodDescription != null && !periodDescription.isEmpty()) {
+            String[] periods = periodDescription.split("\\;");
+            for (String period : periods) {
+                String[] interval = period.split("-");
+                if (interval.length == 2) {
+                    if (periodLength.compareTo(new BigDecimal(interval[0])) > 0
+                            && periodLength.compareTo(new BigDecimal(interval[1])) < 0) {
                         return true;
                     }
                 } else {

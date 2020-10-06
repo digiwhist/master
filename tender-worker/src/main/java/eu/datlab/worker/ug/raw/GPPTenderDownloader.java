@@ -23,13 +23,24 @@ public final class GPPTenderDownloader extends BaseDownloader<RawData> {
     private static final String VERSION = "1.0";
 
     @Override
+    protected boolean skipExisting(final Message message) {
+        final String sourceDataUrl = message.getValue("url");
+        RawData existing = rawDao.getBySourceUrl(getName(), getVersion(), sourceDataUrl);
+        if (existing != null) {
+            logger.info("Raw data from {} are already downloaded", sourceDataUrl);
+            return true;
+        }
+
+        return false;
+    }
+
+    @Override
     public List<RawData> downloadAndPopulateRawData(final Message message) {
         final RawData rawData = rawDao.getEmptyInstance();
 
         // get message parameters
         final String sourceDataUrl = message.getValue("url");
         final HashMap<String, Object> metaData = message.getMetaData();
-
 
         try {
             rawData.setSourceUrl(new URL(sourceDataUrl));

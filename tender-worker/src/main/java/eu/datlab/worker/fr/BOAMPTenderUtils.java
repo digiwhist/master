@@ -29,6 +29,10 @@ public final class BOAMPTenderUtils {
      */
     public static final String FILE_PATH_METADATA_KEY = "filePath";
     /**
+     * Metadata key for origin XML file name.
+     */
+    public static final String FILE_NAME_METADATA_KEY = "fileName";
+    /**
      * Metadata key for URL of archive where some file is.
      */
     public static final String ARCHIVE_URL_METADATA_KEY = "archiveUrl";
