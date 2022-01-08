@@ -48,7 +48,7 @@
 		<dependency>
 			<groupId>org.pac4j</groupId>
 			<artifactId>pac4j-core</artifactId>
-			<version>3.8.3</version>
+			<version>5.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.pac4j</groupId>
