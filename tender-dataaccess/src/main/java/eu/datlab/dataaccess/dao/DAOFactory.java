@@ -309,28 +309,4 @@ public abstract class DAOFactory {
      * @return DAO obejct for managing BvD etalon body
      */
     public abstract EtalonBodyDAO getBVDEtalonBodyDAO();
-
-    /**
-     * Gets zIndex indicator DAO.
-     *
-     * @param workerName
-     *         name of the worker manipulating with data via this DAO
-     * @param workerVersion
-     *         version of the worker manipulating with data via this DAO
-     *
-     * @return DAO obejct for managing zIndex indicator
-     */
-    public abstract ZIndexIndicatorDAO getZIndexIndicatorDAO(String workerName, String workerVersion);
-
-    /**
-     * Gets master tender indicator DAO.
-     *
-     * @param workerName
-     *         name of the worker manipulating with data via this DAO
-     * @param workerVersion
-     *         version of the worker manipulating with data via this DAO
-     *
-     * @return DAO object for managing master tenders in zindex indicator plugins
-     */
-    public abstract MasterTenderZIndexIndicatorDAO getMasterTenderZIndexIndicatorDAO(String workerName, String workerVersion);
 }

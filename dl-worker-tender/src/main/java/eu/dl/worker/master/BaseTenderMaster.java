@@ -24,7 +24,6 @@ import eu.dl.utils.currency.UnconvertableException;
 import eu.dl.worker.master.plugin.generic.LogicalORPlugin;
 import eu.dl.worker.master.plugin.specific.CorrigendumPlugin;
 import eu.dl.worker.master.plugin.specific.DigiwhistPricePlugin;
-import eu.dl.worker.master.plugin.specific.FrameworkAgreementRobustPricePlugin;
 import eu.dl.worker.master.plugin.specific.NoLotStatusPlugin;
 import eu.dl.worker.master.utils.ContractImplementationUtils;
 import eu.dl.worker.master.utils.MasterUtils;
@@ -61,7 +60,6 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
 
     private final CorrigendumPlugin corrigendumPlugin;
 
-    private final FrameworkAgreementRobustPricePlugin frameworkAgreementRobustPricePlugin;
 
     /**
      * Initialization of everything.
@@ -76,7 +74,6 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
 
         corrigendumPlugin = new CorrigendumPlugin();
 
-        frameworkAgreementRobustPricePlugin = new FrameworkAgreementRobustPricePlugin((MasterTenderDAO) getMasterDAO());
     }
 
     @Override
@@ -406,8 +403,6 @@ public abstract class BaseTenderMaster<T extends MatchedTender, V extends Master
 
         // must precede the framework agreement/dps robust price calculation
         MasterUtils.calculateEstimatedDurationInDays(masterTender);
-
-        tender = frameworkAgreementRobustPricePlugin.master(null, tender, null);
 
         tender = digiwhistPricePlugin.master(null, tender, null);
         tender = noLotStatusPlugin.master(null, tender, null);

@@ -2,7 +2,6 @@ package eu.datlab.dataaccess.dao.jdbc;
 
 import java.util.List;
 
-import eu.datlab.dataaccess.dao.MasterTenderZIndexIndicatorDAO;
 import eu.dl.dataaccess.dao.jdbc.JdbcMatchedBodyDAO;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -12,7 +11,6 @@ import eu.datlab.dataaccess.dao.ParsedBudgetItemDAO;
 import eu.datlab.dataaccess.dao.ParsedContractingAuthorityDAO;
 import eu.datlab.dataaccess.dao.ParsedPublicOfficialDAO;
 import eu.datlab.dataaccess.dao.RawAssetDeclarationDAO;
-import eu.datlab.dataaccess.dao.ZIndexIndicatorDAO;
 import eu.dl.dataaccess.dao.CleanTenderDAO;
 import eu.dl.dataaccess.dao.CrawlerAuditDAO;
 import eu.dl.dataaccess.dao.EtalonBodyDAO;
@@ -136,16 +134,5 @@ public final class JdbcDAOFactory extends DAOFactory {
     @Override
     public EtalonBodyDAO getBVDEtalonBodyDAO() {
         return new JdbcBVDEtalonBodyDAO();
-    }
-
-    @Override
-    public ZIndexIndicatorDAO getZIndexIndicatorDAO(final String workerName, final String workerVersion) {
-        return (ZIndexIndicatorDAO) new JdbcZIndexIndicatorDAO().populateWithWorkerMetadata(workerName, workerVersion);
-    }
-
-    @Override
-    public MasterTenderZIndexIndicatorDAO getMasterTenderZIndexIndicatorDAO(final String workerName, final String workerVersion) {
-        return (MasterTenderZIndexIndicatorDAO) new JdbcMasterTenderZIndexIndicatorDAO().populateWithWorkerMetadata(workerName,
-            workerVersion);
     }
 }
