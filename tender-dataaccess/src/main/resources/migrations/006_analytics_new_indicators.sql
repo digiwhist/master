@@ -1,4 +1,4 @@
-SET search_path TO tender_staging;
+SET search_path TO tender_development;
 
 ALTER TABLE master_tender_analytics ADD flag_award_date_missing float NULL;
 ALTER TABLE master_tender_analytics ADD flag_market_missing float NULL;

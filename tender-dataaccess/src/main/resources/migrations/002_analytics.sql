@@ -1,8 +1,9 @@
-SET search_path TO buyer_profile_zindex;
+SET
+  search_path TO tender_development;
 
 DROP TABLE if exists clean_tender_analytics cascade;
-CREATE TABLE clean_tender_analytics
-(
+
+CREATE TABLE clean_tender_analytics (
   tender_id text,
   title text,
   procedure_type text,
@@ -102,63 +103,32 @@ CREATE TABLE clean_tender_analytics
   updated_duration_days integer,
   payments_sum double precision,
   last_payment_year integer
-)
-WITH (
-  OIDS=FALSE
-);
+) WITH (OIDS = FALSE);
 
-CREATE INDEX analytics_cta_form_type_combined_idx
-  ON clean_tender_analytics
-  USING btree
-  (form_type_combined COLLATE pg_catalog."default");
+CREATE INDEX analytics_cta_form_type_combined_idx ON clean_tender_analytics USING btree (form_type_combined COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_cta_createdby_idx
-  ON clean_tender_analytics
-  USING btree
-  (createdby COLLATE pg_catalog."default");
+CREATE INDEX analytics_cta_createdby_idx ON clean_tender_analytics USING btree (createdby COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_cta_persistent_id_idx
-  ON clean_tender_analytics
-  USING btree
-  (persistent_id COLLATE pg_catalog."default");
+CREATE INDEX analytics_cta_persistent_id_idx ON clean_tender_analytics USING btree (persistent_id COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_cta_source_form_idx
-  ON clean_tender_analytics
-  USING btree
-  (source_form_type COLLATE pg_catalog."default");
+CREATE INDEX analytics_cta_source_form_idx ON clean_tender_analytics USING btree (source_form_type COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_cta_source_idx
-  ON clean_tender_analytics
-  USING btree
-  (source COLLATE pg_catalog."default");
+CREATE INDEX analytics_cta_source_idx ON clean_tender_analytics USING btree (source COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_cta_source_publication_idx
-  ON clean_tender_analytics
-  USING btree
-  (source_publication COLLATE pg_catalog."default");
+CREATE INDEX analytics_cta_source_publication_idx ON clean_tender_analytics USING btree (source_publication COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_cta_tender_id_idx
-  ON clean_tender_analytics
-  USING btree
-  (tender_id COLLATE pg_catalog."default");
+CREATE INDEX analytics_cta_tender_id_idx ON clean_tender_analytics USING btree (tender_id COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_cta_tender_proceduretype_idx
-  ON clean_tender_analytics
-  USING btree
-  (procedure_type COLLATE pg_catalog."default");
+CREATE INDEX analytics_cta_tender_proceduretype_idx ON clean_tender_analytics USING btree (procedure_type COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_cta_tender_year_idx
-  ON clean_tender_analytics
-  USING btree
-  (year);
-  
-    CREATE INDEX analytics_cta_src_idx ON clean_tender_analytics (src);
+CREATE INDEX analytics_cta_tender_year_idx ON clean_tender_analytics USING btree (year);
 
+CREATE INDEX analytics_cta_src_idx ON clean_tender_analytics (src);
 
-  -- Table: matched_tender_analytics
+-- Table: matched_tender_analytics
 DROP TABLE if exists matched_tender_analytics;
-CREATE TABLE matched_tender_analytics
-(
+
+CREATE TABLE matched_tender_analytics (
   matched_tender_id text,
   tender_group_id text,
   clean_tender_id text,
@@ -173,53 +143,26 @@ CREATE TABLE matched_tender_analytics
   createdby text,
   createdbyversion double precision,
   analytics_created_time timestamp with time zone
-)
-WITH (
-  OIDS=FALSE
-);
+) WITH (OIDS = FALSE);
 
+CREATE INDEX analytics_mta_bgi_idx ON matched_tender_analytics USING btree (buyer_group_id COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mta_bgi_idx
-  ON matched_tender_analytics
-  USING btree
-  (buyer_group_id COLLATE pg_catalog."default");
+CREATE INDEX analytics_mta_cb_idx ON matched_tender_analytics USING btree (createdby COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mta_cb_idx
-  ON matched_tender_analytics
-  USING btree
-  (createdby COLLATE pg_catalog."default");
+CREATE INDEX analytics_mta_cti_idx ON matched_tender_analytics USING btree (clean_tender_id COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mta_cti_idx
-  ON matched_tender_analytics
-  USING btree
-  (clean_tender_id COLLATE pg_catalog."default");
+CREATE INDEX analytics_mta_mt_idx ON matched_tender_analytics USING btree (createdby COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mta_mt_idx
-  ON matched_tender_analytics
-  USING btree
-  (createdby COLLATE pg_catalog."default");
+CREATE INDEX analytics_mta_tgi_idx ON matched_tender_analytics USING btree (tender_group_id COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mta_tgi_idx
-  ON matched_tender_analytics
-  USING btree
-  (tender_group_id COLLATE pg_catalog."default");
+CREATE INDEX analytics_mta_tpi_idx ON matched_tender_analytics USING btree (persistent_id COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mta_tpi_idx
-  ON matched_tender_analytics
-  USING btree
-  (persistent_id COLLATE pg_catalog."default");
-  
-  CREATE INDEX analytics_mta_tfi_idx ON matched_tender_analytics (src);
+CREATE INDEX analytics_mta_tfi_idx ON matched_tender_analytics (src);
 
-
-
-
-
-
-  -- Table: master_tender_analytics
+-- Table: master_tender_analytics
 DROP TABLE if exists master_tender_analytics;
-CREATE TABLE master_tender_analytics
-(
+
+CREATE TABLE master_tender_analytics (
   tender_id text,
   tender_group_id text,
   title text,
@@ -380,78 +323,41 @@ CREATE TABLE master_tender_analytics
   payments_sum double precision,
   last_payment_year integer,
   matched_master_tender_id text
-)
-WITH (
-  OIDS=FALSE
-);
+) WITH (OIDS = FALSE);
 
+CREATE INDEX analytics_mta_createdby_idx ON master_tender_analytics USING btree (createdby COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mta_createdby_idx
-  ON master_tender_analytics
-  USING btree
-  (createdby COLLATE pg_catalog."default");
+CREATE INDEX analytics_mta_persistent_id_idx ON master_tender_analytics USING btree (persistent_id COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mta_persistent_id_idx
-  ON master_tender_analytics
-  USING btree
-  (persistent_id COLLATE pg_catalog."default");
+CREATE INDEX analytics_mta_source_idx ON master_tender_analytics USING btree (source COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mta_source_idx
-  ON master_tender_analytics
-  USING btree
-  (source COLLATE pg_catalog."default");
+CREATE INDEX analytics_mta_tender_group_id_idx ON master_tender_analytics USING btree (tender_group_id COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mta_tender_group_id_idx
-  ON master_tender_analytics
-  USING btree
-  (tender_group_id COLLATE pg_catalog."default");
+CREATE INDEX analytics_mta_tender_id_idx ON master_tender_analytics USING btree (tender_id COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mta_tender_id_idx
-  ON master_tender_analytics
-  USING btree
-  (tender_id COLLATE pg_catalog."default");
+CREATE INDEX analytics_mta_tender_proceduretype_idx ON master_tender_analytics USING btree (procedure_type COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mta_tender_proceduretype_idx
-  ON master_tender_analytics
-  USING btree
-  (procedure_type COLLATE pg_catalog."default");
+CREATE INDEX analytics_mta_tender_year_idx ON master_tender_analytics USING btree (year);
 
-CREATE INDEX analytics_mta_tender_year_idx
-  ON master_tender_analytics
-  USING btree
-  (year);
+CREATE INDEX analytics_mta_buyer_id_idx ON master_tender_analytics USING btree (buyer_master_id COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mta_buyer_id_idx
-  ON master_tender_analytics
-  USING btree
-  (buyer_master_id COLLATE pg_catalog."default");
+CREATE INDEX analytics_mta_bidder_id_idx ON master_tender_analytics USING btree (bidder_master_id COLLATE pg_catalog."default");
 
-  CREATE INDEX analytics_mta_bidder_id_idx
-  ON master_tender_analytics
-  USING btree
-  (bidder_master_id COLLATE pg_catalog."default");
-  
-    CREATE INDEX analytics_mta_bidder_bvd_id_idx
-  ON master_tender_analytics
-  USING btree
-  (bidder_bvd_id COLLATE pg_catalog."default");
+CREATE INDEX analytics_mta_bidder_bvd_id_idx ON master_tender_analytics USING btree (bidder_bvd_id COLLATE pg_catalog."default");
 
-  CREATE INDEX analytics_mta_tender_country_idx
-  ON master_tender_analytics
-  USING btree
-  (tender_country COLLATE pg_catalog."default");
-  
-  CREATE INDEX analytics_mta_src_idx ON master_tender_analytics (src);
-  CREATE INDEX analytics_mta_award_date_idx ON master_tender_analytics (award_date);
-  CREATE INDEX analytics_mta_notice_date_first_idx ON master_tender_analytics (notice_date_first);
-  CREATE INDEX analytics_mta_matched_master_tender_id_idx ON master_tender_analytics (matched_master_tender_id);
+CREATE INDEX analytics_mta_tender_country_idx ON master_tender_analytics USING btree (tender_country COLLATE pg_catalog."default");
 
+CREATE INDEX analytics_mta_src_idx ON master_tender_analytics (src);
 
+CREATE INDEX analytics_mta_award_date_idx ON master_tender_analytics (award_date);
+
+CREATE INDEX analytics_mta_notice_date_first_idx ON master_tender_analytics (notice_date_first);
+
+CREATE INDEX analytics_mta_matched_master_tender_id_idx ON master_tender_analytics (matched_master_tender_id);
 
 DROP TABLE if exists matched_body_analytics;
 
-CREATE TABLE matched_body_analytics
-(
+CREATE TABLE matched_body_analytics (
   id text,
   group_id text,
   clean_tender_id text,
@@ -473,43 +379,24 @@ CREATE TABLE matched_body_analytics
   created timestamp with time zone,
   createdbyversion double precision,
   analytics_created_time timestamp with time zone
-)
-WITH (
-  OIDS=FALSE
+) WITH (OIDS = FALSE);
+
+CREATE INDEX analytics_mba_bgi_idx ON matched_body_analytics USING btree (group_id COLLATE pg_catalog."default");
+
+CREATE INDEX analytics_mba_cti_idx ON matched_body_analytics USING btree (clean_tender_id COLLATE pg_catalog."default");
+
+CREATE INDEX analytics_mba_ctpi_idx ON matched_body_analytics USING btree (
+  clean_tender_persistent_id COLLATE pg_catalog."default"
 );
 
-CREATE INDEX analytics_mba_bgi_idx
-  ON matched_body_analytics
-  USING btree
-  (group_id COLLATE pg_catalog."default");
+CREATE INDEX analytics_mba_id_idx ON matched_body_analytics USING btree (id COLLATE pg_catalog."default");
 
-CREATE INDEX analytics_mba_cti_idx
-  ON matched_body_analytics
-  USING btree
-  (clean_tender_id COLLATE pg_catalog."default");
-
-CREATE INDEX analytics_mba_ctpi_idx
-  ON matched_body_analytics
-  USING btree
-  (clean_tender_persistent_id COLLATE pg_catalog."default");
-
-CREATE INDEX analytics_mba_id_idx
-  ON matched_body_analytics
-  USING btree
-  (id COLLATE pg_catalog."default");
-
-CREATE INDEX analytics_mba_cby_idx
-  ON matched_body_analytics
-  USING btree
-  (createdby COLLATE pg_catalog."default");
-
-
-
+CREATE INDEX analytics_mba_cby_idx ON matched_body_analytics USING btree (createdby COLLATE pg_catalog."default");
 
 -- Table: master_body_analytics
 DROP TABLE if exists master_body_analytics;
-CREATE TABLE master_body_analytics
-(
+
+CREATE TABLE master_body_analytics (
   id character varying(255),
   group_id text,
   name text,
@@ -536,13 +423,6 @@ CREATE TABLE master_body_analytics
   createdbyversion double precision,
   analytics_created_time timestamp with time zone,
   email text
-)
-WITH (
-  OIDS=FALSE
-);
+) WITH (OIDS = FALSE);
 
-
-CREATE INDEX analytics_mba_createdby_idx
-  ON master_body_analytics
-  USING btree
-  (createdby COLLATE pg_catalog."default");
+CREATE INDEX analytics_mba_createdby_idx ON master_body_analytics USING btree (createdby COLLATE pg_catalog."default");

@@ -1,0 +1,2 @@
+#!/bin/bash
+docker run -d -p 4444:4444 -v /dev/shm:/dev/shm -v /tmp:/tmp --name chromedriver chromedriver:latest
