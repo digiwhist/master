@@ -74,7 +74,7 @@ Each tender record has it's copy on each stage of data processing. These are sto
 - master_tender
 - master_body
 
-Create script is located in tender-dataaccess\src\main\resources\migrations\001_base.sql
+Create scripts for the DDCS database are located in tender-dataaccess\src\main\resources\migrations\ and should be run in a given order from `000_bvd.sql` to `006_analytics_new_indicators.sql`
 
 Each table row will contain meta-data about the tender, along with a blob of structured JSON. 
 
