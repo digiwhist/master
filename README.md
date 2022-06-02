@@ -47,20 +47,20 @@ Each above described stage of data is processed by a standalone program called w
 
 Worker names are derived from a package structure of DDCS. Worker names that processes TED source are: 
 
-- eu.digiwhist.worker.eu.raw.TedTenderCrawler
-- eu.digiwhist.worker.eu.raw.TedTenderDownloader
-- eu.digiwhist.worker.eu.parsed.TedTenderParser
-- eu.digiwhist.worker.eu.clean.TedTenderCleaner
-- eu.digiwhist.worker.eu.matched.TedTenderMatcher
-- eu.digiwhist.worker.eu.master.TedTenderMaster
-- eu.digiwhist.worker.eu.master.TedBodyMaster
+- eu.datlab.worker.eu.raw.TedTenderCrawler
+- eu.datlab.worker.eu.raw.TedTenderDownloader
+- eu.datlab.worker.eu.parsed.TedTenderParser
+- eu.datlab.worker.eu.clean.TedTenderCleaner
+- eu.datlab.worker.eu.matched.TedTenderMatcher
+- eu.datlab.worker.eu.master.TedTenderMaster
+- eu.datlab.worker.eu.master.TedBodyMaster
 
-Worker names that crawl and download data from country specific sources are named as follows (example is for Spanish sources)
+Worker names that crawl and download data from country specific sources are named as follows (example is for the Czech source)
 
-- eu.digiwhist.worker.es.raw.PCETenderCrawler
-- eu.digiwhist.worker.es.raw.PCETenderDownloader
+- eu.datlab.worker.cz.raw.VVZTenderCrawler
+- eu.datlab.worker.cz.raw.VVZTenderDownloader
 
-These can be found in the `digiwhist-worker/serc/main/java/eu/digiwhist/worker/[COUNTRY]/raw` folders
+These can be found in the `tender-worker/src/main/java/eu/datlab/worker/[COUNTRY]/raw` folders
 
 Storage
 -------------------------------------------------------
@@ -74,7 +74,7 @@ Each tender record has it's copy on each stage of data processing. These are sto
 - master_tender
 - master_body
 
-Create script is located in digiwhist-dataaccess\src\main\resources\migrations\001_base.sql
+Create script is located in tender-dataaccess\src\main\resources\migrations\001_base.sql
 
 Each table row will contain meta-data about the tender, along with a blob of structured JSON. 
 
